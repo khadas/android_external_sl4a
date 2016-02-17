@@ -20,10 +20,8 @@ import android.app.Service;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.wifi.nan.ConfigRequest;
-import android.net.wifi.nan.PublishData;
-import android.net.wifi.nan.PublishSettings;
-import android.net.wifi.nan.SubscribeData;
-import android.net.wifi.nan.SubscribeSettings;
+import android.net.wifi.nan.PublishConfig;
+import android.net.wifi.nan.SubscribeConfig;
 import android.net.wifi.nan.TlvBufferUtils;
 import android.net.wifi.nan.WifiNanEventListener;
 import android.net.wifi.nan.WifiNanManager;
@@ -105,12 +103,12 @@ public class WifiNanManagerFacade extends RpcReceiver {
         return builder.build();
     }
 
-    private static PublishData getPublishData(JSONObject j) throws JSONException {
+    private static PublishConfig getPublishConfig(JSONObject j) throws JSONException {
         if (j == null) {
             return null;
         }
 
-        PublishData.Builder builder = new PublishData.Builder();
+        PublishConfig.Builder builder = new PublishConfig.Builder();
 
         if (j.has("ServiceName")) {
             builder.setServiceName(j.getString("ServiceName"));
@@ -131,16 +129,6 @@ public class WifiNanManagerFacade extends RpcReceiver {
             builder.setRxFilter(constructor.getArray(), constructor.getActualLength());
         }
 
-        return builder.build();
-    }
-
-    private static PublishSettings getPublishSettings(JSONObject j) throws JSONException {
-        if (j == null) {
-            return null;
-        }
-
-        PublishSettings.Builder builder = new PublishSettings.Builder();
-
         if (j.has("PublishType")) {
             builder.setPublishType(j.getInt("PublishType"));
         }
@@ -154,12 +142,12 @@ public class WifiNanManagerFacade extends RpcReceiver {
         return builder.build();
     }
 
-    private static SubscribeData getSubscribeData(JSONObject j) throws JSONException {
+    private static SubscribeConfig getSubscribeConfig(JSONObject j) throws JSONException {
         if (j == null) {
             return null;
         }
 
-        SubscribeData.Builder builder = new SubscribeData.Builder();
+        SubscribeConfig.Builder builder = new SubscribeConfig.Builder();
 
         if (j.has("ServiceName")) {
             builder.setServiceName(j.getString("ServiceName"));
@@ -179,16 +167,6 @@ public class WifiNanManagerFacade extends RpcReceiver {
             TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("RxFilter"));
             builder.setRxFilter(constructor.getArray(), constructor.getActualLength());
         }
-
-        return builder.build();
-    }
-
-    private static SubscribeSettings getSubscribeSettings(JSONObject j) throws JSONException {
-        if (j == null) {
-            return null;
-        }
-
-        SubscribeSettings.Builder builder = new SubscribeSettings.Builder();
 
         if (j.has("SubscribeType")) {
             builder.setSubscribeType(j.getInt("SubscribeType"));
@@ -238,11 +216,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Publish.")
-    public void wifiNanPublish(@RpcParameter(name = "publishData") JSONObject publishData,
-            @RpcParameter(name = "publishSettings") JSONObject publishSettings,
+    public void wifiNanPublish(@RpcParameter(name = "publishConfig") JSONObject publishConfig,
             @RpcParameter(name = "listenerId") Integer listenerId)
                     throws RemoteException, JSONException {
-        mSession = mMgr.publish(getPublishData(publishData), getPublishSettings(publishSettings),
+        mSession = mMgr.publish(getPublishConfig(publishConfig),
                 new NanSessionListenerPostsEvents(mNanFacadeThread.getLooper(), listenerId),
                 WifiNanSessionListener.LISTEN_PUBLISH_FAIL
                         | WifiNanSessionListener.LISTEN_PUBLISH_TERMINATED
@@ -255,13 +232,11 @@ public class WifiNanManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Subscribe.")
-    public void wifiNanSubscribe(@RpcParameter(name = "subscribeData") JSONObject subscribeData,
-            @RpcParameter(name = "subscribeSettings") JSONObject subscribeSettings,
+    public void wifiNanSubscribe(@RpcParameter(name = "subscribeConfig") JSONObject subscribeConfig,
             @RpcParameter(name = "listenerId") Integer listenerId)
                     throws RemoteException, JSONException {
 
-        mSession = mMgr.subscribe(getSubscribeData(subscribeData),
-                getSubscribeSettings(subscribeSettings),
+        mSession = mMgr.subscribe(getSubscribeConfig(subscribeConfig),
                 new NanSessionListenerPostsEvents(mNanFacadeThread.getLooper(), listenerId),
                 WifiNanSessionListener.LISTEN_PUBLISH_FAIL
                         | WifiNanSessionListener.LISTEN_PUBLISH_TERMINATED
