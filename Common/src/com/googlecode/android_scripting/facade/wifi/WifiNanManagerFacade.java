@@ -190,10 +190,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
         mMgr = (WifiNanManager) mService.getSystemService(Context.WIFI_NAN_SERVICE);
         mMgr.connect(new NanEventCallbackPostsEvents(mNanFacadeThread.getLooper()),
-                WifiNanEventCallback.LISTEN_CONFIG_COMPLETED
-                        | WifiNanEventCallback.LISTEN_CONFIG_FAILED
-                        | WifiNanEventCallback.LISTEN_NAN_DOWN
-                        | WifiNanEventCallback.LISTEN_IDENTITY_CHANGED);
+                WifiNanEventCallback.FLAG_LISTEN_CONFIG_COMPLETED
+                        | WifiNanEventCallback.FLAG_LISTEN_CONFIG_FAILED
+                        | WifiNanEventCallback.FLAG_LISTEN_NAN_DOWN
+                        | WifiNanEventCallback.FLAG_LISTEN_IDENTITY_CHANGED);
 
         mConnMgr = (ConnectivityManager) mService.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -221,14 +221,14 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     throws RemoteException, JSONException {
         mSession = mMgr.publish(getPublishConfig(publishConfig),
                 new NanSessionCallbackPostsEvents(mNanFacadeThread.getLooper(), callbackId),
-                WifiNanSessionCallback.LISTEN_PUBLISH_FAIL
-                        | WifiNanSessionCallback.LISTEN_PUBLISH_TERMINATED
-                        | WifiNanSessionCallback.LISTEN_SUBSCRIBE_FAIL
-                        | WifiNanSessionCallback.LISTEN_SUBSCRIBE_TERMINATED
-                        | WifiNanSessionCallback.LISTEN_MATCH
-                        | WifiNanSessionCallback.LISTEN_MESSAGE_SEND_SUCCESS
-                        | WifiNanSessionCallback.LISTEN_MESSAGE_SEND_FAIL
-                        | WifiNanSessionCallback.LISTEN_MESSAGE_RECEIVED);
+                WifiNanSessionCallback.FLAG_LISTEN_PUBLISH_FAIL
+                        | WifiNanSessionCallback.FLAG_LISTEN_PUBLISH_TERMINATED
+                        | WifiNanSessionCallback.FLAG_LISTEN_SUBSCRIBE_FAIL
+                        | WifiNanSessionCallback.FLAG_LISTEN_SUBSCRIBE_TERMINATED
+                        | WifiNanSessionCallback.FLAG_LISTEN_MATCH
+                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_SEND_SUCCESS
+                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_SEND_FAIL
+                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_RECEIVED);
     }
 
     @Rpc(description = "Subscribe.")
@@ -238,14 +238,14 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
         mSession = mMgr.subscribe(getSubscribeConfig(subscribeConfig),
                 new NanSessionCallbackPostsEvents(mNanFacadeThread.getLooper(), callbackId),
-                WifiNanSessionCallback.LISTEN_PUBLISH_FAIL
-                        | WifiNanSessionCallback.LISTEN_PUBLISH_TERMINATED
-                        | WifiNanSessionCallback.LISTEN_SUBSCRIBE_FAIL
-                        | WifiNanSessionCallback.LISTEN_SUBSCRIBE_TERMINATED
-                        | WifiNanSessionCallback.LISTEN_MATCH
-                        | WifiNanSessionCallback.LISTEN_MESSAGE_SEND_SUCCESS
-                        | WifiNanSessionCallback.LISTEN_MESSAGE_SEND_FAIL
-                        | WifiNanSessionCallback.LISTEN_MESSAGE_RECEIVED);
+                WifiNanSessionCallback.FLAG_LISTEN_PUBLISH_FAIL
+                        | WifiNanSessionCallback.FLAG_LISTEN_PUBLISH_TERMINATED
+                        | WifiNanSessionCallback.FLAG_LISTEN_SUBSCRIBE_FAIL
+                        | WifiNanSessionCallback.FLAG_LISTEN_SUBSCRIBE_TERMINATED
+                        | WifiNanSessionCallback.FLAG_LISTEN_MATCH
+                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_SEND_SUCCESS
+                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_SEND_FAIL
+                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_RECEIVED);
     }
 
     @Rpc(description = "Send peer-to-peer NAN message")
