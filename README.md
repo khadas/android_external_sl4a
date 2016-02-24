@@ -21,7 +21,7 @@ target name*
 
 Then Build SL4A:
 
-    cd <ANDROID_SOURCE_ROOT>/packages/apps/Test/connectivity/sl4a
+    cd <ANDROID_SOURCE_ROOT>/external/sl4a
     mm [-j15]
 
 ### Adding SL4A Builds to Android Builds by Default
