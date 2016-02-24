@@ -777,10 +777,6 @@ public class WifiManagerFacade extends RpcReceiver {
             @RpcParameter(name = "configJson") JSONObject configJson) throws JSONException {
         int wifiState = mWifi.getWifiState();
         if (enable) {
-            if ((wifiState == WifiManager.WIFI_STATE_ENABLING) ||
-                    (wifiState == WifiManager.WIFI_STATE_ENABLED)) {
-                mWifi.setWifiEnabled(false);
-            }
             WifiConfiguration config = genWifiConfig(configJson);
             // Need to strip of extra quotation marks for SSID and password.
             String ssid = config.SSID;
