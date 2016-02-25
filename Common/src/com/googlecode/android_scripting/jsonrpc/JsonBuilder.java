@@ -580,7 +580,6 @@ public class JsonBuilder {
         result.put("level", scanResult.level);
         result.put("capabilities", scanResult.capabilities);
         result.put("timestamp", scanResult.timestamp);
-        result.put("autoJoinStatus", scanResult.autoJoinStatus);
         result.put("blackListTimestamp", scanResult.blackListTimestamp);
         result.put("centerFreq0", scanResult.centerFreq0);
         result.put("centerFreq1", scanResult.centerFreq1);
