@@ -305,7 +305,13 @@ public class TelephonyConstants {
     public static final String EventEtwsReceived = "EtwsReceived";
 
     /**
-     * Constant for Telecom Call Event Name
+     * Constant for Telecom Event Names
+     * **/
+    public static final String EventTelecomCallAdded = "TelecomCallAdded";
+    public static final String EventTelecomCallRemoved = "TelecomCallRemoved";
+
+    /**
+     * Constant for Telecom Call Event Names
      * **/
     public static final String EventTelecomCallStateChanged = "TelecomCallStateChanged";
     public static final String EventTelecomCallParentChanged = "TelecomCallParentChanged";

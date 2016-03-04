@@ -39,11 +39,47 @@ import com.googlecode.android_scripting.facade.EventFacade;
 
 public class InCallServiceImpl extends InCallService {
 
-    private static InCallServiceImpl mService = null;
+    private static InCallServiceImpl sService = null;
 
     public static InCallServiceImpl getService() {
-        return mService;
+        return sService;
     }
+
+    public static class CallListener {
+
+        public static final int LISTEN_CALL_ADDED   = 1 << 0;
+        public static final int LISTEN_CALL_REMOVED = 1 << 1;
+        public static final int LISTEN_ALL = LISTEN_CALL_ADDED | LISTEN_CALL_REMOVED;
+
+        private static int sListenedEvents = 0;
+
+        public static void startListeningForEvent( int event ) {
+            sListenedEvents |= event & LISTEN_ALL;
+        }
+
+        public static void stopListeningForEvent( int event ) {
+            sListenedEvents &= ~(event & LISTEN_ALL);
+        }
+
+        public static void onCallAdded(String callId, Call call) {
+            Log.d("CallListener:onCallAdded()");
+            if ((sListenedEvents & LISTEN_CALL_ADDED)
+                    == LISTEN_CALL_ADDED) {
+                servicePostEvent(TelephonyConstants.EventTelecomCallAdded,
+                        new CallEvent<Call>(callId, call));
+            }
+        }
+
+        public static void onCallRemoved(String callId, Call call) {
+            Log.d("CallListener:onCallRemoved()");
+            if ((sListenedEvents & LISTEN_CALL_REMOVED)
+                    == LISTEN_CALL_REMOVED) {
+                servicePostEvent(TelephonyConstants.EventTelecomCallRemoved,
+                        new CallEvent<Call>(callId, call));
+            }
+        }
+    };
+
 
     private static Object mLock = new Object();
 
@@ -74,7 +110,7 @@ public class InCallServiceImpl extends InCallService {
             VideoProfile.STATE_BIDIRECTIONAL | VideoProfile.STATE_PAUSED;
 
     // Container class to return the call ID along with the event
-    public class CallEvent<EventType> {
+    public static class CallEvent<EventType> {
 
         private final String mCallId;
         private final EventType mEvent;
@@ -94,7 +130,7 @@ public class InCallServiceImpl extends InCallService {
     }
 
     // Currently the same as a call event... here for future use
-    public class VideoCallEvent<EventType> extends CallEvent<EventType> {
+    public static class VideoCallEvent<EventType> extends CallEvent<EventType> {
         VideoCallEvent(String callId, EventType event) {
             super(callId, event);
         }
@@ -554,12 +590,14 @@ public class InCallServiceImpl extends InCallService {
          * Because object lifetime is not guaranteed we shouldn't do this in the
          * constructor/destructor.
          */
-        if (mService == null) {
-            mService = this;
+        if (sService == null) {
+            sService = this;
         }
-        else if (mService != this) {
+        else if (sService != this) {
             Log.e("Multiple InCall Services Active in SL4A!");
         }
+
+        CallListener.onCallAdded(id, call);
     }
 
     @Override
@@ -570,8 +608,10 @@ public class InCallServiceImpl extends InCallService {
 
         mCallContainerMap.remove(id);
 
+        CallListener.onCallRemoved(id, call);
+
         if (mCallContainerMap.size() == 0) {
-            mService = null;
+            sService = null;
         }
     }
 

@@ -41,6 +41,7 @@ import android.provider.ContactsContract;
 
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.AndroidFacade;
+import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
@@ -67,10 +68,13 @@ public class TelecomManagerFacade extends RpcReceiver {
         mTelecomManager = new TelecomManager(mService);
         mTelephonyManager = new TelephonyManager(mService);
         mAndroidFacade = manager.getReceiver(AndroidFacade.class);
+        InCallServiceImpl.setEventFacade(
+                manager.getReceiver(EventFacade.class));
     }
 
     @Override
     public void shutdown() {
+        InCallServiceImpl.setEventFacade(null);
     }
 
     @Rpc(description = "If there's a ringing call, accept on behalf of the user.")
@@ -213,6 +217,30 @@ public class TelecomManagerFacade extends RpcReceiver {
     @Rpc(description = "Swap two calls")
     public void telecomSwapCalls() {
         // TODO: b/26273475 Add logic to swap the foreground and back ground calls
+    }
+
+    @Rpc(description = "Start listening for added calls")
+    public void telecomStartListeningForCallAdded() {
+        InCallServiceImpl.CallListener.startListeningForEvent(
+                InCallServiceImpl.CallListener.LISTEN_CALL_ADDED);
+    }
+
+    @Rpc(description = "Stop listening for added calls")
+    public void telecomStopListeningForCallAdded() {
+        InCallServiceImpl.CallListener.stopListeningForEvent(
+                InCallServiceImpl.CallListener.LISTEN_CALL_ADDED);
+    }
+
+    @Rpc(description = "Start listening for removed calls")
+    public void telecomStartListeningForCallRemoved() {
+        InCallServiceImpl.CallListener.startListeningForEvent(
+                InCallServiceImpl.CallListener.LISTEN_CALL_REMOVED);
+    }
+
+    @Rpc(description = "Stop listening for removed calls")
+    public void telecomStopListeningForCallRemoved() {
+        InCallServiceImpl.CallListener.stopListeningForEvent(
+                InCallServiceImpl.CallListener.LISTEN_CALL_REMOVED);
     }
 
     @Rpc(description = "Toggles call waiting feature on or off for default voice subscription id.")
