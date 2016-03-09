@@ -177,6 +177,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         if (j.has("TtlSec")) {
             builder.setTtlSec(j.getInt("TtlSec"));
         }
+        if (j.has("MatchStyle")) {
+            builder.setMatchStyle(j.getInt("MatchStyle"));
+        }
 
         return builder.build();
     }
