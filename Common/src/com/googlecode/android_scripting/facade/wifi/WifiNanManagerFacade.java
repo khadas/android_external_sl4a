@@ -138,6 +138,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         if (j.has("TtlSec")) {
             builder.setTtlSec(j.getInt("TtlSec"));
         }
+        if (j.has("EnableTerminateNotification")) {
+            builder.setEnableTerminateNotification(j.getBoolean("EnableTerminateNotification"));
+        }
 
         return builder.build();
     }
@@ -179,6 +182,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
         if (j.has("MatchStyle")) {
             builder.setMatchStyle(j.getInt("MatchStyle"));
+        }
+        if (j.has("EnableTerminateNotification")) {
+            builder.setEnableTerminateNotification(j.getBoolean("EnableTerminateNotification"));
         }
 
         return builder.build();
@@ -223,15 +229,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             @RpcParameter(name = "callbackId") Integer callbackId)
                     throws RemoteException, JSONException {
         mSession = mMgr.publish(getPublishConfig(publishConfig),
-                new NanSessionCallbackPostsEvents(mNanFacadeThread.getLooper(), callbackId),
-                WifiNanSessionCallback.FLAG_LISTEN_PUBLISH_FAIL
-                        | WifiNanSessionCallback.FLAG_LISTEN_PUBLISH_TERMINATED
-                        | WifiNanSessionCallback.FLAG_LISTEN_SUBSCRIBE_FAIL
-                        | WifiNanSessionCallback.FLAG_LISTEN_SUBSCRIBE_TERMINATED
-                        | WifiNanSessionCallback.FLAG_LISTEN_MATCH
-                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_SEND_SUCCESS
-                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_SEND_FAIL
-                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_RECEIVED);
+                new NanSessionCallbackPostsEvents(mNanFacadeThread.getLooper(), callbackId));
     }
 
     @Rpc(description = "Subscribe.")
@@ -240,15 +238,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     throws RemoteException, JSONException {
 
         mSession = mMgr.subscribe(getSubscribeConfig(subscribeConfig),
-                new NanSessionCallbackPostsEvents(mNanFacadeThread.getLooper(), callbackId),
-                WifiNanSessionCallback.FLAG_LISTEN_PUBLISH_FAIL
-                        | WifiNanSessionCallback.FLAG_LISTEN_PUBLISH_TERMINATED
-                        | WifiNanSessionCallback.FLAG_LISTEN_SUBSCRIBE_FAIL
-                        | WifiNanSessionCallback.FLAG_LISTEN_SUBSCRIBE_TERMINATED
-                        | WifiNanSessionCallback.FLAG_LISTEN_MATCH
-                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_SEND_SUCCESS
-                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_SEND_FAIL
-                        | WifiNanSessionCallback.FLAG_LISTEN_MESSAGE_RECEIVED);
+                new NanSessionCallbackPostsEvents(mNanFacadeThread.getLooper(), callbackId));
     }
 
     @Rpc(description = "Send peer-to-peer NAN message")
