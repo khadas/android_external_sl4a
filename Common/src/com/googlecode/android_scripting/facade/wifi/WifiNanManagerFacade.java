@@ -99,6 +99,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         if (j.has("ClusterHigh")) {
             builder.setClusterHigh(j.getInt("ClusterHigh"));
         }
+        if (j.has("EnableIdentityChangeCallback")) {
+            builder.setEnableIdentityChangeCallback(j.getBoolean("EnableIdentityChangeCallback"));
+        }
 
         return builder.build();
     }
@@ -198,11 +201,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         mNanFacadeThread.start();
 
         mMgr = (WifiNanManager) mService.getSystemService(Context.WIFI_NAN_SERVICE);
-        mMgr.connect(new NanEventCallbackPostsEvents(mNanFacadeThread.getLooper()),
-                WifiNanEventCallback.FLAG_LISTEN_CONFIG_COMPLETED
-                        | WifiNanEventCallback.FLAG_LISTEN_CONFIG_FAILED
-                        | WifiNanEventCallback.FLAG_LISTEN_NAN_DOWN
-                        | WifiNanEventCallback.FLAG_LISTEN_IDENTITY_CHANGED);
+        mMgr.connect(new NanEventCallbackPostsEvents(mNanFacadeThread.getLooper()));
 
         mConnMgr = (ConnectivityManager) mService.getSystemService(Context.CONNECTIVITY_SERVICE);
 
