@@ -296,35 +296,19 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onPublishFail(int reason) {
+        public void onSessionConfigFail(int reason) {
             Bundle mResults = new Bundle();
             mResults.putInt("callbackId", mCallbackId);
             mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanSessionOnPublishFail", mResults);
+            mEventFacade.postEvent("WifiNanSessionOnSessionConfigFail", mResults);
         }
 
         @Override
-        public void onPublishTerminated(int reason) {
+        public void onSessionTerminated(int reason) {
             Bundle mResults = new Bundle();
             mResults.putInt("callbackId", mCallbackId);
             mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanSessionOnPublishTerminated", mResults);
-        }
-
-        @Override
-        public void onSubscribeFail(int reason) {
-            Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
-            mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanSessionOnSubscribeFail", mResults);
-        }
-
-        @Override
-        public void onSubscribeTerminated(int reason) {
-            Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
-            mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanSessionOnSubscribeTerminated", mResults);
+            mEventFacade.postEvent("WifiNanSessionOnSessionTerminated", mResults);
         }
 
         @Override
