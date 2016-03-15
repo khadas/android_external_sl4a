@@ -18,19 +18,21 @@ package com.googlecode.android_scripting.facade.wifi;
 
 import android.app.Service;
 import android.content.Context;
-import android.net.ConnectivityManager;
 import android.net.wifi.nan.ConfigRequest;
 import android.net.wifi.nan.PublishConfig;
 import android.net.wifi.nan.SubscribeConfig;
 import android.net.wifi.nan.TlvBufferUtils;
 import android.net.wifi.nan.WifiNanEventCallback;
 import android.net.wifi.nan.WifiNanManager;
+import android.net.wifi.nan.WifiNanPublishSession;
 import android.net.wifi.nan.WifiNanSession;
 import android.net.wifi.nan.WifiNanSessionCallback;
+import android.net.wifi.nan.WifiNanSubscribeSession;
 import android.os.Bundle;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.util.SparseArray;
 
 import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
@@ -49,9 +51,14 @@ public class WifiNanManagerFacade extends RpcReceiver {
     private final EventFacade mEventFacade;
 
     private WifiNanManager mMgr;
-    private WifiNanSession mSession;
     private HandlerThread mNanFacadeThread;
-    private ConnectivityManager mConnMgr;
+
+    private int mNextSessionId = 1;
+    private SparseArray<WifiNanSession> mSessions = new SparseArray<>();
+
+    private int getNextSessionId() {
+        return mNextSessionId++;
+    }
 
     private static TlvBufferUtils.TlvConstructor getFilterData(JSONObject j) throws JSONException {
         if (j == null) {
@@ -201,15 +208,15 @@ public class WifiNanManagerFacade extends RpcReceiver {
         mNanFacadeThread.start();
 
         mMgr = (WifiNanManager) mService.getSystemService(Context.WIFI_NAN_SERVICE);
-        mMgr.connect(new NanEventCallbackPostsEvents(mNanFacadeThread.getLooper()));
-
-        mConnMgr = (ConnectivityManager) mService.getSystemService(Context.CONNECTIVITY_SERVICE);
+        mMgr.connect(mNanFacadeThread.getLooper(), new NanEventCallbackPostsEvents());
 
         mEventFacade = manager.getReceiver(EventFacade.class);
     }
 
     @Override
     public void shutdown() {
+        mMgr.disconnect();
+        mSessions.clear();
     }
 
     @Rpc(description = "Start NAN.")
@@ -221,27 +228,46 @@ public class WifiNanManagerFacade extends RpcReceiver {
     @Rpc(description = "Stop NAN.")
     public void wifiNanDisable() throws RemoteException, JSONException {
         mMgr.disconnect();
+        mSessions.clear();
     }
 
     @Rpc(description = "Publish.")
-    public void wifiNanPublish(@RpcParameter(name = "publishConfig") JSONObject publishConfig,
-            @RpcParameter(name = "callbackId") Integer callbackId)
-                    throws RemoteException, JSONException {
-        mSession = mMgr.publish(getPublishConfig(publishConfig),
-                new NanSessionCallbackPostsEvents(mNanFacadeThread.getLooper(), callbackId));
+    public Integer wifiNanPublish(@RpcParameter(name = "callbackId") Integer callbackId,
+            @RpcParameter(name = "publishConfig") JSONObject publishConfig)
+            throws RemoteException, JSONException {
+        int sessionId = getNextSessionId();
+        mMgr.publish(getPublishConfig(publishConfig),
+                new NanSessionCallbackPostsEvents(callbackId, sessionId));
+        return sessionId;
     }
 
     @Rpc(description = "Subscribe.")
-    public void wifiNanSubscribe(@RpcParameter(name = "subscribeConfig") JSONObject subscribeConfig,
-            @RpcParameter(name = "callbackId") Integer callbackId)
-                    throws RemoteException, JSONException {
+    public Integer wifiNanSubscribe(@RpcParameter(name = "callbackId") Integer callbackId,
+            @RpcParameter(name = "subscribeConfig") JSONObject subscribeConfig)
+            throws RemoteException, JSONException {
+        int sessionId = getNextSessionId();
+        mMgr.subscribe(getSubscribeConfig(subscribeConfig),
+                new NanSessionCallbackPostsEvents(callbackId, sessionId));
+        return sessionId;
+    }
 
-        mSession = mMgr.subscribe(getSubscribeConfig(subscribeConfig),
-                new NanSessionCallbackPostsEvents(mNanFacadeThread.getLooper(), callbackId));
+    @Rpc(description = "Terminate Session.")
+    public void wifiNanTerminateSession(
+            @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId)
+            throws RemoteException {
+        WifiNanSession session = mSessions.get(sessionId);
+        if (session == null) {
+            throw new IllegalStateException(
+                    "Calling wifiNanTerminateSession before session (session ID "
+                    + sessionId + " is ready");
+        }
+        session.terminate();
+        mSessions.remove(sessionId);
     }
 
     @Rpc(description = "Send peer-to-peer NAN message")
     public void wifiNanSendMessage(
+            @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId,
             @RpcParameter(name = "peerId", description = "The ID of the peer being communicated "
                     + "with. Obtained from a previous message or match session.") Integer peerId,
             @RpcParameter(name = "message") String message,
@@ -249,14 +275,15 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     + "identification of the message in the message status callbacks")
             Integer messageId)
                     throws RemoteException {
-        mSession.sendMessage(peerId, message.getBytes(), message.length(), messageId);
+        WifiNanSession session = mSessions.get(sessionId);
+        if (session == null) {
+            throw new IllegalStateException("Calling wifiNanSendMessage before session (session ID "
+                    + sessionId + " is ready");
+        }
+        session.sendMessage(peerId, message.getBytes(), message.length(), messageId);
     }
 
     private class NanEventCallbackPostsEvents extends WifiNanEventCallback {
-        public NanEventCallbackPostsEvents(Looper looper) {
-            super(looper);
-        }
-
         @Override
         public void onConfigCompleted(ConfigRequest configRequest) {
             Bundle mResults = new Bundle();
@@ -288,10 +315,31 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
     private class NanSessionCallbackPostsEvents extends WifiNanSessionCallback {
         private int mCallbackId;
+        private int mSessionId;
 
-        public NanSessionCallbackPostsEvents(Looper looper, int callbackId) {
-            super(looper);
+        public NanSessionCallbackPostsEvents(int callbackId, int sessionId) {
             mCallbackId = callbackId;
+            mSessionId = sessionId;
+        }
+
+        @Override
+        public void onPublishStarted(WifiNanPublishSession session) {
+            mSessions.put(mSessionId, session);
+
+            Bundle mResults = new Bundle();
+            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("sessionId", mSessionId);
+            mEventFacade.postEvent("WifiNanSessionOnPublishStarted", mResults);
+        }
+
+        @Override
+        public void onSubscribeStarted(WifiNanSubscribeSession session) {
+            mSessions.put(mSessionId, session);
+
+            Bundle mResults = new Bundle();
+            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("sessionId", mSessionId);
+            mEventFacade.postEvent("WifiNanSessionOnSubscribeStarted", mResults);
         }
 
         @Override
