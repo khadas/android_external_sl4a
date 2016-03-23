@@ -17,7 +17,10 @@
 package com.googlecode.android_scripting.facade.wifi;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.net.wifi.nan.ConfigRequest;
 import android.net.wifi.nan.PublishConfig;
 import android.net.wifi.nan.SubscribeConfig;
@@ -49,6 +52,7 @@ import org.json.JSONObject;
 public class WifiNanManagerFacade extends RpcReceiver {
     private final Service mService;
     private final EventFacade mEventFacade;
+    private final WifiNanStateChangedReceiver mStateChangedReceiver;
 
     private WifiNanManager mMgr;
     private HandlerThread mNanFacadeThread;
@@ -210,12 +214,32 @@ public class WifiNanManagerFacade extends RpcReceiver {
         mMgr = (WifiNanManager) mService.getSystemService(Context.WIFI_NAN_SERVICE);
 
         mEventFacade = manager.getReceiver(EventFacade.class);
+
+        mStateChangedReceiver = new WifiNanStateChangedReceiver();
+        IntentFilter filter = new IntentFilter(WifiNanManager.WIFI_NAN_STATE_CHANGED_ACTION);
+        mService.registerReceiver(mStateChangedReceiver, filter);
     }
 
     @Override
     public void shutdown() {
         mMgr.disconnect();
         mSessions.clear();
+        mService.unregisterReceiver(mStateChangedReceiver);
+    }
+
+    @Rpc(description = "Enable NAN Usage.")
+    public void wifiNanEnableUsage() throws RemoteException {
+        mMgr.enableUsage();
+    }
+
+    @Rpc(description = "Disable NAN Usage.")
+    public void wifiNanDisableUsage() throws RemoteException {
+        mMgr.disableUsage();
+    }
+
+    @Rpc(description = "Is NAN Usage Enabled?")
+    public Boolean wifiIsNanUsageEnabled() throws RemoteException {
+        return mMgr.isUsageEnabled();
     }
 
     @Rpc(description = "Connect to NAN.")
@@ -402,6 +426,16 @@ public class WifiNanManagerFacade extends RpcReceiver {
             mResults.putByteArray("message", message); // TODO: base64
             mResults.putString("messageAsString", new String(message, 0, messageLength));
             mEventFacade.postEvent("WifiNanSessionOnMessageReceived", mResults);
+        }
+    }
+
+    class WifiNanStateChangedReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context c, Intent intent) {
+            int status = intent.getIntExtra(WifiNanManager.EXTRA_WIFI_STATE,
+                    WifiNanManager.WIFI_NAN_STATE_DISABLED);
+            mEventFacade.postEvent(status == WifiNanManager.WIFI_NAN_STATE_ENABLED
+                    ? "WifiNanEnabled" : "WifiNanDisabled", new Bundle());
         }
     }
 }
