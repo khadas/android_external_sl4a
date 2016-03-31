@@ -29,11 +29,14 @@ import java.util.TreeMap;
 import com.google.common.collect.Maps;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothA2dpFacade;
+import com.googlecode.android_scripting.facade.bluetooth.BluetoothA2dpSinkFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothAvrcpFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothConnectionFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothHidFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothHspFacade;
+import com.googlecode.android_scripting.facade.bluetooth.BluetoothHfpClientFacade;
+import com.googlecode.android_scripting.facade.bluetooth.BluetoothA2dpFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothLeAdvertiseFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothLeScanFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothMapFacade;
@@ -135,6 +138,7 @@ public class FacadeConfiguration {
         if( sSdkLevel >= 23 ) {
             //add new facades here
             sFacadeClassList.add(WifiNanManagerFacade.class);
+            sFacadeClassList.add(BluetoothHfpClientFacade.class);
         }
 
         for (Class<? extends RpcReceiver> recieverClass : sFacadeClassList) {
