@@ -196,7 +196,7 @@ public class TelecomCallFacade extends RpcReceiver {
         InCallServiceImpl.callAnswer(callId, videoState);
     }
 
-    @Rpc(description = "Answer a call of a specified id, with video state")
+    @Rpc(description = "Reject a call, sending the given message to the caller")
     public void telecomCallReject(
                         @RpcParameter(name = "call")
             String callId,
