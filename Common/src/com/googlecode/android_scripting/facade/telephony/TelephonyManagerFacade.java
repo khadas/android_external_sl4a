@@ -750,10 +750,11 @@ public class TelephonyManagerFacade extends RpcReceiver {
     @Rpc(description = "Get Authentication Challenge Response from a " +
             "given SIM Application")
     public String telephonyGetIccSimChallengeResponse(
-        @RpcParameter(name = "appType") Integer appType,
+            @RpcParameter(name = "appType") Integer appType,
+            @RpcParameter(name = "authType") Integer authType,
             @RpcParameter(name = "hexChallenge") String hexChallenge) {
         return telephonyGetIccSimChallengeResponseForSubscription(
-                SubscriptionManager.getDefaultSubscriptionId(), appType, hexChallenge);
+                SubscriptionManager.getDefaultSubscriptionId(), appType, authType, hexChallenge);
     }
 
     @Rpc(description = "Get Authentication Challenge Response from a " +
@@ -761,11 +762,12 @@ public class TelephonyManagerFacade extends RpcReceiver {
     public String telephonyGetIccSimChallengeResponseForSubscription(
             @RpcParameter(name = "subId") Integer subId,
             @RpcParameter(name = "appType") Integer appType,
+            @RpcParameter(name = "authType") Integer authType,
             @RpcParameter(name = "hexChallenge") String hexChallenge) {
 
         try {
             String b64Data = BaseEncoding.base64().encode(BaseEncoding.base16().decode(hexChallenge));
-            String b64Result = mTelephonyManager.getIccSimChallengeResponse(subId, appType, b64Data);
+            String b64Result = mTelephonyManager.getIccAuthentication(subId, appType, authType, b64Data);
             return (b64Result != null)
                     ? BaseEncoding.base16().encode(BaseEncoding.base64().decode(b64Result)) : null;
         } catch( Exception e) {
