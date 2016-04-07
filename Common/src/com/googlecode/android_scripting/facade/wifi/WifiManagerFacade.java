@@ -863,6 +863,12 @@ public class WifiManagerFacade extends RpcReceiver {
         return false;
     }
 
+    @Rpc(description = "Enable/disable WifiConnectivityManager.")
+    public void wifiEnableWifiConnectivityManager(
+            @RpcParameter(name = "enable") Boolean enable) {
+        mWifi.enableWifiConnectivityManager(enable);
+    }
+
     @Override
     public void shutdown() {
         wifiLockRelease();
