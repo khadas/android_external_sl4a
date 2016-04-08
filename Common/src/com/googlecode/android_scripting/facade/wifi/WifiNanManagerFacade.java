@@ -208,7 +208,6 @@ public class WifiNanManagerFacade extends RpcReceiver {
         mNanFacadeThread.start();
 
         mMgr = (WifiNanManager) mService.getSystemService(Context.WIFI_NAN_SERVICE);
-        mMgr.connect(mNanFacadeThread.getLooper(), new NanEventCallbackPostsEvents());
 
         mEventFacade = manager.getReceiver(EventFacade.class);
     }
@@ -219,14 +218,15 @@ public class WifiNanManagerFacade extends RpcReceiver {
         mSessions.clear();
     }
 
-    @Rpc(description = "Start NAN.")
-    public void wifiNanEnable(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
+    @Rpc(description = "Connect to NAN.")
+    public void wifiNanConnect(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
             throws RemoteException, JSONException {
-        mMgr.requestConfig(getConfigRequest(nanConfig));
+        mMgr.connect(mNanFacadeThread.getLooper(), new NanEventCallbackPostsEvents(),
+                getConfigRequest(nanConfig));
     }
 
-    @Rpc(description = "Stop NAN.")
-    public void wifiNanDisable() throws RemoteException, JSONException {
+    @Rpc(description = "Disconnect from NAN.")
+    public void wifiNanDisconnect() throws RemoteException, JSONException {
         mMgr.disconnect();
         mSessions.clear();
     }
@@ -285,18 +285,16 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
     private class NanEventCallbackPostsEvents extends WifiNanEventCallback {
         @Override
-        public void onConfigCompleted(ConfigRequest configRequest) {
+        public void onConnectSuccess() {
             Bundle mResults = new Bundle();
-            mResults.putParcelable("configRequest", configRequest);
-            mEventFacade.postEvent("WifiNanOnConfigCompleted", mResults);
+            mEventFacade.postEvent("WifiNanOnConnectSuccess", mResults);
         }
 
         @Override
-        public void onConfigFailed(ConfigRequest failedConfig, int reason) {
+        public void onConnectFail(int reason) {
             Bundle mResults = new Bundle();
-            mResults.putParcelable("failedConfig", failedConfig);
             mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanOnConfigFailed", mResults);
+            mEventFacade.postEvent("WifiNanOnConnectFail", mResults);
         }
 
         @Override
@@ -340,6 +338,13 @@ public class WifiNanManagerFacade extends RpcReceiver {
             mResults.putInt("callbackId", mCallbackId);
             mResults.putInt("sessionId", mSessionId);
             mEventFacade.postEvent("WifiNanSessionOnSubscribeStarted", mResults);
+        }
+
+        @Override
+        public void onSessionConfigSuccess() {
+            Bundle mResults = new Bundle();
+            mResults.putInt("callbackId", mCallbackId);
+            mEventFacade.postEvent("WifiNanSessionOnSessionConfigSuccess", mResults);
         }
 
         @Override
