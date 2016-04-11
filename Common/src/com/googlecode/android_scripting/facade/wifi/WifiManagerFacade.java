@@ -532,8 +532,8 @@ public class WifiManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Enable/disable autojoin scan and switch network when connected.")
-    public Boolean wifiEnableAutoJoinWhenAssociated(@RpcParameter(name = "enable") Boolean enable) {
-        return mWifi.enableAutoJoinWhenAssociated(enable);
+    public Boolean wifiSetEnableAutoJoinWhenAssociated(@RpcParameter(name = "enable") Boolean enable) {
+        return mWifi.setEnableAutoJoinWhenAssociated(enable);
     }
 
     @Rpc(description = "Enable a configured network. Initiate a connection if disableOthers is true", returns = "True if the operation succeeded.")
