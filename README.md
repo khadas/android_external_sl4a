@@ -16,7 +16,7 @@ For the initial build of Android:
     lunch aosp_<TARGET>
     make [-j15]
 
-*where <ANDROID_SOURCE_ROOT> is the root directory of the android tree and <TARGET> is the lunch
+*where `<ANDROID_SOURCE_ROOT>` is the root directory of the android tree and `<TARGET>` is the lunch
 target name*
 
 Then Build SL4A:
@@ -47,7 +47,7 @@ b) To enable RPC access from the command prompt:
     adb shell "am start -a com.googlecode.android_scripting.action.LAUNCH_SERVER \
                --ei com.googlecode.android_scripting.extra.USE_SERVICE_PORT <DEVICE_PORT_NUM> \
                com.googlecode.android_scripting/.activity.ScriptingLayerServiceLauncher"
-*where <HOST_PORT_NUM> and <DEVICE_PORT_NUM> are the tcp ports on the host computer and device.*
+*where `<HOST_PORT_NUM>` and `<DEVICE_PORT_NUM>` are the tcp ports on the host computer and device.*
 
 ### Generate the API Documentation
 From SL4A source directory run this command:
