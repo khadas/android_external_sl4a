@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import android.app.Service;
-import android.bluetooth.BluetoothHeadsetClient;
+import android.bluetooth.BluetoothPbapClient;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProfile;
@@ -33,102 +33,102 @@ import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
-public class BluetoothHfpClientFacade extends RpcReceiver {
+public class BluetoothPbapClientFacade extends RpcReceiver {
   static final ParcelUuid[] UUIDS = {
-    BluetoothUuid.Handsfree_AG,
+    BluetoothUuid.PBAP_PSE,
   };
 
   private final Service mService;
   private final BluetoothAdapter mBluetoothAdapter;
 
-  private static boolean sIsHfpClientReady = false;
-  private static BluetoothHeadsetClient sHfpClientProfile = null;
+  private static boolean sIsPbapClientReady = false;
+  private static BluetoothPbapClient sPbapClientProfile = null;
 
-  public BluetoothHfpClientFacade(FacadeManager manager) {
+  public BluetoothPbapClientFacade(FacadeManager manager) {
     super(manager);
     mService = manager.getService();
     mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    mBluetoothAdapter.getProfileProxy(mService, new HfpClientServiceListener(),
-        BluetoothProfile.HEADSET_CLIENT);
+    mBluetoothAdapter.getProfileProxy(mService, new PbapClientServiceListener(),
+        BluetoothProfile.PBAP_CLIENT);
   }
 
-  class HfpClientServiceListener implements BluetoothProfile.ServiceListener {
+  class PbapClientServiceListener implements BluetoothProfile.ServiceListener {
     @Override
     public void onServiceConnected(int profile, BluetoothProfile proxy) {
-      sHfpClientProfile = (BluetoothHeadsetClient) proxy;
-      sIsHfpClientReady = true;
+      sPbapClientProfile = (BluetoothPbapClient) proxy;
+      sIsPbapClientReady = true;
     }
 
     @Override
     public void onServiceDisconnected(int profile) {
-      sIsHfpClientReady = false;
+      sIsPbapClientReady = false;
     }
   }
 
-  public Boolean hfpClientConnect(BluetoothDevice device) {
-    if (sHfpClientProfile == null) return false;
-    return sHfpClientProfile.connect(device);
+  public Boolean pbapClientConnect(BluetoothDevice device) {
+    if (sPbapClientProfile == null) return false;
+    return sPbapClientProfile.connect(device);
   }
 
-  public Boolean hfpClientDisconnect(BluetoothDevice device) {
-    if (sHfpClientProfile == null) return false;
-    return sHfpClientProfile.disconnect(device);
+  public Boolean pbapClientDisconnect(BluetoothDevice device) {
+    if (sPbapClientProfile == null) return false;
+    return sPbapClientProfile.disconnect(device);
   }
 
-  @Rpc(description = "Is HfpClient profile ready.")
-  public Boolean bluetoothHfpClientIsReady() {
-    return sIsHfpClientReady;
+  @Rpc(description = "Is PbapClient profile ready.")
+  public Boolean bluetoothPbapClientIsReady() {
+    return sIsPbapClientReady;
   }
 
-  @Rpc(description = "Connect to an HFP Client device.")
-  public Boolean bluetoothHfpClientConnect(
+  @Rpc(description = "Connect to an PBAP Client device.")
+  public Boolean bluetoothPbapClientConnect(
       @RpcParameter(name = "device", description = "Name or MAC address of a bluetooth device.")
       String deviceStr)
       throws Exception {
-    if (sHfpClientProfile == null) return false;
+    if (sPbapClientProfile == null) return false;
     try {
       BluetoothDevice device =
           BluetoothFacade.getDevice(BluetoothFacade.DiscoveredDevices, deviceStr);
       Log.d("Connecting to device " + device.getAliasName());
-      return hfpClientConnect(device);
+      return pbapClientConnect(device);
     } catch (Exception e) {
-        Log.e("bluetoothHfpClientConnect failed on getDevice " + deviceStr + " with " + e);
+        Log.e("bluetoothPbapClientConnect failed on getDevice " + deviceStr + " with " + e);
         return false;
     }
   }
 
-  @Rpc(description = "Disconnect an HFP Client device.")
-  public Boolean bluetoothHfpClientDisconnect(
+  @Rpc(description = "Disconnect an PBAP Client device.")
+  public Boolean bluetoothPbapClientDisconnect(
       @RpcParameter(name = "device", description = "Name or MAC address of a device.")
       String deviceStr) {
-    if (sHfpClientProfile == null) return false;
-    Log.d("Connected devices: " + sHfpClientProfile.getConnectedDevices());
+    if (sPbapClientProfile == null) return false;
+    Log.d("Connected devices: " + sPbapClientProfile.getConnectedDevices());
     try {
         BluetoothDevice device =
-            BluetoothFacade.getDevice(sHfpClientProfile.getConnectedDevices(), deviceStr);
-        return hfpClientDisconnect(device);
+            BluetoothFacade.getDevice(sPbapClientProfile.getConnectedDevices(), deviceStr);
+        return pbapClientDisconnect(device);
     } catch (Exception e) {
-        // Do nothing since it is disconnect and this function should force disconnect.
-        Log.e("bluetoothHfpClientConnect getDevice failed " + e);
+        // Do nothing since it is disconnect and the above call should force disconnect.
+        Log.e("bluetoothPbapClientConnect getDevice failed " + e);
     }
     return false;
   }
 
-  @Rpc(description = "Get all the devices connected through HFP Client.")
-  public List<BluetoothDevice> bluetoothHfpClientGetConnectedDevices() {
-    if (sHfpClientProfile == null) return new ArrayList<BluetoothDevice>();
-    return sHfpClientProfile.getConnectedDevices();
+  @Rpc(description = "Get all the devices connected through PBAP Client.")
+  public List<BluetoothDevice> bluetoothPbapClientGetConnectedDevices() {
+    if (sPbapClientProfile == null) return new ArrayList<BluetoothDevice>();
+    return sPbapClientProfile.getConnectedDevices();
   }
 
   @Rpc(description = "Get the connection status of a device.")
-  public Integer bluetoothHfpClientGetConnectionStatus(
+  public Integer bluetoothPbapClientGetConnectionStatus(
           @RpcParameter(name = "deviceID",
                         description = "Name or MAC address of a bluetooth device.")
           String deviceID) {
-      if (sHfpClientProfile == null) {
+      if (sPbapClientProfile == null) {
           return BluetoothProfile.STATE_DISCONNECTED;
       }
-      List<BluetoothDevice> deviceList = sHfpClientProfile.getConnectedDevices();
+      List<BluetoothDevice> deviceList = sPbapClientProfile.getConnectedDevices();
       BluetoothDevice device;
       try {
           device = BluetoothFacade.getDevice(deviceList, deviceID);
@@ -136,7 +136,7 @@ public class BluetoothHfpClientFacade extends RpcReceiver {
           Log.e(e);
           return BluetoothProfile.STATE_DISCONNECTED;
       }
-      return sHfpClientProfile.getConnectionState(device);
+      return sPbapClientProfile.getConnectionState(device);
   }
 
   @Override

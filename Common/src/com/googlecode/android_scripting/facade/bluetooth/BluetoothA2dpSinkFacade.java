@@ -17,6 +17,7 @@
 package com.googlecode.android_scripting.facade.bluetooth;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import android.app.Service;
 import android.bluetooth.BluetoothA2dpSink;
@@ -107,6 +108,7 @@ public class BluetoothA2dpSinkFacade extends RpcReceiver {
 
   @Rpc(description = "Get all the devices connected through A2DP Sink.")
   public List<BluetoothDevice> bluetoothA2dpSinkGetConnectedDevices() {
+    if (sA2dpSinkProfile == null) return new ArrayList<BluetoothDevice>();
     return sA2dpSinkProfile.getConnectedDevices();
   }
 
