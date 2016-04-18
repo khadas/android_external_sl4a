@@ -682,12 +682,6 @@ public class TelephonyManagerFacade extends RpcReceiver {
                       SubscriptionManager.getDefaultSubscriptionId());
     }
 
-    @Rpc(description = "Get the latest power consumption stats from the modem")
-    public ModemActivityInfo telephonyGetModemActivityInfo() {
-        ModemActivityInfo info = mTelephonyManager.getModemActivityInfo();
-        return info;
-    }
-
     @Rpc(description = "Returns the MCC for specified subscription ID")
     public String telephonyGetSimCountryIsoForSubscription(
                   @RpcParameter(name = "subId") Integer subId) {
