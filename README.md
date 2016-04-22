@@ -52,7 +52,7 @@ b) To enable RPC access from the command prompt:
 ### Generate the API Documentation
 From SL4A source directory run this command:
 
-        perl Docs/generate_api_reference_md.pl
+        python Docs/generate_api_reference_md.py
 
 In the Docs directory there should now be an ApiReference.md file that
 contains which RPC functions are available in SL4A as well as documentation
