@@ -19,6 +19,7 @@ import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.telephony.TelephonyEvents;
 import android.os.Bundle;
+import android.os.Looper;
 import android.telephony.CellInfo;
 import android.telephony.DataConnectionRealTimeInfo;
 import android.telephony.PhoneStateListener;
@@ -55,6 +56,12 @@ public class TelephonyStateListeners {
 
         public CallStateChangeListener(EventFacade ef, int subId) {
             super(subId);
+            mEventFacade = ef;
+            subscriptionId = subId;
+        }
+
+        public CallStateChangeListener(EventFacade ef, int subId, Looper looper) {
+            super(subId, looper);
             mEventFacade = ef;
             subscriptionId = subId;
         }
@@ -118,6 +125,12 @@ public class TelephonyStateListeners {
             subscriptionId = subId;
         }
 
+        public DataConnectionRealTimeInfoChangeListener(EventFacade ef, int subId, Looper looper) {
+            super(subId, looper);
+            mEventFacade = ef;
+            subscriptionId = subId;
+        }
+
         @Override
         public void onDataConnectionRealTimeInfoChanged(
             DataConnectionRealTimeInfo dcRtInfo) {
@@ -145,6 +158,14 @@ public class TelephonyStateListeners {
 
         public DataConnectionStateChangeListener(EventFacade ef, TelephonyManager tm, int subId) {
             super(subId);
+            mEventFacade = ef;
+            mTelephonyManager = tm;
+            subscriptionId = subId;
+        }
+
+        public DataConnectionStateChangeListener(
+                EventFacade ef, TelephonyManager tm, int subId, Looper looper) {
+            super(subId, looper);
             mEventFacade = ef;
             mTelephonyManager = tm;
             subscriptionId = subId;
@@ -179,6 +200,12 @@ public class TelephonyStateListeners {
             subscriptionId = subId;
         }
 
+        public ServiceStateChangeListener(EventFacade ef, int subId, Looper looper) {
+            super(subId, looper);
+            mEventFacade = ef;
+            subscriptionId = subId;
+        }
+
         @Override
         public void onServiceStateChanged(ServiceState serviceState) {
             mEventFacade.postEvent(TelephonyConstants.EventServiceStateChanged,
@@ -203,6 +230,11 @@ public class TelephonyStateListeners {
             mEventFacade = ef;
         }
 
+        public CellInfoChangeListener(EventFacade ef, int subId, Looper looper) {
+            super(subId, looper);
+            mEventFacade = ef;
+        }
+
         @Override
         public void onCellInfoChanged(List<CellInfo> cellInfo) {
             mEventFacade.postEvent(
@@ -222,6 +254,11 @@ public class TelephonyStateListeners {
 
         public VolteServiceStateChangeListener(EventFacade ef, int subId) {
             super(subId);
+            mEventFacade = ef;
+        }
+
+        public VolteServiceStateChangeListener(EventFacade ef, int subId, Looper looper) {
+            super(subId, looper);
             mEventFacade = ef;
         }
 
@@ -250,6 +287,11 @@ public class TelephonyStateListeners {
             mEventFacade = ef;
         }
 
+        public VoiceMailStateChangeListener(EventFacade ef, int subId, Looper looper) {
+            super(subId, looper);
+            mEventFacade = ef;
+        }
+
         @Override
         public void onMessageWaitingIndicatorChanged(boolean messageWaitingIndicator) {
             mEventFacade.postEvent(
@@ -272,6 +314,11 @@ public class TelephonyStateListeners {
 
         public SignalStrengthChangeListener(EventFacade ef, int subId) {
             super(subId);
+            mEventFacade = ef;
+        }
+
+        public SignalStrengthChangeListener(EventFacade ef, int subId, Looper looper) {
+            super(subId, looper);
             mEventFacade = ef;
         }
 
