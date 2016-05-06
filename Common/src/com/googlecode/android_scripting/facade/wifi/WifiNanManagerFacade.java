@@ -322,13 +322,6 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onNanDown(int reason) {
-            Bundle mResults = new Bundle();
-            mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanOnNanDown", mResults);
-        }
-
-        @Override
         public void onIdentityChanged() {
             Bundle mResults = new Bundle();
             mEventFacade.postEvent("WifiNanOnIdentityChanged", mResults);
