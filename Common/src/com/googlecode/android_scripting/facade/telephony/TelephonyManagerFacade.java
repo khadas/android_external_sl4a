@@ -191,7 +191,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Get if phone have voice capability")
-    public boolean telephonyIsVoiceCapable() {
+    public Boolean telephonyIsVoiceCapable() {
         return mTelephonyManager.isVoiceCapable();
     }
 
