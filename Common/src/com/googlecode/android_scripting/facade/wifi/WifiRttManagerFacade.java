@@ -54,7 +54,7 @@ public class WifiRttManagerFacade extends RpcReceiver {
             mEventFacade = eventFacade;
         }
 
-        private Bundle packRttResult(RttResult result) {
+        public static Bundle packRttResult(RttResult result) {
             Bundle rttResult = new Bundle();
             rttResult.putString("BSSID", result.bssid);
             rttResult.putInt("txRate", result.txRate);
@@ -123,7 +123,7 @@ public class WifiRttManagerFacade extends RpcReceiver {
         return mRtt.getRttCapabilities();
     }
 
-    private RttParams parseRttParam(JSONObject j) throws JSONException {
+    public static RttParams parseRttParam(JSONObject j) throws JSONException {
         RttParams result = new RttParams();
         if (j.has("deviceType")) {
             result.deviceType = j.getInt("deviceType");
