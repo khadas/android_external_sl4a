@@ -16,11 +16,19 @@
 
 package com.googlecode.android_scripting.facade.wifi;
 
+import com.googlecode.android_scripting.facade.EventFacade;
+import com.googlecode.android_scripting.facade.FacadeManager;
+import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
+import com.googlecode.android_scripting.rpc.Rpc;
+import com.googlecode.android_scripting.rpc.RpcParameter;
+
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.wifi.RttManager;
+import android.net.wifi.RttManager.RttResult;
 import android.net.wifi.nan.ConfigRequest;
 import android.net.wifi.nan.PublishConfig;
 import android.net.wifi.nan.SubscribeConfig;
@@ -33,16 +41,11 @@ import android.net.wifi.nan.WifiNanSessionCallback;
 import android.net.wifi.nan.WifiNanSubscribeSession;
 import android.os.Bundle;
 import android.os.HandlerThread;
-import android.os.Looper;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.SparseArray;
 
-import com.googlecode.android_scripting.facade.EventFacade;
-import com.googlecode.android_scripting.facade.FacadeManager;
-import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
-import com.googlecode.android_scripting.rpc.Rpc;
-import com.googlecode.android_scripting.rpc.RpcParameter;
-
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -307,6 +310,24 @@ public class WifiNanManagerFacade extends RpcReceiver {
         session.sendMessage(peerId, message.getBytes(), message.length(), messageId);
     }
 
+    @Rpc(description = "Start peer-to-peer NAN ranging")
+    public void wifiNanStartRanging(
+            @RpcParameter(name = "callbackId") Integer callbackId,
+            @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId,
+            @RpcParameter(name = "rttParams", description = "RTT session parameters.") JSONArray rttParams) throws RemoteException, JSONException {
+        WifiNanSession session = mSessions.get(sessionId);
+        if (session == null) {
+            throw new IllegalStateException(
+                    "Calling wifiNanStartRanging before session (session ID "
+                            + sessionId + " is ready");
+        }
+        RttManager.RttParams[] rParams = new RttManager.RttParams[rttParams.length()];
+        for (int i = 0; i < rttParams.length(); i++) {
+            rParams[i] = WifiRttManagerFacade.parseRttParam(rttParams.getJSONObject(i));
+        }
+        session.startRanging(rParams, new WifiNanRangingListener(callbackId, sessionId));
+    }
+
     private class NanEventCallbackPostsEvents extends WifiNanEventCallback {
         @Override
         public void onConnectSuccess() {
@@ -420,6 +441,50 @@ public class WifiNanManagerFacade extends RpcReceiver {
             mResults.putString("messageAsString", new String(message, 0, messageLength));
             mEventFacade.postEvent("WifiNanSessionOnMessageReceived", mResults);
         }
+    }
+
+    class WifiNanRangingListener implements RttManager.RttListener {
+        private int mCallbackId;
+        private int mSessionId;
+
+        public WifiNanRangingListener(int callbackId, int sessionId) {
+            mCallbackId = callbackId;
+            mSessionId = sessionId;
+        }
+
+        @Override
+        public void onSuccess(RttResult[] results) {
+            Bundle bundle = new Bundle();
+            bundle.putInt("callbackId", mCallbackId);
+            bundle.putInt("sessionId", mSessionId);
+
+            Parcelable[] resultBundles = new Parcelable[results.length];
+            for (int i = 0; i < results.length; i++) {
+                resultBundles[i] = WifiRttManagerFacade.RangingListener.packRttResult(results[i]);
+            }
+            bundle.putParcelableArray("Results", resultBundles);
+
+            mEventFacade.postEvent("WifiNanRangingListenerOnSuccess", bundle);
+        }
+
+        @Override
+        public void onFailure(int reason, String description) {
+            Bundle bundle = new Bundle();
+            bundle.putInt("callbackId", mCallbackId);
+            bundle.putInt("sessionId", mSessionId);
+            bundle.putInt("reason", reason);
+            bundle.putString("description", description);
+            mEventFacade.postEvent("WifiNanRangingListenerOnFailure", bundle);
+        }
+
+        @Override
+        public void onAborted() {
+            Bundle bundle = new Bundle();
+            bundle.putInt("callbackId", mCallbackId);
+            bundle.putInt("sessionId", mSessionId);
+            mEventFacade.postEvent("WifiNanRangingListenerOnAborted", bundle);
+        }
+
     }
 
     class WifiNanStateChangedReceiver extends BroadcastReceiver {
