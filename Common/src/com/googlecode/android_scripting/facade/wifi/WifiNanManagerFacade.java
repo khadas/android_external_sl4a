@@ -331,6 +331,25 @@ public class WifiNanManagerFacade extends RpcReceiver {
         session.startRanging(rParams, new WifiNanRangingListener(callbackId, sessionId));
     }
 
+    @Rpc(description = "Create a network specifier to be used when specifying a NAN network request")
+    public String wifiNanCreateNetworkSpecifier(
+            @RpcParameter(name = "role", description = "The role of the device: Initiator (0) or Responder (1)")
+                    Integer role,
+            @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe")
+                    Integer sessionId,
+            @RpcParameter(name = "peerId", description = "The ID of the peer (obtained through OnMatch or OnMessageReceived")
+                    Integer peerId,
+            @RpcParameter(name = "token", description = "Arbitrary token message to be sent to peer as part of data-path creation process")
+                    String token) {
+        WifiNanSession session = mSessions.get(sessionId);
+        if (session == null) {
+            throw new IllegalStateException(
+                    "Calling wifiNanStartRanging before session (session ID "
+                            + sessionId + " is ready");
+        }
+        return session.createNetworkSpecifier(role, peerId, token.getBytes(), token.length());
+    }
+
     private class NanEventCallbackPostsEvents extends WifiNanEventCallback {
         @Override
         public void onConnectSuccess() {
