@@ -294,20 +294,23 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Send peer-to-peer NAN message")
     public void wifiNanSendMessage(
-            @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId,
+            @RpcParameter(name = "sessionId", description = "The session ID returned when session"
+                    + " was created using publish or subscribe") Integer sessionId,
             @RpcParameter(name = "peerId", description = "The ID of the peer being communicated "
                     + "with. Obtained from a previous message or match session.") Integer peerId,
             @RpcParameter(name = "message") String message,
             @RpcParameter(name = "messageId", description = "Arbitrary handle used for "
                     + "identification of the message in the message status callbacks")
-            Integer messageId)
+            Integer messageId,
+            @RpcParameter(name = "retryCount", description = "Number of retries (0 for none) if "
+                    + "transmission fails due to no ACK reception") Integer retryCount)
                     throws RemoteException {
         WifiNanSession session = mSessions.get(sessionId);
         if (session == null) {
             throw new IllegalStateException("Calling wifiNanSendMessage before session (session ID "
                     + sessionId + " is ready");
         }
-        session.sendMessage(peerId, message.getBytes(), message.length(), messageId);
+        session.sendMessage(peerId, message.getBytes(), message.length(), messageId, retryCount);
     }
 
     @Rpc(description = "Start peer-to-peer NAN ranging")
