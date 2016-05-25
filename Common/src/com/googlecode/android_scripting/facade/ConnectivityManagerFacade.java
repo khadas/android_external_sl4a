@@ -562,6 +562,13 @@ public class ConnectivityManagerFacade extends RpcReceiver {
             throws JSONException {
         NetworkRequest.Builder builder = new NetworkRequest.Builder();
 
+        if (configJson.has("ClearCapabilities")) {
+            /* the 'ClearCapabilities' property does not have a value (that we use). Its presence
+             is used to clear the capabilities of the constructed network request (which is
+             constructed with some default capabilities already present). */
+            Log.d("build ClearCapabilities");
+            builder.clearCapabilities();
+        }
         if (configJson.has("TransportType")) {
             Log.d("build TransportType" + configJson.getInt("TransportType"));
             builder.addTransportType(configJson.getInt("TransportType"));
