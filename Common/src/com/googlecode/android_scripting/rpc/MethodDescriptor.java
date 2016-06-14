@@ -182,6 +182,13 @@ public final class MethodDescriptor {
           result[i] = list.getInt(i);
         }
         return result;
+      } else if (type == byte[].class) {
+        JSONArray list = parameters.getJSONArray(index);
+        byte[] result = new byte[list.length()];
+        for (int i = 0; i < list.length(); i++) {
+          result[i] = (byte)list.getInt(i);
+        }
+        return result;
       } else if (type == String[].class) {
         JSONArray list = parameters.getJSONArray(index);
         String[] result = new String[list.length()];

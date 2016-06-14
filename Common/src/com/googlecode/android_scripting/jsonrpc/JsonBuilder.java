@@ -266,7 +266,11 @@ public class JsonBuilder {
             return buildWifiP2pGroup((WifiP2pGroup) data);
         }
         if (data instanceof byte[]) {
-            return Base64Codec.encodeBase64((byte[]) data);
+            JSONArray result = new JSONArray();
+            for (byte b : (byte[]) data) {
+                result.put(b&0xFF);
+            }
+            return result;
         }
         if (data instanceof Object[]) {
             return buildJSONArray((Object[]) data);
