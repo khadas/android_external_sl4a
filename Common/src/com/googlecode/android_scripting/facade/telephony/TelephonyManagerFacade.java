@@ -554,6 +554,17 @@ public class TelephonyManagerFacade extends RpcReceiver {
         mTelephonyManager.answerRingingCall();
     }
 
+    @Rpc(description = "Returns the radio on/off state.")
+    public Boolean telephonyIsRadioOn() {
+        return mTelephonyManager.isRadioOn();
+    }
+
+    @Rpc(description = "Sets the radio to an on/off state.")
+    public Boolean telephonySetRadioPower(
+        @RpcParameter(name = "turnOn") boolean turnOn) {
+        return mTelephonyManager.setRadioPower(turnOn);
+    }
+
     @Rpc(description = "Returns the current cell location.")
     public CellLocation telephonyGetCellLocation() {
         return mTelephonyManager.getCellLocation();
