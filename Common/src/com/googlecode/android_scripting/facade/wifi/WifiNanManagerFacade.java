@@ -133,7 +133,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
         if (j.has("ServiceSpecificInfo")) {
             String ssi = j.getString("ServiceSpecificInfo");
-            builder.setServiceSpecificInfo(ssi.getBytes(), ssi.length());
+            byte[] bytes = ssi.getBytes();
+            builder.setServiceSpecificInfo(bytes, bytes.length);
         }
 
         if (j.has("TxFilter")) {
@@ -310,7 +311,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
             throw new IllegalStateException("Calling wifiNanSendMessage before session (session ID "
                     + sessionId + " is ready");
         }
-        session.sendMessage(peerId, message.getBytes(), message.length(), messageId, retryCount);
+        byte[] bytes = message.getBytes();
+        session.sendMessage(peerId, bytes, bytes.length, messageId, retryCount);
     }
 
     @Rpc(description = "Start peer-to-peer NAN ranging")
@@ -347,7 +349,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     "Calling wifiNanStartRanging before session (session ID "
                             + sessionId + " is ready");
         }
-        return session.createNetworkSpecifier(role, peerId, token.getBytes(), token.length());
+        byte[] bytes = token.getBytes();
+        return session.createNetworkSpecifier(role, peerId, bytes, bytes.length);
     }
 
     private class NanEventCallbackPostsEvents extends WifiNanEventCallback {
