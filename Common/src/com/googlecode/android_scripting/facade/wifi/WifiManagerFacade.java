@@ -464,7 +464,8 @@ public class WifiManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "test.")
-    public String wifiTest(String certString) throws CertificateException, IOException {
+    public String wifiTest(
+            @RpcParameter(name = "certString") String certString) throws CertificateException, IOException {
         // TODO(angli): Make this work. Convert a X509Certificate back to a string.
         X509Certificate caCert = strToX509Cert(certString);
         caCert.getEncoded();
