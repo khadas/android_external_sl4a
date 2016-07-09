@@ -30,6 +30,3 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src/com/googlecode/android_scrip
 LOCAL_SRC_FILES += $(call all-java-files-under, src/org/apache/commons/codec)
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
-
-include $(CLEAR_VARS)
-include $(BUILD_MULTI_PREBUILT)
