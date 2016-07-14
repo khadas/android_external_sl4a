@@ -768,22 +768,34 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.removeNetwork(netId);
     }
 
+    private WifiConfiguration createSoftApWifiConfiguration(JSONObject configJson)
+            throws JSONException {
+        WifiConfiguration config = genWifiConfig(configJson);
+        // Need to strip of extra quotation marks for SSID and password.
+        String ssid = config.SSID;
+        if (ssid != null) {
+            config.SSID = ssid.substring(1, ssid.length() - 1);
+        }
+        String pwd = config.preSharedKey;                                                                      if (pwd != null) {
+            config.preSharedKey = pwd.substring(1, pwd.length() - 1);
+        }
+        return config;
+    }
+
+    @Rpc(description = "Set configuration for soft AP.")
+    public Boolean wifiSetWifiApConfiguration(
+            @RpcParameter(name = "configJson") JSONObject configJson) throws JSONException {
+        WifiConfiguration config = createSoftApWifiConfiguration(configJson);
+        return mWifi.setWifiApConfiguration(config);
+    }
+
     @Rpc(description = "Start/stop wifi soft AP.")
     public Boolean wifiSetApEnabled(
             @RpcParameter(name = "enable") Boolean enable,
             @RpcParameter(name = "configJson") JSONObject configJson) throws JSONException {
         int wifiState = mWifi.getWifiState();
         if (enable) {
-            WifiConfiguration config = genWifiConfig(configJson);
-            // Need to strip of extra quotation marks for SSID and password.
-            String ssid = config.SSID;
-            if (ssid != null) {
-                config.SSID = ssid.substring(1, ssid.length() - 1);
-            }
-            String pwd = config.preSharedKey;
-            if (pwd != null) {
-                config.preSharedKey = pwd.substring(1, pwd.length() - 1);
-            }
+            WifiConfiguration config = createSoftApWifiConfiguration(configJson);
             return mWifi.setWifiApEnabled(config, enable);
         } else {
             return mWifi.setWifiApEnabled(null, false);
