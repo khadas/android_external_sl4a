@@ -82,8 +82,6 @@ import java.util.HashMap;
 /**
  * Exposes TelephonyManager functionality.
  *
- * @author Damon Kohler (damonkohler@gmail.com)
- * @author Felix Arends (felix.arends@gmail.com)
  */
 public class TelephonyManagerFacade extends RpcReceiver {
 
