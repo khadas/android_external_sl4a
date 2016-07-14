@@ -45,6 +45,8 @@ import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.SparseArray;
 
+import libcore.util.HexEncoding;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -368,8 +370,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onIdentityChanged() {
+        public void onIdentityChanged(byte[] mac) {
             Bundle mResults = new Bundle();
+            mResults.putString("mac", String.valueOf(HexEncoding.encode(mac)));
             mEventFacade.postEvent("WifiNanOnIdentityChanged", mResults);
         }
     }
