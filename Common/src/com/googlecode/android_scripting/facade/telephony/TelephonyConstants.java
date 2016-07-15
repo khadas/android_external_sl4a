@@ -361,7 +361,7 @@ public class TelephonyConstants {
 
     /**
      * Constant for Network Call Back
-     * **/
+     */
     public static final String EventNetworkCallback = "NetworkCallback";
 
     /*Sub-Event Names*/
@@ -377,8 +377,14 @@ public class TelephonyConstants {
     public static final String NetworkCallbackInvalid = "Invalid";
 
     /**
+     * Constants for OnStartTetheringCallback
+     */
+    public static final String TetheringStartedCallback = "ConnectivityManagerOnTetheringStarted";
+    public static final String TetheringFailedCallback = "ConnectivityManagerOnTetheringFailed";
+
+    /**
      * Constant for Signal Strength fields
-     * **/
+     */
     public static class SignalStrengthContainer {
         public static final String SIGNAL_STRENGTH_GSM = "gsmSignalStrength";
         public static final String SIGNAL_STRENGTH_GSM_DBM = "gsmDbm";
