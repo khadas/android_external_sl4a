@@ -136,17 +136,17 @@ public class WifiNanManagerFacade extends RpcReceiver {
         if (j.has("ServiceSpecificInfo")) {
             String ssi = j.getString("ServiceSpecificInfo");
             byte[] bytes = ssi.getBytes();
-            builder.setServiceSpecificInfo(bytes, bytes.length);
+            builder.setServiceSpecificInfo(bytes);
         }
 
         if (j.has("TxFilter")) {
             TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("TxFilter"));
-            builder.setTxFilter(constructor.getArray(), constructor.getActualLength());
+            builder.setTxFilter(constructor.getArray());
         }
 
         if (j.has("RxFilter")) {
             TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("RxFilter"));
-            builder.setRxFilter(constructor.getArray(), constructor.getActualLength());
+            builder.setRxFilter(constructor.getArray());
         }
 
         if (j.has("PublishType")) {
@@ -183,12 +183,12 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
         if (j.has("TxFilter")) {
             TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("TxFilter"));
-            builder.setTxFilter(constructor.getArray(), constructor.getActualLength());
+            builder.setTxFilter(constructor.getArray());
         }
 
         if (j.has("RxFilter")) {
             TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("RxFilter"));
-            builder.setRxFilter(constructor.getArray(), constructor.getActualLength());
+            builder.setRxFilter(constructor.getArray());
         }
 
         if (j.has("SubscribeType")) {
@@ -314,7 +314,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     + sessionId + " is ready");
         }
         byte[] bytes = message.getBytes();
-        session.sendMessage(peerId, bytes, bytes.length, messageId, retryCount);
+        session.sendMessage(peerId, bytes, messageId, retryCount);
     }
 
     @Rpc(description = "Start peer-to-peer NAN ranging")
@@ -352,7 +352,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
                             + sessionId + " is ready");
         }
         byte[] bytes = token.getBytes();
-        return session.createNetworkSpecifier(role, peerId, bytes, bytes.length);
+        return session.createNetworkSpecifier(role, peerId, bytes);
     }
 
     private class NanEventCallbackPostsEvents extends WifiNanEventCallback {
@@ -430,14 +430,11 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onMatch(int peerId, byte[] serviceSpecificInfo,
-                int serviceSpecificInfoLength, byte[] matchFilter, int matchFilterLength) {
+        public void onMatch(int peerId, byte[] serviceSpecificInfo, byte[] matchFilter) {
             Bundle mResults = new Bundle();
             mResults.putInt("callbackId", mCallbackId);
             mResults.putInt("peerId", peerId);
-            mResults.putInt("serviceSpecificInfoLength", serviceSpecificInfoLength);
             mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo); // TODO: base64
-            mResults.putInt("matchFilterLength", matchFilterLength);
             mResults.putByteArray("matchFilter", matchFilter); // TODO: base64
             mEventFacade.postEvent("WifiNanSessionOnMatch", mResults);
         }
@@ -460,13 +457,12 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onMessageReceived(int peerId, byte[] message, int messageLength) {
+        public void onMessageReceived(int peerId, byte[] message) {
             Bundle mResults = new Bundle();
             mResults.putInt("callbackId", mCallbackId);
             mResults.putInt("peerId", peerId);
-            mResults.putInt("messageLength", messageLength);
             mResults.putByteArray("message", message); // TODO: base64
-            mResults.putString("messageAsString", new String(message, 0, messageLength));
+            mResults.putString("messageAsString", new String(message));
             mEventFacade.postEvent("WifiNanSessionOnMessageReceived", mResults);
         }
     }
