@@ -78,6 +78,7 @@ public class WifiManagerFacade extends RpcReceiver {
     private final WifiScanReceiver mScanResultsAvailableReceiver;
     private final WifiStateChangeReceiver mStateChangeReceiver;
     private boolean mTrackingWifiStateChange;
+    private boolean mTrackingTetherStateChange;
 
     private final BroadcastReceiver mTetherStateReceiver = new BroadcastReceiver() {
         @Override
@@ -130,6 +131,7 @@ public class WifiManagerFacade extends RpcReceiver {
         mScanResultsAvailableReceiver = new WifiScanReceiver(mEventFacade);
         mStateChangeReceiver = new WifiStateChangeReceiver();
         mTrackingWifiStateChange = false;
+        mTrackingTetherStateChange = false;
     }
 
     private void makeLock(int wifiMode) {
@@ -822,16 +824,28 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Start listening for wifi state change related broadcasts.")
     public void wifiStartTrackingStateChange() {
         mService.registerReceiver(mStateChangeReceiver, mStateChangeFilter);
-        mService.registerReceiver(mTetherStateReceiver, mTetherFilter);
         mTrackingWifiStateChange = true;
     }
 
     @Rpc(description = "Stop listening for wifi state change related broadcasts.")
     public void wifiStopTrackingStateChange() {
         if (mTrackingWifiStateChange == true) {
-            mService.unregisterReceiver(mTetherStateReceiver);
             mService.unregisterReceiver(mStateChangeReceiver);
             mTrackingWifiStateChange = false;
+        }
+    }
+
+    @Rpc(description = "Start listening for tether state change related broadcasts.")
+    public void wifiStartTrackingTetherStateChange() {
+        mService.registerReceiver(mTetherStateReceiver, mTetherFilter);
+        mTrackingTetherStateChange = true;
+    }
+
+    @Rpc(description = "Stop listening for wifi state change related broadcasts.")
+    public void wifiStopTrackingTetherStateChange() {
+        if (mTrackingTetherStateChange == true) {
+            mService.unregisterReceiver(mTetherStateReceiver);
+            mTrackingTetherStateChange = false;
         }
     }
 
@@ -874,6 +888,9 @@ public class WifiManagerFacade extends RpcReceiver {
         wifiLockRelease();
         if (mTrackingWifiStateChange == true) {
             wifiStopTrackingStateChange();
+        }
+        if (mTrackingTetherStateChange == true) {
+            wifiStopTrackingTetherStateChange();
         }
     }
 }
