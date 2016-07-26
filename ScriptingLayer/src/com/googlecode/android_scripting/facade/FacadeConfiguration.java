@@ -45,6 +45,7 @@ import com.googlecode.android_scripting.facade.media.MediaPlayerFacade;
 import com.googlecode.android_scripting.facade.media.MediaRecorderFacade;
 import com.googlecode.android_scripting.facade.media.MediaScannerFacade;
 import com.googlecode.android_scripting.facade.media.MediaSessionFacade;
+import com.googlecode.android_scripting.facade.net.nsd.NsdManagerFacade;
 import com.googlecode.android_scripting.facade.telephony.CarrierConfigFacade;
 import com.googlecode.android_scripting.facade.telephony.ImsManagerFacade;
 import com.googlecode.android_scripting.facade.telephony.SmsFacade;
@@ -135,6 +136,7 @@ public class FacadeConfiguration {
         if( sSdkLevel >= 23 ) {
             //add new facades here
             sFacadeClassList.add(WifiNanManagerFacade.class);
+            sFacadeClassList.add(NsdManagerFacade.class);
         }
 
         for (Class<? extends RpcReceiver> recieverClass : sFacadeClassList) {
