@@ -73,6 +73,7 @@ public class ConnectivityConstants {
         public static final String NETWORK_CALLBACK_EVENT = "networkCallbackEvent";
         public static final String MAX_MS_TO_LIVE = "maxMsToLive";
         public static final String RSSI = "rssi";
+        public static final String INTERFACE_NAME = "interfaceName";
     }
 
     /**

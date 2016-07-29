@@ -291,9 +291,9 @@ public class ConnectivityManagerFacade extends RpcReceiver {
             if ((mEvents & EVENT_LINK_PROPERTIES_CHANGED) == EVENT_LINK_PROPERTIES_CHANGED) {
                 mEventFacade.postEvent(
                         ConnectivityConstants.EventNetworkCallback,
-                    new ConnectivityEvents.NetworkCallbackEventBase(
-                        mId,
-                        getNetworkCallbackEventString(EVENT_LINK_PROPERTIES_CHANGED)));
+                        new ConnectivityEvents.NetworkCallbackEventOnLinkPropertiesChanged(mId,
+                                getNetworkCallbackEventString(EVENT_LINK_PROPERTIES_CHANGED),
+                                linkProperties.getInterfaceName()));
             }
         }
 
