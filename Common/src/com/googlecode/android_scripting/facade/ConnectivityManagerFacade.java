@@ -30,7 +30,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.os.Bundle;
-import android.provider.Settings.SettingNotFoundException;
+import android.provider.Settings;
 
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
@@ -693,9 +693,10 @@ public class ConnectivityManagerFacade extends RpcReceiver {
             returns = "True if airplane mode is enabled.")
     public Boolean connectivityCheckAirplaneMode() {
         try {
-            return android.provider.Settings.System.getInt(mService.getContentResolver(),
-                    android.provider.Settings.Global.AIRPLANE_MODE_ON) == AIRPLANE_MODE_ON;
-        } catch (SettingNotFoundException e) {
+            return Settings.Global.getInt(mService.getContentResolver(),
+                    Settings.Global.AIRPLANE_MODE_ON) == AIRPLANE_MODE_ON;
+        } catch (Settings.SettingNotFoundException e) {
+            Log.e("Settings.Global.AIRPLANE_MODE_ON not found!");
             return false;
         }
     }
