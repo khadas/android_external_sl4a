@@ -42,15 +42,15 @@ public class NsdManagerFacade extends RpcReceiver {
     /**
      * NsdServiceInfo JSON constants
      */
-    private static final String NSD_SERVICE_INFO_HOST = "ServiceInfoHost";
-    private static final String NSD_SERVICE_INFO_PORT = "ServiceInfoPort";
-    private static final String NSD_SERVICE_INFO_SERVICE_NAME = "ServiceInfoServiceName";
-    private static final String NSD_SERVICE_INFO_SERVICE_TYPE = "ServiceInfoServiceType";
+    private static final String NSD_SERVICE_INFO_HOST = "serviceInfoHost";
+    private static final String NSD_SERVICE_INFO_PORT = "serviceInfoPort";
+    private static final String NSD_SERVICE_INFO_SERVICE_NAME = "serviceInfoServiceName";
+    private static final String NSD_SERVICE_INFO_SERVICE_TYPE = "serviceInfoServiceType";
 
     /**
      * RegisterationListener events/data
      */
-    private static final String REG_LISTENER_EVENT = "nsdRegistrationListener";
+    private static final String REG_LISTENER_EVENT = "NsdRegistrationListener";
 
     private static final String REG_LISTENER_EVENT_ON_REG_FAILED = "OnRegistrationFailed";
     private static final String REG_LISTENER_EVENT_ON_SERVICE_REGISTERED = "OnServiceRegistered";
@@ -64,7 +64,7 @@ public class NsdManagerFacade extends RpcReceiver {
     /**
      * DiscoveryListener events/data
      */
-    private static final String DISCOVERY_LISTENER_EVENT = "nsdDiscoveryListener";
+    private static final String DISCOVERY_LISTENER_EVENT = "NsdDiscoveryListener";
 
     private static final String DISCOVERY_LISTENER_EVENT_ON_DISCOVERY_STARTED =
             "OnDiscoveryStarted";
@@ -85,7 +85,7 @@ public class NsdManagerFacade extends RpcReceiver {
     /**
      * ResolveListener events/data
      */
-    private static final String RESOLVE_LISTENER_EVENT = "nsdResolveListener";
+    private static final String RESOLVE_LISTENER_EVENT = "NsdResolveListener";
 
     private static final String RESOLVE_LISTENER_EVENT_ON_RESOLVE_FAIL = "OnResolveFail";
     private static final String RESOLVE_LISTENER_EVENT_ON_SERVICE_RESOLVED = "OnServiceResolved";
