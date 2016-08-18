@@ -139,14 +139,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
             builder.setServiceSpecificInfo(bytes);
         }
 
-        if (j.has("TxFilter")) {
-            TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("TxFilter"));
-            builder.setTxFilter(constructor.getArray());
-        }
-
-        if (j.has("RxFilter")) {
-            TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("RxFilter"));
-            builder.setRxFilter(constructor.getArray());
+        if (j.has("MatchFilter")) {
+            TlvBufferUtils.TlvConstructor constructor = getFilterData(
+                    j.getJSONObject("MatchFilter"));
+            builder.setMatchFilter(constructor.getArray());
         }
 
         if (j.has("PublishType")) {
@@ -181,14 +177,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
             builder.setServiceSpecificInfo(ssi);
         }
 
-        if (j.has("TxFilter")) {
-            TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("TxFilter"));
-            builder.setTxFilter(constructor.getArray());
-        }
-
-        if (j.has("RxFilter")) {
-            TlvBufferUtils.TlvConstructor constructor = getFilterData(j.getJSONObject("RxFilter"));
-            builder.setRxFilter(constructor.getArray());
+        if (j.has("MatchFilter")) {
+            TlvBufferUtils.TlvConstructor constructor = getFilterData(
+                    j.getJSONObject("MatchFilter"));
+            builder.setMatchFilter(constructor.getArray());
         }
 
         if (j.has("SubscribeType")) {
