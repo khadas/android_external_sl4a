@@ -33,6 +33,7 @@ import android.bluetooth.BluetoothHeadsetClient;
 import android.bluetooth.BluetoothInputDevice;
 import android.bluetooth.BluetoothPbapClient;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothPan;
 import android.bluetooth.BluetoothUuid;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -68,6 +69,7 @@ public class BluetoothConnectionFacade extends RpcReceiver {
     private final IntentFilter mHspStateChangeFilter;
     private final IntentFilter mHfpClientStateChangeFilter;
     private final IntentFilter mPbapClientStateChangeFilter;
+    private final IntentFilter mPanStateChangeFilter;
 
     private final Bundle mGoodNews;
     private final Bundle mBadNews;
@@ -78,6 +80,7 @@ public class BluetoothConnectionFacade extends RpcReceiver {
     private BluetoothHspFacade mHspProfile;
     private BluetoothHfpClientFacade mHfpClientProfile;
     private BluetoothPbapClientFacade mPbapClientProfile;
+    private BluetoothPanFacade mPanProfile;
 
     public BluetoothConnectionFacade(FacadeManager manager) {
         super(manager);
@@ -97,6 +100,7 @@ public class BluetoothConnectionFacade extends RpcReceiver {
         mHspProfile = manager.getReceiver(BluetoothHspFacade.class);
         mHfpClientProfile = manager.getReceiver(BluetoothHfpClientFacade.class);
         mPbapClientProfile = manager.getReceiver(BluetoothPbapClientFacade.class);
+        mPanProfile = manager.getReceiver(BluetoothPanFacade.class);
 
         mDiscoverConnectFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         mDiscoverConnectFilter.addAction(BluetoothDevice.ACTION_UUID);
@@ -120,6 +124,8 @@ public class BluetoothConnectionFacade extends RpcReceiver {
             new IntentFilter(BluetoothHeadsetClient.ACTION_CONNECTION_STATE_CHANGED);
         mPbapClientStateChangeFilter =
             new IntentFilter(BluetoothPbapClient.ACTION_CONNECTION_STATE_CHANGED);
+        mPanStateChangeFilter =
+            new IntentFilter(BluetoothPan.ACTION_CONNECTION_STATE_CHANGED);
 
         mGoodNews = new Bundle();
         mGoodNews.putBoolean("Status", true);
@@ -282,6 +288,12 @@ public class BluetoothConnectionFacade extends RpcReceiver {
                     mEventFacade.postEvent("HspConnect" + mDeviceID, mGoodNews);
                     unregisterCachedListener("HspConnecting" + mDeviceID);
                 }
+            } else if (action.equals(BluetoothPan.ACTION_CONNECTION_STATE_CHANGED)) {
+                int state = intent.getIntExtra(BluetoothPan.EXTRA_STATE, -1);
+                if (state == BluetoothPan.STATE_CONNECTED) {
+                    mEventFacade.postEvent("PanConnect" + mDeviceID, mGoodNews);
+                    unregisterCachedListener("PanConnecting" + mDeviceID);
+                }
             }
         }
     }
@@ -370,6 +382,18 @@ public class BluetoothConnectionFacade extends RpcReceiver {
                 mEventFacade.postEvent("PbapClientConnect" + deviceID, mBadNews);
             }
         }
+        if (BluetoothUuid.containsAnyUuid(BluetoothPanFacade.UUIDS, deviceUuids)) {
+            boolean status = mPanProfile.panConnect(device);
+            if (status) {
+                Log.d("Connecting Pan...");
+                ConnectStateChangeReceiver receiver = new ConnectStateChangeReceiver(deviceID);
+                mService.registerReceiver(receiver, mPanStateChangeFilter);
+                listeningDevices.put("PanConnecting" + deviceID, receiver);
+            } else {
+                Log.d("Failed starting Pan connection.");
+                mEventFacade.postEvent("PanConnect" + deviceID, mBadNews);
+            }
+        }
         mService.unregisterReceiver(mPairingHelper);
     }
 
@@ -383,6 +407,7 @@ public class BluetoothConnectionFacade extends RpcReceiver {
         mHspProfile.hspDisconnect(device);
         mHfpClientProfile.hfpClientDisconnect(device);
         mPbapClientProfile.pbapClientDisconnect(device);
+        mPanProfile.panDisconnect(device);
     }
 
     @Rpc(description = "Start intercepting all bluetooth connection pop-ups.")
@@ -514,17 +539,9 @@ public class BluetoothConnectionFacade extends RpcReceiver {
     @Override
     public void shutdown() {
         for(BroadcastReceiver receiver : listeningDevices.values()) {
-            try {
-                mService.unregisterReceiver(receiver);
-            } catch (IllegalArgumentException ex) {
-                Log.e("Failed to unregister " + ex);
-            }
+            mService.unregisterReceiver(receiver);
         }
         listeningDevices.clear();
-        try {
-            mService.unregisterReceiver(mPairingHelper);
-        } catch (IllegalArgumentException ex) {
-            Log.e("Failed to unregister pairing helper." + ex);
-        }
+        mService.unregisterReceiver(mPairingHelper);
     }
 }
