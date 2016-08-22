@@ -214,7 +214,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         mEventFacade = manager.getReceiver(EventFacade.class);
 
         mStateChangedReceiver = new WifiNanStateChangedReceiver();
-        IntentFilter filter = new IntentFilter(WifiNanManager.WIFI_NAN_STATE_CHANGED_ACTION);
+        IntentFilter filter = new IntentFilter(WifiNanManager.ACTION_WIFI_NAN_STATE_CHANGED);
         mService.registerReceiver(mStateChangedReceiver, filter);
     }
 
@@ -243,8 +243,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
     @Rpc(description = "Connect to NAN.")
     public void wifiNanConnect(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
             throws RemoteException, JSONException {
-        mMgr.connect(mNanFacadeThread.getLooper(), new NanEventCallbackPostsEvents(),
-                getConfigRequest(nanConfig));
+        mMgr.connect(mNanFacadeThread.getLooper(), getConfigRequest(nanConfig),
+                new NanEventCallbackPostsEvents());
     }
 
     @Rpc(description = "Disconnect from NAN.")
