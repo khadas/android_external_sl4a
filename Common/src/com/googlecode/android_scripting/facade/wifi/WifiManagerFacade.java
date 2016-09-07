@@ -586,11 +586,6 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.getWifiApConfiguration();
     }
 
-    @Rpc(description = "Returns the file in which IP and proxy configuration data is stored.")
-    public String wifiGetConfigFile() {
-        return mWifi.getConfigFile();
-    }
-
     @Rpc(description = "Return a list of all the configured wifi networks.")
     public List<WifiConfiguration> wifiGetConfiguredNetworks() {
         return mWifi.getConfiguredNetworks();
