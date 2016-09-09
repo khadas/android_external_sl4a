@@ -60,7 +60,6 @@ public class WifiNanManagerFacade extends RpcReceiver {
     private final WifiNanStateChangedReceiver mStateChangedReceiver;
 
     private WifiNanManager mMgr;
-    private HandlerThread mNanFacadeThread;
 
     private int mNextSessionId = 1;
     private SparseArray<WifiNanSession> mSessions = new SparseArray<>();
@@ -206,9 +205,6 @@ public class WifiNanManagerFacade extends RpcReceiver {
         super(manager);
         mService = manager.getService();
 
-        mNanFacadeThread = new HandlerThread("nanFacadeThread");
-        mNanFacadeThread.start();
-
         mMgr = (WifiNanManager) mService.getSystemService(Context.WIFI_NAN_SERVICE);
 
         mEventFacade = manager.getReceiver(EventFacade.class);
@@ -243,8 +239,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
     @Rpc(description = "Connect to NAN.")
     public void wifiNanConnect(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
             throws RemoteException, JSONException {
-        mMgr.connect(mNanFacadeThread.getLooper(), getConfigRequest(nanConfig),
-                new NanEventCallbackPostsEvents());
+        mMgr.connect(null, getConfigRequest(nanConfig), new NanEventCallbackPostsEvents());
     }
 
     @Rpc(description = "Disconnect from NAN.")
