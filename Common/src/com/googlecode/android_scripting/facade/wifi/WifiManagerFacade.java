@@ -330,7 +330,9 @@ public class WifiManagerFacade extends RpcReceiver {
         config.allowedKeyManagement.set(KeyMgmt.WPA_EAP);
         config.allowedKeyManagement.set(KeyMgmt.IEEE8021X);
         if (j.has("SSID")) {
-            config.SSID = j.getString("SSID");
+            config.SSID = "\"" + j.getString("SSID") + "\"";
+        } else if (j.has("ssid")) {
+            config.SSID = "\"" + j.getString("ssid") + "\"";
         }
         if (j.has("FQDN")) {
             config.FQDN = j.getString("FQDN");
