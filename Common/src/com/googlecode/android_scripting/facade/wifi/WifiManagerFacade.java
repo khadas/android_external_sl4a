@@ -526,7 +526,10 @@ public class WifiManagerFacade extends RpcReceiver {
             Log.e("Got negative network Id.");
             return false;
         }
-        mWifi.enableNetwork(nId, true);
+        if (!mWifi.enableNetwork(nId, true)) {
+            Log.e("Failed to enable wifi network.");
+            return false;
+        }
         return mWifi.reconnect();
     }
 
@@ -552,18 +555,22 @@ public class WifiManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Connect to a wifi network that uses Enterprise authentication methods.")
-    public void wifiEnterpriseConnect(@RpcParameter(name = "config") JSONObject config)
+    public Boolean wifiEnterpriseConnect(@RpcParameter(name = "config") JSONObject config)
             throws JSONException, GeneralSecurityException {
         // Create Certificate
         WifiActionListener listener = new WifiActionListener(mEventFacade, "EnterpriseConnect");
         WifiConfiguration wifiConfig = genWifiEnterpriseConfig(config);
         if (wifiConfig.isPasspoint()) {
             Log.d("Got a passpoint config, add it and save config.");
-            mWifi.addNetwork(wifiConfig);
-            mWifi.saveConfiguration();
+            if (mWifi.addNetwork(wifiConfig) == -1) {
+                Log.e("Failed to add a wifi network");
+                return false;
+            }
+            return mWifi.saveConfiguration();
         } else {
             Log.d("Got a non-passpoint enterprise config, connect directly.");
             mWifi.connect(wifiConfig, listener);
+            return true;
         }
     }
 
