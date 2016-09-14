@@ -33,14 +33,13 @@ import android.net.wifi.nan.ConfigRequest;
 import android.net.wifi.nan.PublishConfig;
 import android.net.wifi.nan.SubscribeConfig;
 import android.net.wifi.nan.TlvBufferUtils;
+import android.net.wifi.nan.WifiNanDiscoveryBaseSession;
+import android.net.wifi.nan.WifiNanDiscoverySessionCallback;
 import android.net.wifi.nan.WifiNanEventCallback;
 import android.net.wifi.nan.WifiNanManager;
-import android.net.wifi.nan.WifiNanPublishSession;
-import android.net.wifi.nan.WifiNanSession;
-import android.net.wifi.nan.WifiNanSessionCallback;
-import android.net.wifi.nan.WifiNanSubscribeSession;
+import android.net.wifi.nan.WifiNanPublishDiscoverySession;
+import android.net.wifi.nan.WifiNanSubscribeDiscoverySession;
 import android.os.Bundle;
-import android.os.HandlerThread;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.SparseArray;
@@ -62,7 +61,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
     private WifiNanManager mMgr;
 
     private int mNextSessionId = 1;
-    private SparseArray<WifiNanSession> mSessions = new SparseArray<>();
+    private SparseArray<WifiNanDiscoveryBaseSession> mSessions = new SparseArray<>();
 
     private int getNextSessionId() {
         return mNextSessionId++;
@@ -254,7 +253,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             throws RemoteException, JSONException {
         int sessionId = getNextSessionId();
         mMgr.publish(getPublishConfig(publishConfig),
-                new NanSessionCallbackPostsEvents(callbackId, sessionId));
+                new NanDiscoverySessionCallbackPostsEvents(callbackId, sessionId));
         return sessionId;
     }
 
@@ -264,7 +263,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             throws RemoteException, JSONException {
         int sessionId = getNextSessionId();
         mMgr.subscribe(getSubscribeConfig(subscribeConfig),
-                new NanSessionCallbackPostsEvents(callbackId, sessionId));
+                new NanDiscoverySessionCallbackPostsEvents(callbackId, sessionId));
         return sessionId;
     }
 
@@ -272,7 +271,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
     public void wifiNanTerminateSession(
             @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId)
             throws RemoteException {
-        WifiNanSession session = mSessions.get(sessionId);
+        WifiNanDiscoveryBaseSession session = mSessions.get(sessionId);
         if (session == null) {
             throw new IllegalStateException(
                     "Calling wifiNanTerminateSession before session (session ID "
@@ -295,7 +294,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             @RpcParameter(name = "retryCount", description = "Number of retries (0 for none) if "
                     + "transmission fails due to no ACK reception") Integer retryCount)
                     throws RemoteException {
-        WifiNanSession session = mSessions.get(sessionId);
+        WifiNanDiscoveryBaseSession session = mSessions.get(sessionId);
         if (session == null) {
             throw new IllegalStateException("Calling wifiNanSendMessage before session (session ID "
                     + sessionId + " is ready");
@@ -309,7 +308,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             @RpcParameter(name = "callbackId") Integer callbackId,
             @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId,
             @RpcParameter(name = "rttParams", description = "RTT session parameters.") JSONArray rttParams) throws RemoteException, JSONException {
-        WifiNanSession session = mSessions.get(sessionId);
+        WifiNanDiscoveryBaseSession session = mSessions.get(sessionId);
         if (session == null) {
             throw new IllegalStateException(
                     "Calling wifiNanStartRanging before session (session ID "
@@ -332,7 +331,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     Integer peerId,
             @RpcParameter(name = "token", description = "Arbitrary token message to be sent to peer as part of data-path creation process")
                     String token) {
-        WifiNanSession session = mSessions.get(sessionId);
+        WifiNanDiscoveryBaseSession session = mSessions.get(sessionId);
         if (session == null) {
             throw new IllegalStateException(
                     "Calling wifiNanStartRanging before session (session ID "
@@ -364,17 +363,17 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
     }
 
-    private class NanSessionCallbackPostsEvents extends WifiNanSessionCallback {
+    private class NanDiscoverySessionCallbackPostsEvents extends WifiNanDiscoverySessionCallback {
         private int mCallbackId;
         private int mSessionId;
 
-        public NanSessionCallbackPostsEvents(int callbackId, int sessionId) {
+        public NanDiscoverySessionCallbackPostsEvents(int callbackId, int sessionId) {
             mCallbackId = callbackId;
             mSessionId = sessionId;
         }
 
         @Override
-        public void onPublishStarted(WifiNanPublishSession session) {
+        public void onPublishStarted(WifiNanPublishDiscoverySession session) {
             mSessions.put(mSessionId, session);
 
             Bundle mResults = new Bundle();
@@ -384,7 +383,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onSubscribeStarted(WifiNanSubscribeSession session) {
+        public void onSubscribeStarted(WifiNanSubscribeDiscoverySession session) {
             mSessions.put(mSessionId, session);
 
             Bundle mResults = new Bundle();
