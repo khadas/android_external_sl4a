@@ -33,6 +33,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 
 import com.googlecode.android_scripting.Log;
+import com.googlecode.android_scripting.facade.telephony.TelephonyConstants;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcOptional;

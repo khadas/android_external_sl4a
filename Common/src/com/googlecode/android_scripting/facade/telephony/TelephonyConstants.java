@@ -349,6 +349,12 @@ public class TelephonyConstants {
     public static final String EventMessageWaitingIndicatorChanged = "MessageWaitingIndicatorChanged";
 
     /**
+     * Constants for OnStartTetheringCallback
+     */
+    public static final String TetheringStartedCallback = "ConnectivityManagerOnTetheringStarted";
+    public static final String TetheringFailedCallback = "ConnectivityManagerOnTetheringFailed";
+
+    /**
      * Constant for Signal Strength fields
      */
     public static class SignalStrengthContainer {
