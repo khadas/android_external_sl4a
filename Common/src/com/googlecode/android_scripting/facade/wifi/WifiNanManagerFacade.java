@@ -256,25 +256,25 @@ public class WifiNanManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Is NAN Usage Enabled?")
-    public Boolean wifiIsNanUsageEnabled() throws RemoteException {
+    public Boolean wifiIsNanAvailable() throws RemoteException {
         synchronized (mLock) {
-            return mMgr.isUsageEnabled();
+            return mMgr.isAvailable();
         }
     }
 
-    @Rpc(description = "Connect to NAN.")
-    public Integer wifiNanConnect(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
+    @Rpc(description = "Attach to NAN.")
+    public Integer wifiNanAttach(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
             throws RemoteException, JSONException {
         synchronized (mLock) {
             int sessionId = getNextSessionId();
-            mMgr.connect(null, getConfigRequest(nanConfig),
+            mMgr.attach(null, getConfigRequest(nanConfig),
                     new NanEventCallbackPostsEvents(sessionId));
             return sessionId;
         }
     }
 
-    @Rpc(description = "Disconnect from NAN.")
-    public void wifiNanDisconnect(
+    @Rpc(description = "Destroy a NAN session.")
+    public void wifiNanDestroy(
             @RpcParameter(name = "clientId", description = "The client ID returned when a connection was created") Integer clientId)
             throws RemoteException, JSONException {
         WifiNanSession session;
@@ -286,7 +286,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     "Calling wifiNanDisconnect before session (client ID " + clientId
                             + ") is ready/or already disconnected");
         }
-        session.disconnect();
+        session.destroy();
     }
 
     @Rpc(description = "Publish.")
@@ -329,9 +329,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
     }
 
-    @Rpc(description = "Terminate Session.")
-    public void wifiNanTerminateSession(
-            @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId)
+    @Rpc(description = "Destroy a discovery Session.")
+    public void wifiNanDestroyDiscoverySession(
+            @RpcParameter(name = "sessionId", description = "The discovery session ID returned when session was created using publish or subscribe") Integer sessionId)
             throws RemoteException {
         synchronized (mLock) {
             WifiNanDiscoveryBaseSession session = mDiscoverySessions.get(sessionId);
@@ -340,7 +340,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
                         "Calling wifiNanTerminateSession before session (session ID "
                                 + sessionId + ") is ready");
             }
-            session.terminate();
+            session.destroy();
             mDiscoverySessions.remove(sessionId);
         }
     }
@@ -422,22 +422,22 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onConnectSuccess(WifiNanSession session) {
+        public void onAttached(WifiNanSession session) {
             synchronized (mLock) {
                 mSessions.put(mSessionId, session);
             }
 
             Bundle mResults = new Bundle();
             mResults.putInt("sessionId", mSessionId);
-            mEventFacade.postEvent("WifiNanOnConnectSuccess", mResults);
+            mEventFacade.postEvent("WifiNanOnAttached", mResults);
         }
 
         @Override
-        public void onConnectFail(int reason) {
+        public void onAttachFailed(int reason) {
             Bundle mResults = new Bundle();
             mResults.putInt("sessionId", mSessionId);
             mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanOnConnectFail", mResults);
+            mEventFacade.postEvent("WifiNanOnAttachFailed", mResults);
         }
 
         @Override
@@ -479,18 +479,18 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onSessionConfigSuccess() {
+        public void onSessionConfigUpdated() {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mEventFacade.postEvent("WifiNanSessionOnSessionConfigSuccess", mResults);
+            mEventFacade.postEvent("WifiNanSessionOnSessionConfigUpdated", mResults);
         }
 
         @Override
-        public void onSessionConfigFail(int reason) {
+        public void onSessionConfigFailed(int reason) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanSessionOnSessionConfigFail", mResults);
+            mEventFacade.postEvent("WifiNanSessionOnSessionConfigFailed", mResults);
         }
 
         @Override
@@ -502,30 +502,30 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onMatch(int peerId, byte[] serviceSpecificInfo, byte[] matchFilter) {
+        public void onServiceDiscovered(int peerId, byte[] serviceSpecificInfo, byte[] matchFilter) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("peerId", peerId);
             mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo); // TODO: base64
             mResults.putByteArray("matchFilter", matchFilter); // TODO: base64
-            mEventFacade.postEvent("WifiNanSessionOnMatch", mResults);
+            mEventFacade.postEvent("WifiNanSessionOnServiceDiscovered", mResults);
         }
 
         @Override
-        public void onMessageSendSuccess(int messageId) {
+        public void onMessageSent(int messageId) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("messageId", messageId);
-            mEventFacade.postEvent("WifiNanSessionOnMessageSendSuccess", mResults);
+            mEventFacade.postEvent("WifiNanSessionOnMessageSent", mResults);
         }
 
         @Override
-        public void onMessageSendFail(int messageId, int reason) {
+        public void onMessageSendFailed(int messageId, int reason) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("messageId", messageId);
             mResults.putInt("reason", reason);
-            mEventFacade.postEvent("WifiNanSessionOnMessageSendFail", mResults);
+            mEventFacade.postEvent("WifiNanSessionOnMessageSendFailed", mResults);
         }
 
         @Override
@@ -589,7 +589,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             int status = intent.getIntExtra(WifiNanManager.EXTRA_WIFI_STATE,
                     WifiNanManager.WIFI_NAN_STATE_DISABLED);
             mEventFacade.postEvent(status == WifiNanManager.WIFI_NAN_STATE_ENABLED
-                    ? "WifiNanEnabled" : "WifiNanDisabled", new Bundle());
+                    ? "WifiNanAvailable" : "WifiNanNotAvailable", new Bundle());
         }
     }
 }
