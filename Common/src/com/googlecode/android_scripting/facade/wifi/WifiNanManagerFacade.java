@@ -38,11 +38,14 @@ import android.net.wifi.nan.WifiNanDiscoverySessionCallback;
 import android.net.wifi.nan.WifiNanEventCallback;
 import android.net.wifi.nan.WifiNanManager;
 import android.net.wifi.nan.WifiNanPublishDiscoverySession;
+import android.net.wifi.nan.WifiNanSession;
 import android.net.wifi.nan.WifiNanSubscribeDiscoverySession;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.RemoteException;
 import android.util.SparseArray;
+
+import com.android.internal.annotations.GuardedBy;
 
 import libcore.util.HexEncoding;
 
@@ -58,13 +61,29 @@ public class WifiNanManagerFacade extends RpcReceiver {
     private final EventFacade mEventFacade;
     private final WifiNanStateChangedReceiver mStateChangedReceiver;
 
+    private final Object mLock = new Object(); // lock access to the following vars
+
+    @GuardedBy("mLock")
     private WifiNanManager mMgr;
 
-    private int mNextSessionId = 1;
-    private SparseArray<WifiNanDiscoveryBaseSession> mSessions = new SparseArray<>();
+    @GuardedBy("mLock")
+    private int mNextDiscoverySessionId = 1;
+    @GuardedBy("mLock")
+    private SparseArray<WifiNanDiscoveryBaseSession> mDiscoverySessions = new SparseArray<>();
+    private int getNextDiscoverySessionId() {
+        synchronized (mLock) {
+            return mNextDiscoverySessionId++;
+        }
+    }
 
+    @GuardedBy("mLock")
+    private int mNextSessionId = 1;
+    @GuardedBy("mLock")
+    private SparseArray<WifiNanSession> mSessions = new SparseArray<>();
     private int getNextSessionId() {
-        return mNextSessionId++;
+        synchronized (mLock) {
+            return mNextSessionId++;
+        }
     }
 
     private static TlvBufferUtils.TlvConstructor getFilterData(JSONObject j) throws JSONException {
@@ -215,70 +234,115 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
     @Override
     public void shutdown() {
-        mMgr.disconnect();
-        mSessions.clear();
+        synchronized (mLock) {
+            mSessions.clear();
+            mDiscoverySessions.clear();
+        }
         mService.unregisterReceiver(mStateChangedReceiver);
     }
 
     @Rpc(description = "Enable NAN Usage.")
     public void wifiNanEnableUsage() throws RemoteException {
-        mMgr.enableUsage();
+        synchronized (mLock) {
+            mMgr.enableUsage();
+        }
     }
 
     @Rpc(description = "Disable NAN Usage.")
     public void wifiNanDisableUsage() throws RemoteException {
-        mMgr.disableUsage();
+        synchronized (mLock) {
+            mMgr.disableUsage();
+        }
     }
 
     @Rpc(description = "Is NAN Usage Enabled?")
     public Boolean wifiIsNanUsageEnabled() throws RemoteException {
-        return mMgr.isUsageEnabled();
+        synchronized (mLock) {
+            return mMgr.isUsageEnabled();
+        }
     }
 
     @Rpc(description = "Connect to NAN.")
-    public void wifiNanConnect(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
+    public Integer wifiNanConnect(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
             throws RemoteException, JSONException {
-        mMgr.connect(null, getConfigRequest(nanConfig), new NanEventCallbackPostsEvents());
+        synchronized (mLock) {
+            int sessionId = getNextSessionId();
+            mMgr.connect(null, getConfigRequest(nanConfig),
+                    new NanEventCallbackPostsEvents(sessionId));
+            return sessionId;
+        }
     }
 
     @Rpc(description = "Disconnect from NAN.")
-    public void wifiNanDisconnect() throws RemoteException, JSONException {
-        mMgr.disconnect();
-        mSessions.clear();
+    public void wifiNanDisconnect(
+            @RpcParameter(name = "clientId", description = "The client ID returned when a connection was created") Integer clientId)
+            throws RemoteException, JSONException {
+        WifiNanSession session;
+        synchronized (mLock) {
+            session = mSessions.get(clientId);
+        }
+        if (session == null) {
+            throw new IllegalStateException(
+                    "Calling wifiNanDisconnect before session (client ID " + clientId
+                            + ") is ready/or already disconnected");
+        }
+        session.disconnect();
     }
 
     @Rpc(description = "Publish.")
-    public Integer wifiNanPublish(@RpcParameter(name = "callbackId") Integer callbackId,
+    public Integer wifiNanPublish(
+            @RpcParameter(name = "clientId", description = "The client ID returned when a connection was created") Integer clientId,
             @RpcParameter(name = "publishConfig") JSONObject publishConfig)
             throws RemoteException, JSONException {
-        int sessionId = getNextSessionId();
-        mMgr.publish(getPublishConfig(publishConfig),
-                new NanDiscoverySessionCallbackPostsEvents(callbackId, sessionId));
-        return sessionId;
+        synchronized (mLock) {
+            WifiNanSession session = mSessions.get(clientId);
+            if (session == null) {
+                throw new IllegalStateException(
+                        "Calling wifiNanPublish before session (client ID " + clientId
+                                + ") is ready/or already disconnected");
+            }
+
+            int discoverySessionId = getNextDiscoverySessionId();
+            session.publish(getPublishConfig(publishConfig),
+                    new NanDiscoverySessionCallbackPostsEvents(discoverySessionId));
+            return discoverySessionId;
+        }
     }
 
     @Rpc(description = "Subscribe.")
-    public Integer wifiNanSubscribe(@RpcParameter(name = "callbackId") Integer callbackId,
+    public Integer wifiNanSubscribe(
+            @RpcParameter(name = "clientId", description = "The client ID returned when a connection was created") Integer clientId,
             @RpcParameter(name = "subscribeConfig") JSONObject subscribeConfig)
             throws RemoteException, JSONException {
-        int sessionId = getNextSessionId();
-        mMgr.subscribe(getSubscribeConfig(subscribeConfig),
-                new NanDiscoverySessionCallbackPostsEvents(callbackId, sessionId));
-        return sessionId;
+        synchronized (mLock) {
+            WifiNanSession session = mSessions.get(clientId);
+            if (session == null) {
+                throw new IllegalStateException(
+                        "Calling wifiNanSubscribe before session (client ID " + clientId
+                                + ") is ready/or already disconnected");
+            }
+
+            int discoverySessionId = getNextDiscoverySessionId();
+            session.subscribe(getSubscribeConfig(subscribeConfig),
+                    new NanDiscoverySessionCallbackPostsEvents(discoverySessionId));
+            return discoverySessionId;
+        }
     }
 
     @Rpc(description = "Terminate Session.")
     public void wifiNanTerminateSession(
             @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId)
             throws RemoteException {
-        WifiNanDiscoveryBaseSession session = mSessions.get(sessionId);
-        if (session == null) {
-            throw new IllegalStateException(
-                    "Calling wifiNanTerminateSession before session (session ID "
-                    + sessionId + " is ready");
+        synchronized (mLock) {
+            WifiNanDiscoveryBaseSession session = mDiscoverySessions.get(sessionId);
+            if (session == null) {
+                throw new IllegalStateException(
+                        "Calling wifiNanTerminateSession before session (session ID "
+                                + sessionId + ") is ready");
+            }
+            session.terminate();
+            mDiscoverySessions.remove(sessionId);
         }
-        session.terminate();
-        mSessions.remove(sessionId);
     }
 
     @Rpc(description = "Send peer-to-peer NAN message")
@@ -294,7 +358,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
             @RpcParameter(name = "retryCount", description = "Number of retries (0 for none) if "
                     + "transmission fails due to no ACK reception") Integer retryCount)
                     throws RemoteException {
-        WifiNanDiscoveryBaseSession session = mSessions.get(sessionId);
+        WifiNanDiscoveryBaseSession session;
+        synchronized (mLock) {
+            session = mDiscoverySessions.get(sessionId);
+        }
         if (session == null) {
             throw new IllegalStateException("Calling wifiNanSendMessage before session (session ID "
                     + sessionId + " is ready");
@@ -308,7 +375,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
             @RpcParameter(name = "callbackId") Integer callbackId,
             @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId,
             @RpcParameter(name = "rttParams", description = "RTT session parameters.") JSONArray rttParams) throws RemoteException, JSONException {
-        WifiNanDiscoveryBaseSession session = mSessions.get(sessionId);
+        WifiNanDiscoveryBaseSession session;
+        synchronized (mLock) {
+            session = mDiscoverySessions.get(sessionId);
+        }
         if (session == null) {
             throw new IllegalStateException(
                     "Calling wifiNanStartRanging before session (session ID "
@@ -331,7 +401,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     Integer peerId,
             @RpcParameter(name = "token", description = "Arbitrary token message to be sent to peer as part of data-path creation process")
                     String token) {
-        WifiNanDiscoveryBaseSession session = mSessions.get(sessionId);
+        WifiNanDiscoveryBaseSession session;
+        synchronized (mLock) {
+            session = mDiscoverySessions.get(sessionId);
+        }
         if (session == null) {
             throw new IllegalStateException(
                     "Calling wifiNanStartRanging before session (session ID "
@@ -342,15 +415,27 @@ public class WifiNanManagerFacade extends RpcReceiver {
     }
 
     private class NanEventCallbackPostsEvents extends WifiNanEventCallback {
+        private int mSessionId;
+
+        public NanEventCallbackPostsEvents(int sessionId) {
+            mSessionId = sessionId;
+        }
+
         @Override
-        public void onConnectSuccess() {
+        public void onConnectSuccess(WifiNanSession session) {
+            synchronized (mLock) {
+                mSessions.put(mSessionId, session);
+            }
+
             Bundle mResults = new Bundle();
+            mResults.putInt("sessionId", mSessionId);
             mEventFacade.postEvent("WifiNanOnConnectSuccess", mResults);
         }
 
         @Override
         public void onConnectFail(int reason) {
             Bundle mResults = new Bundle();
+            mResults.putInt("sessionId", mSessionId);
             mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiNanOnConnectFail", mResults);
         }
@@ -358,51 +443,52 @@ public class WifiNanManagerFacade extends RpcReceiver {
         @Override
         public void onIdentityChanged(byte[] mac) {
             Bundle mResults = new Bundle();
+            mResults.putInt("sessionId", mSessionId);
             mResults.putString("mac", String.valueOf(HexEncoding.encode(mac)));
             mEventFacade.postEvent("WifiNanOnIdentityChanged", mResults);
         }
     }
 
     private class NanDiscoverySessionCallbackPostsEvents extends WifiNanDiscoverySessionCallback {
-        private int mCallbackId;
-        private int mSessionId;
+        private int mDiscoverySessionId;
 
-        public NanDiscoverySessionCallbackPostsEvents(int callbackId, int sessionId) {
-            mCallbackId = callbackId;
-            mSessionId = sessionId;
+        public NanDiscoverySessionCallbackPostsEvents(int discoverySessionId) {
+            mDiscoverySessionId = discoverySessionId;
         }
 
         @Override
-        public void onPublishStarted(WifiNanPublishDiscoverySession session) {
-            mSessions.put(mSessionId, session);
+        public void onPublishStarted(WifiNanPublishDiscoverySession discoverySession) {
+            synchronized (mLock) {
+                mDiscoverySessions.put(mDiscoverySessionId, discoverySession);
+            }
 
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
-            mResults.putInt("sessionId", mSessionId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mEventFacade.postEvent("WifiNanSessionOnPublishStarted", mResults);
         }
 
         @Override
-        public void onSubscribeStarted(WifiNanSubscribeDiscoverySession session) {
-            mSessions.put(mSessionId, session);
+        public void onSubscribeStarted(WifiNanSubscribeDiscoverySession discoverySession) {
+            synchronized (mLock) {
+                mDiscoverySessions.put(mDiscoverySessionId, discoverySession);
+            }
 
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
-            mResults.putInt("sessionId", mSessionId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mEventFacade.postEvent("WifiNanSessionOnSubscribeStarted", mResults);
         }
 
         @Override
         public void onSessionConfigSuccess() {
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mEventFacade.postEvent("WifiNanSessionOnSessionConfigSuccess", mResults);
         }
 
         @Override
         public void onSessionConfigFail(int reason) {
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiNanSessionOnSessionConfigFail", mResults);
         }
@@ -410,7 +496,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         @Override
         public void onSessionTerminated(int reason) {
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiNanSessionOnSessionTerminated", mResults);
         }
@@ -418,7 +504,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         @Override
         public void onMatch(int peerId, byte[] serviceSpecificInfo, byte[] matchFilter) {
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("peerId", peerId);
             mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo); // TODO: base64
             mResults.putByteArray("matchFilter", matchFilter); // TODO: base64
@@ -428,7 +514,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         @Override
         public void onMessageSendSuccess(int messageId) {
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("messageId", messageId);
             mEventFacade.postEvent("WifiNanSessionOnMessageSendSuccess", mResults);
         }
@@ -436,7 +522,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         @Override
         public void onMessageSendFail(int messageId, int reason) {
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("messageId", messageId);
             mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiNanSessionOnMessageSendFail", mResults);
@@ -445,7 +531,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         @Override
         public void onMessageReceived(int peerId, byte[] message) {
             Bundle mResults = new Bundle();
-            mResults.putInt("callbackId", mCallbackId);
+            mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("peerId", peerId);
             mResults.putByteArray("message", message); // TODO: base64
             mResults.putString("messageAsString", new String(message));
