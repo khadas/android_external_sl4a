@@ -33,9 +33,10 @@ import android.net.wifi.nan.ConfigRequest;
 import android.net.wifi.nan.PublishConfig;
 import android.net.wifi.nan.SubscribeConfig;
 import android.net.wifi.nan.TlvBufferUtils;
+import android.net.wifi.nan.WifiNanAttachCallback;
 import android.net.wifi.nan.WifiNanDiscoveryBaseSession;
 import android.net.wifi.nan.WifiNanDiscoverySessionCallback;
-import android.net.wifi.nan.WifiNanEventCallback;
+import android.net.wifi.nan.WifiNanIdentityChangedListener;
 import android.net.wifi.nan.WifiNanManager;
 import android.net.wifi.nan.WifiNanPublishDiscoverySession;
 import android.net.wifi.nan.WifiNanSession;
@@ -131,9 +132,6 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
         if (j.has("ClusterHigh")) {
             builder.setClusterHigh(j.getInt("ClusterHigh"));
-        }
-        if (j.has("EnableIdentityChangeCallback")) {
-            builder.setEnableIdentityChangeCallback(j.getBoolean("EnableIdentityChangeCallback"));
         }
 
         return builder.build();
@@ -268,7 +266,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
         synchronized (mLock) {
             int sessionId = getNextSessionId();
             mMgr.attach(null, getConfigRequest(nanConfig),
-                    new NanEventCallbackPostsEvents(sessionId));
+                    new NanAttachCallbackPostsEvents(sessionId),
+                    new NanIdentityChangeListenerPostsEvents(sessionId));
             return sessionId;
         }
     }
@@ -414,10 +413,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
         return session.createNetworkSpecifier(role, peerId, bytes);
     }
 
-    private class NanEventCallbackPostsEvents extends WifiNanEventCallback {
+    private class NanAttachCallbackPostsEvents extends WifiNanAttachCallback {
         private int mSessionId;
 
-        public NanEventCallbackPostsEvents(int sessionId) {
+        public NanAttachCallbackPostsEvents(int sessionId) {
             mSessionId = sessionId;
         }
 
@@ -438,6 +437,14 @@ public class WifiNanManagerFacade extends RpcReceiver {
             mResults.putInt("sessionId", mSessionId);
             mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiNanOnAttachFailed", mResults);
+        }
+    }
+
+    private class NanIdentityChangeListenerPostsEvents extends WifiNanIdentityChangedListener {
+        private int mSessionId;
+
+        public NanIdentityChangeListenerPostsEvents(int sessionId) {
+            mSessionId = sessionId;
         }
 
         @Override
