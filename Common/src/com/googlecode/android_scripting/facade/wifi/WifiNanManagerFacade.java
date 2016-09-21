@@ -302,7 +302,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             }
 
             int discoverySessionId = getNextDiscoverySessionId();
-            session.publish(getPublishConfig(publishConfig),
+            session.publish(null, getPublishConfig(publishConfig),
                     new NanDiscoverySessionCallbackPostsEvents(discoverySessionId));
             return discoverySessionId;
         }
@@ -322,7 +322,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             }
 
             int discoverySessionId = getNextDiscoverySessionId();
-            session.subscribe(getSubscribeConfig(subscribeConfig),
+            session.subscribe(null, getSubscribeConfig(subscribeConfig),
                     new NanDiscoverySessionCallbackPostsEvents(discoverySessionId));
             return discoverySessionId;
         }
