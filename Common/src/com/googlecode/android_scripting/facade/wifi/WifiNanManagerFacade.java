@@ -432,10 +432,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onAttachFailed(int reason) {
+        public void onAttachFailed() {
             Bundle mResults = new Bundle();
             mResults.putInt("sessionId", mSessionId);
-            mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiNanOnAttachFailed", mResults);
         }
     }
@@ -493,10 +492,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onSessionConfigFailed(int reason) {
+        public void onSessionConfigFailed() {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiNanSessionOnSessionConfigFailed", mResults);
         }
 
@@ -527,11 +525,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onMessageSendFailed(int messageId, int reason) {
+        public void onMessageSendFailed(int messageId) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("messageId", messageId);
-            mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiNanSessionOnMessageSendFailed", mResults);
         }
 
