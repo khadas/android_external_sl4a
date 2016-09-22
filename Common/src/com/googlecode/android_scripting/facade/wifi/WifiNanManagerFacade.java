@@ -590,10 +590,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
     class WifiNanStateChangedReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context c, Intent intent) {
-            int status = intent.getIntExtra(WifiNanManager.EXTRA_WIFI_STATE,
-                    WifiNanManager.WIFI_NAN_STATE_DISABLED);
-            mEventFacade.postEvent(status == WifiNanManager.WIFI_NAN_STATE_ENABLED
-                    ? "WifiNanAvailable" : "WifiNanNotAvailable", new Bundle());
+            mEventFacade.postEvent(mMgr.isAvailable() ? "WifiNanAvailable" : "WifiNanNotAvailable",
+                    new Bundle());
         }
     }
 }
