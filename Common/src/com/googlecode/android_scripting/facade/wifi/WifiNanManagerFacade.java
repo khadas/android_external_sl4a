@@ -366,7 +366,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     + sessionId + " is ready");
         }
         byte[] bytes = message.getBytes();
-        session.sendMessage(peerId, messageId, bytes, retryCount);
+        session.sendMessage(Integer.valueOf(peerId), messageId, bytes, retryCount);
     }
 
     @Rpc(description = "Start peer-to-peer NAN ranging")
@@ -507,10 +507,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onServiceDiscovered(int peerId, byte[] serviceSpecificInfo, byte[] matchFilter) {
+        public void onServiceDiscovered(Object peerHandle, byte[] serviceSpecificInfo, byte[] matchFilter) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mResults.putInt("peerId", peerId);
+            mResults.putInt("peerId", (Integer) peerHandle);
             mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo); // TODO: base64
             mResults.putByteArray("matchFilter", matchFilter); // TODO: base64
             mEventFacade.postEvent("WifiNanSessionOnServiceDiscovered", mResults);
@@ -533,10 +533,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onMessageReceived(int peerId, byte[] message) {
+        public void onMessageReceived(Object peerHandle, byte[] message) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mResults.putInt("peerId", peerId);
+            mResults.putInt("peerId", (Integer) peerHandle);
             mResults.putByteArray("message", message); // TODO: base64
             mResults.putString("messageAsString", new String(message));
             mEventFacade.postEvent("WifiNanSessionOnMessageReceived", mResults);
