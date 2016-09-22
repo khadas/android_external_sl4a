@@ -20,6 +20,7 @@ import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
+import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
 import android.app.Service;
@@ -261,7 +262,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Attach to NAN.")
-    public Integer wifiNanAttach(@RpcParameter(name = "nanConfig") JSONObject nanConfig)
+    public Integer wifiNanAttach(
+            @RpcParameter(name = "nanConfig") @RpcOptional JSONObject nanConfig)
             throws RemoteException, JSONException {
         synchronized (mLock) {
             int sessionId = getNextSessionId();
