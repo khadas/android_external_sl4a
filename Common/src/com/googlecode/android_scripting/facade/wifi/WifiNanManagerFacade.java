@@ -350,10 +350,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     + " was created using publish or subscribe") Integer sessionId,
             @RpcParameter(name = "peerId", description = "The ID of the peer being communicated "
                     + "with. Obtained from a previous message or match session.") Integer peerId,
-            @RpcParameter(name = "message") String message,
             @RpcParameter(name = "messageId", description = "Arbitrary handle used for "
                     + "identification of the message in the message status callbacks")
-            Integer messageId,
+                    Integer messageId,
+            @RpcParameter(name = "message") String message,
             @RpcParameter(name = "retryCount", description = "Number of retries (0 for none) if "
                     + "transmission fails due to no ACK reception") Integer retryCount)
                     throws RemoteException {
@@ -366,7 +366,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
                     + sessionId + " is ready");
         }
         byte[] bytes = message.getBytes();
-        session.sendMessage(peerId, bytes, messageId, retryCount);
+        session.sendMessage(peerId, messageId, bytes, retryCount);
     }
 
     @Rpc(description = "Start peer-to-peer NAN ranging")
