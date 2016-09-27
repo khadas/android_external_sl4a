@@ -171,7 +171,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             builder.setTtlSec(j.getInt("TtlSec"));
         }
         if (j.has("EnableTerminateNotification")) {
-            builder.setEnableTerminateNotification(j.getBoolean("EnableTerminateNotification"));
+            builder.setTerminateNotificationEnabled(j.getBoolean("TerminateNotificationEnabled"));
         }
 
         return builder.build();
@@ -212,7 +212,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             builder.setMatchStyle(j.getInt("MatchStyle"));
         }
         if (j.has("EnableTerminateNotification")) {
-            builder.setEnableTerminateNotification(j.getBoolean("EnableTerminateNotification"));
+            builder.setTerminateNotificationEnabled(j.getBoolean("TerminateNotificationEnabled"));
         }
 
         return builder.build();
