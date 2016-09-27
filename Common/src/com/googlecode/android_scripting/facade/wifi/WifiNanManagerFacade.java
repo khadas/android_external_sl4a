@@ -190,7 +190,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
         if (j.has("ServiceSpecificInfo")) {
             String ssi = j.getString("ServiceSpecificInfo");
-            builder.setServiceSpecificInfo(ssi);
+            builder.setServiceSpecificInfo(ssi.getBytes());
         }
 
         if (j.has("MatchFilter")) {
