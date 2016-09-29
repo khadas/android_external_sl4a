@@ -137,6 +137,7 @@ public class FacadeConfiguration {
         sFacadeClassList.add(TelecomCallFacade.class);
         sFacadeClassList.add(CarrierConfigFacade.class);
         sFacadeClassList.add(NfcManagerFacade.class);
+        sFacadeClassList.add(VpnFacade.class);
 
         /* Compatibility reset to >= Marshmallow */
         if (sSdkLevel >= 23) {
