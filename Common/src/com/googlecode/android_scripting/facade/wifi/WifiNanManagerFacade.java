@@ -233,10 +233,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
     @Override
     public void shutdown() {
-        synchronized (mLock) {
-            mSessions.clear();
-            mDiscoverySessions.clear();
-        }
+        wifiNanDestroyAll();
         mService.unregisterReceiver(mStateChangedReceiver);
     }
 
@@ -258,6 +255,19 @@ public class WifiNanManagerFacade extends RpcReceiver {
     public Boolean wifiIsNanAvailable() throws RemoteException {
         synchronized (mLock) {
             return mMgr.isAvailable();
+        }
+    }
+
+    @Rpc(description = "Destroy all NAN sessions and discovery sessions")
+    public void wifiNanDestroyAll() {
+        synchronized (mLock) {
+            for (int i = 0; i < mSessions.size(); ++i) {
+                mSessions.valueAt(i).destroy();
+            }
+            mSessions.clear();
+
+            /* discovery sessions automatically destroyed when containing NAN sessions destroyed */
+            mDiscoverySessions.clear();
         }
     }
 
@@ -597,7 +607,11 @@ public class WifiNanManagerFacade extends RpcReceiver {
     class WifiNanStateChangedReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context c, Intent intent) {
-            mEventFacade.postEvent(mMgr.isAvailable() ? "WifiNanAvailable" : "WifiNanNotAvailable",
+            boolean isAvailable = mMgr.isAvailable();
+            if (!isAvailable) {
+                wifiNanDestroyAll();
+            }
+            mEventFacade.postEvent(isAvailable ? "WifiNanAvailable" : "WifiNanNotAvailable",
                     new Bundle());
         }
     }
