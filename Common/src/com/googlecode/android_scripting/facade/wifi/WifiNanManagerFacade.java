@@ -367,7 +367,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
             throw new IllegalStateException("Calling wifiNanSendMessage before session (session ID "
                     + sessionId + " is ready");
         }
-        byte[] bytes = message.getBytes();
+        byte[] bytes = null;
+        if (message != null) {
+            bytes = message.getBytes();
+        }
         session.sendMessage(new WifiNanManager.OpaquePeerHandle(peerId), messageId, bytes,
                 retryCount);
     }
