@@ -408,7 +408,7 @@ public class JsonBuilder {
             }
         }
         result.put("manufacturerSpecificDataList", manufacturerDataList);
-        result.put("manufacturereIdList", idList);
+        result.put("manufacturerIdList", idList);
         ArrayList<String> serviceUuidList = new ArrayList<String>();
         ArrayList<String> serviceDataList = new ArrayList<String>();
         if (scanResult.getScanRecord().getServiceData() != null) {
