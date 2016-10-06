@@ -88,6 +88,9 @@ public class WifiNanManagerFacade extends RpcReceiver {
         }
     }
 
+    @GuardedBy("mLock")
+    private SparseArray<Long> mMessageStartTime = new SparseArray<>();
+
     private static TlvBufferUtils.TlvConstructor getFilterData(JSONObject j) throws JSONException {
         if (j == null) {
             return null;
@@ -268,6 +271,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
             /* discovery sessions automatically destroyed when containing NAN sessions destroyed */
             mDiscoverySessions.clear();
+
+            mMessageStartTime.clear();
         }
     }
 
@@ -380,6 +385,10 @@ public class WifiNanManagerFacade extends RpcReceiver {
         byte[] bytes = null;
         if (message != null) {
             bytes = message.getBytes();
+        }
+
+        synchronized (mLock) {
+            mMessageStartTime.put(messageId, System.currentTimeMillis());
         }
         session.sendMessage(new WifiNanManager.OpaquePeerHandle(peerId), messageId, bytes,
                 retryCount);
@@ -538,6 +547,14 @@ public class WifiNanManagerFacade extends RpcReceiver {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("messageId", messageId);
+            synchronized (mLock) {
+                Long startTime = mMessageStartTime.get(messageId);
+                if (startTime != null) {
+                    mResults.putLong("latencyMs",
+                            System.currentTimeMillis() - startTime.longValue());
+                    mMessageStartTime.remove(messageId);
+                }
+            }
             mEventFacade.postEvent("WifiNanSessionOnMessageSent", mResults);
         }
 
@@ -546,6 +563,14 @@ public class WifiNanManagerFacade extends RpcReceiver {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("messageId", messageId);
+            synchronized (mLock) {
+                Long startTime = mMessageStartTime.get(messageId);
+                if (startTime != null) {
+                    mResults.putLong("latencyMs",
+                            System.currentTimeMillis() - startTime.longValue());
+                    mMessageStartTime.remove(messageId);
+                }
+            }
             mEventFacade.postEvent("WifiNanSessionOnMessageSendFailed", mResults);
         }
 
