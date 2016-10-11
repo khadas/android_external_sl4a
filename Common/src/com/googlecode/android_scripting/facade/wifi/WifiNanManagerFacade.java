@@ -441,9 +441,11 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
     private class NanAttachCallbackPostsEvents extends WifiNanAttachCallback {
         private int mSessionId;
+        private long mCreateTimestampMs;
 
         public NanAttachCallbackPostsEvents(int sessionId) {
             mSessionId = sessionId;
+            mCreateTimestampMs = System.currentTimeMillis();
         }
 
         @Override
@@ -454,6 +456,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
             Bundle mResults = new Bundle();
             mResults.putInt("sessionId", mSessionId);
+            mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
             mEventFacade.postEvent("WifiNanOnAttached", mResults);
         }
 
@@ -461,6 +464,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
         public void onAttachFailed() {
             Bundle mResults = new Bundle();
             mResults.putInt("sessionId", mSessionId);
+            mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
             mEventFacade.postEvent("WifiNanOnAttachFailed", mResults);
         }
     }
@@ -483,9 +487,11 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
     private class NanDiscoverySessionCallbackPostsEvents extends WifiNanDiscoverySessionCallback {
         private int mDiscoverySessionId;
+        private long mCreateTimestampMs;
 
         public NanDiscoverySessionCallbackPostsEvents(int discoverySessionId) {
             mDiscoverySessionId = discoverySessionId;
+            mCreateTimestampMs = System.currentTimeMillis();
         }
 
         @Override
@@ -496,6 +502,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
+            mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
+            mResults.putLong("timestampMs", System.currentTimeMillis());
             mEventFacade.postEvent("WifiNanSessionOnPublishStarted", mResults);
         }
 
@@ -507,6 +515,8 @@ public class WifiNanManagerFacade extends RpcReceiver {
 
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
+            mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
+            mResults.putLong("timestampMs", System.currentTimeMillis());
             mEventFacade.postEvent("WifiNanSessionOnSubscribeStarted", mResults);
         }
 
@@ -539,6 +549,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             mResults.putInt("peerId", ((WifiNanManager.OpaquePeerHandle) peerHandle).peerId);
             mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo); // TODO: base64
             mResults.putByteArray("matchFilter", matchFilter); // TODO: base64
+            mResults.putLong("timestampMs", System.currentTimeMillis());
             mEventFacade.postEvent("WifiNanSessionOnServiceDiscovered", mResults);
         }
 
