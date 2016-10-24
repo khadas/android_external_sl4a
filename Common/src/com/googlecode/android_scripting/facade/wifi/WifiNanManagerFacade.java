@@ -457,6 +457,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             Bundle mResults = new Bundle();
             mResults.putInt("sessionId", mSessionId);
             mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
+            mResults.putLong("timestampMs", System.currentTimeMillis());
             mEventFacade.postEvent("WifiNanOnAttached", mResults);
         }
 
@@ -481,6 +482,7 @@ public class WifiNanManagerFacade extends RpcReceiver {
             Bundle mResults = new Bundle();
             mResults.putInt("sessionId", mSessionId);
             mResults.putString("mac", String.valueOf(HexEncoding.encode(mac)));
+            mResults.putLong("timestampMs", System.currentTimeMillis());
             mEventFacade.postEvent("WifiNanOnIdentityChanged", mResults);
         }
     }
