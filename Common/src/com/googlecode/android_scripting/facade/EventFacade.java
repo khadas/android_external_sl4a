@@ -199,8 +199,8 @@ public class EventFacade extends RpcReceiver {
                         synchronized (futureEvent) {
                             if (!futureEvent.isDone()) {
                                 futureEvent.set(event);
-                                // TODO(navtej) Remove log.
-                                Log.v(String.format("Removeing observer (%s) got event  (%s)",
+                                // TODO: Remove log.
+                                Log.v(String.format("Removing observer (%s) got event  (%s)",
                                         this,
                                         event));
                                 removeEventObserver(this);
@@ -240,7 +240,7 @@ public class EventFacade extends RpcReceiver {
                     synchronized (futureEvent) {
                         if (!futureEvent.isDone()) {
                             futureEvent.set(event);
-                            // TODO(navtej) Remove log.
+                            // TODO: Remove log.
                             Log.v(String.format("onEventReceived for event (%s)", event));
                         }
                     }
@@ -256,8 +256,8 @@ public class EventFacade extends RpcReceiver {
         if (result != null) {
             mEventQueue.remove(result);
         }
-        // TODO(navtej) Remove log.
-        Log.v(String.format("Removeing observer (%s) got event  (%s)", observer, result));
+        // TODO: Remove log.
+        Log.v(String.format("Removing observer (%s) got event  (%s)", observer, result));
         if (observer != null) {
             removeEventObserver(observer); // Make quite sure this goes away.
         }
@@ -310,7 +310,7 @@ public class EventFacade extends RpcReceiver {
             }
         }
         synchronized (mGlobalEventObservers) {
-            // TODO(navtej) Remove log.
+            // TODO: Remove log.
             Log.v(String.format("mGlobalEventObservers size (%s)", mGlobalEventObservers.size()));
             for (EventObserver observer : mGlobalEventObservers) {
                 observer.onEventReceived(event);
