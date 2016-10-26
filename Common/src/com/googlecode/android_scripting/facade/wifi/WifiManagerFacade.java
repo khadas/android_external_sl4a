@@ -683,9 +683,9 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.isMulticastEnabled();
     }
 
-    @Rpc(description = "true if this adapter supports Neighbour Awareness Network APIs.")
-    public Boolean wifiIsNanSupported() {
-        return mWifi.isNanSupported();
+    @Rpc(description = "true if this adapter supports Wi-Fi Aware APIs.")
+    public Boolean wifiIsAwareSupported() {
+        return mWifi.isWifiAwareSupported();
     }
 
     @Rpc(description = "true if this adapter supports Off Channel Tunnel Directed Link Setup.")
