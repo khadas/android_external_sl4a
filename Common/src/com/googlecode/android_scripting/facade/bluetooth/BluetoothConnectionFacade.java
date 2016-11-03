@@ -370,18 +370,6 @@ public class BluetoothConnectionFacade extends RpcReceiver {
                 mEventFacade.postEvent("HfpClientConnect" + deviceID, mBadNews);
             }
         }
-        if (BluetoothUuid.containsAnyUuid(BluetoothPbapClientFacade.UUIDS, deviceUuids)) {
-            boolean status = mPbapClientProfile.pbapClientConnect(device);
-            if (status) {
-                Log.d("Connecting PBAP Client ...");
-                ConnectStateChangeReceiver receiver = new ConnectStateChangeReceiver(deviceID);
-                mService.registerReceiver(receiver, mPbapClientStateChangeFilter);
-                listeningDevices.put("PbapClientConnecting" + deviceID, receiver);
-            } else {
-                Log.d("Failed starting Pbap Client connection.");
-                mEventFacade.postEvent("PbapClientConnect" + deviceID, mBadNews);
-            }
-        }
         if (BluetoothUuid.containsAnyUuid(BluetoothPanFacade.UUIDS, deviceUuids)) {
             boolean status = mPanProfile.panConnect(device);
             if (status) {
@@ -392,6 +380,18 @@ public class BluetoothConnectionFacade extends RpcReceiver {
             } else {
                 Log.d("Failed starting Pan connection.");
                 mEventFacade.postEvent("PanConnect" + deviceID, mBadNews);
+            }
+        }
+        if (BluetoothUuid.containsAnyUuid(BluetoothPbapClientFacade.UUIDS, deviceUuids)) {
+            boolean status = mPbapClientProfile.pbapClientConnect(device);
+            if (status) {
+                Log.d("Connecting PBAP Client ...");
+                ConnectStateChangeReceiver receiver = new ConnectStateChangeReceiver(deviceID);
+                mService.registerReceiver(receiver, mPbapClientStateChangeFilter);
+                listeningDevices.put("PbapClientConnecting" + deviceID, receiver);
+            } else {
+                Log.d("Failed starting Pbap Client connection.");
+                mEventFacade.postEvent("PbapClientConnect" + deviceID, mBadNews);
             }
         }
         mService.unregisterReceiver(mPairingHelper);
