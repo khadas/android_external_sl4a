@@ -16,8 +16,8 @@
 
 package com.googlecode.android_scripting.facade.telephony;
 
-import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -648,7 +648,7 @@ public class InCallServiceImpl extends InCallService {
             return "";
     }
 
-    private static Call getCallById(String callId) {
+    public static Call getCallById(String callId) {
 
         CallContainer cc = mCallContainerMap.get(callId);
 

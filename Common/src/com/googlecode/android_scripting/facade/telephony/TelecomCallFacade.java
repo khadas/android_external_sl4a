@@ -17,6 +17,7 @@
 package com.googlecode.android_scripting.facade.telephony;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -55,6 +56,14 @@ public class TelecomCallFacade extends RpcReceiver {
     @Override
     public void shutdown() {
         InCallServiceImpl.setEventFacade(null);
+    }
+
+    /**
+     * Returns a particular call by its id.
+     */
+    @Rpc(description = "Get call by particular Id")
+    public Call telecomCallGetCallById(String callId) {
+        return InCallServiceImpl.getCallById(callId);
     }
 
     /**
