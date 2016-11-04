@@ -54,6 +54,7 @@ import org.json.JSONObject;
 public class ContactsFacade extends RpcReceiver {
   private static final String TAG = "ContactsFacade";
   private static final Uri CONTACTS_URI = Uri.parse("content://contacts/people");
+  private static final String ERASE_COMPLETE = "ContactsErased";
   private final ContentResolver mContentResolver;
   private final Service mService;
   private final CommonIntentsFacade mCommonIntentsFacade;
@@ -322,6 +323,7 @@ public class ContactsFacade extends RpcReceiver {
           Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, cursor.getString(0));
       mContentResolver.delete(uri, null, null);
     }
+    mEventFacade.postEvent(ERASE_COMPLETE, null);
     return;
   }
 
