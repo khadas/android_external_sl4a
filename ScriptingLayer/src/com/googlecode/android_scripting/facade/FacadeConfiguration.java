@@ -91,6 +91,7 @@ public class FacadeConfiguration {
         sFacadeClassList.add(ApplicationManagerFacade.class);
         sFacadeClassList.add(AudioManagerFacade.class);
         sFacadeClassList.add(BatteryManagerFacade.class);
+        sFacadeClassList.add(CallLogFacade.class);
         sFacadeClassList.add(CameraFacade.class);
         sFacadeClassList.add(CommonIntentsFacade.class);
         sFacadeClassList.add(ContactsFacade.class);
