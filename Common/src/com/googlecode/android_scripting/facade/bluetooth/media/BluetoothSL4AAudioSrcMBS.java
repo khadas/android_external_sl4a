@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.googlecode.android_scripting.facade.bluetooth;
+package com.googlecode.android_scripting.facade.bluetooth.media;
 
 import android.app.Service;
 import android.media.browse.MediaBrowser.MediaItem;
@@ -24,24 +24,30 @@ import android.service.media.MediaBrowserService;
 
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothMediaFacade;
 import com.googlecode.android_scripting.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A {@link MediaBrowserService} implemented in the SL4A App to intercept Media keys and
  * commands.
- * This would be running on the AVRCP TG device and whenever the device receives a media
- * command from a AVRCP CT, this MediaBrowserService's MediaSession would intercept it.
- * Helps to verify the commands received by the AVRCP TG are the same as what was sent from
- * an AVRCP CT.
+ * This would be running on the Phone (AVRCP TG device) and whenever the device receives a media
+ * command from Car (a AVRCP CT), this MediaBrowserService's MediaSession would intercept it.
+ * Helps to verify the commands received by the Phone (AVRCP TG) are the same as what was sent from
+ * Car (AVRCP CT).
  */
-public class BluetoothAvrcpMediaBrowserService extends MediaBrowserService {
-    private static final String TAG = "BluetoothAvrcpMBS";
+public class BluetoothSL4AAudioSrcMBS extends MediaBrowserService {
+    private static final String TAG = "BluetoothSL4AAudioSrcMBS";
     private static final String MEDIA_ROOT_ID = "__ROOT__";
 
     private MediaSession mMediaSession = null;
     private MediaSession.Token mSessionToken = null;
-    private MediaController mMediaController = null;
+    private BluetoothMediaPlayback mPlayback = null;
+    private static BluetoothSL4AAudioSrcMBS sAvrcpMediaBrowserService;
+    private static final String CMD_MEDIA_PLAY = "play";
+    private static final String CMD_MEDIA_PAUSE = "pause";
+    private static final String CMD_MEDIA_SKIP_NEXT = "skipNext";
+    private static final String CMD_MEDIA_SKIP_PREV = "skipPrev";
 
     /**
      * MediaSession callback dispatching the corresponding <code>PlaybackState</code> to
@@ -52,51 +58,96 @@ public class BluetoothAvrcpMediaBrowserService extends MediaBrowserService {
                 @Override
                 public void onPlay() {
                     Log.d(TAG + " onPlay");
-                    BluetoothMediaFacade.dispatchPlaybackStateChanged(PlaybackState.STATE_PLAYING);
+                    mPlayback.play();
                 }
 
                 @Override
                 public void onPause() {
                     Log.d(TAG + " onPause");
-                    BluetoothMediaFacade.dispatchPlaybackStateChanged(PlaybackState.STATE_PAUSED);
+                    mPlayback.pause();
                 }
 
                 @Override
                 public void onRewind() {
                     Log.d(TAG + " onRewind");
-                    BluetoothMediaFacade.dispatchPlaybackStateChanged(PlaybackState.STATE_REWINDING);
                 }
 
                 @Override
                 public void onFastForward() {
                     Log.d(TAG + " onFastForward");
-                    BluetoothMediaFacade.dispatchPlaybackStateChanged(PlaybackState.STATE_FAST_FORWARDING);
                 }
 
                 @Override
                 public void onSkipToNext() {
                     Log.d(TAG + " onSkipToNext");
-                    BluetoothMediaFacade.dispatchPlaybackStateChanged(PlaybackState.STATE_SKIPPING_TO_NEXT);
+                    mPlayback.skipNext();
                 }
 
                 @Override
                 public void onSkipToPrevious() {
                     Log.d(TAG + " onSkipToPrevious");
-                    BluetoothMediaFacade.dispatchPlaybackStateChanged(
-                            PlaybackState.STATE_SKIPPING_TO_PREVIOUS);
+                    mPlayback.skipPrev();
+                }
+
+                @Override
+                public void onStop() {
+                    Log.d(TAG + " onStop");
+                    mPlayback.stop();
                 }
             };
 
     /**
-     * We do the following on the AvrcpMediaBrowserService onCreate():
+     * Returns the currently set instance of {@link BluetoothSL4AAudioSrcMBS}
+     *
+     * @return current instance of {@link BluetoothSL4AAudioSrcMBS}
+     */
+    public static synchronized BluetoothSL4AAudioSrcMBS getAvrcpMediaBrowserService() {
+        return sAvrcpMediaBrowserService;
+    }
+
+    /**
+     * Handle a Media Playback Command.
+     * Pass it to the appropriate {@link BluetoothMediaPlayback} method
+     *
+     * @param command - command to handle
+     */
+    public void handleMediaCommand(String command) {
+        if (mPlayback == null) {
+            Log.d(TAG + " handleMediaCommand Failed since Playback is null");
+            return;
+        }
+        switch (command) {
+            case CMD_MEDIA_PLAY:
+                mPlayback.play();
+                break;
+            case CMD_MEDIA_PAUSE:
+                mPlayback.pause();
+                break;
+            case CMD_MEDIA_SKIP_NEXT:
+                mPlayback.skipNext();
+                break;
+            case CMD_MEDIA_SKIP_PREV:
+                mPlayback.skipPrev();
+                break;
+            default:
+                Log.d(TAG + " Unknown command " + command);
+        }
+        return;
+    }
+
+    /**
+     * We do the following on the BluetoothSL4AAudioSrcMBS onCreate():
      * 1. Create a new MediaSession
      * 2. Register a callback with the created MediaSession
      * 3. Set its playback state and set the session to active.
+     * 4. Create a new BluetoothMediaPlayback instance to handle all the "music playing"
+     * 5. Set the created MediaSession active
      */
     @Override
     public void onCreate() {
         Log.d(TAG + " onCreate");
         super.onCreate();
+        sAvrcpMediaBrowserService = this;
         mMediaSession = new MediaSession(this, TAG);
         mSessionToken = mMediaSession.getSessionToken();
         setSessionToken(mSessionToken);
@@ -105,11 +156,15 @@ public class BluetoothAvrcpMediaBrowserService extends MediaBrowserService {
                 | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
         // Note - MediaButton Intent is not received until the session has a PlaybackState
         // whose state is set to something other than STATE_STOPPED or STATE_NONE
+        mPlayback = new BluetoothMediaPlayback();
+        if (mPlayback == null) {
+            Log.e(TAG + "Playback alloc error");
+        }
+        mPlayback.setMediaSession(mMediaSession);
         PlaybackState state = new PlaybackState.Builder()
                 .setActions(PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE
-                        | PlaybackState.ACTION_FAST_FORWARD | PlaybackState.ACTION_PLAY_PAUSE
-                        | PlaybackState.ACTION_REWIND | PlaybackState.ACTION_SKIP_TO_NEXT
-                        | PlaybackState.ACTION_SKIP_TO_PREVIOUS)
+                        | PlaybackState.ACTION_SKIP_TO_NEXT | PlaybackState.ACTION_SKIP_TO_PREVIOUS
+                        | PlaybackState.ACTION_STOP)
                 .setState(PlaybackState.STATE_PLAYING, PlaybackState.PLAYBACK_POSITION_UNKNOWN, 1)
                 .build();
         mMediaSession.setPlaybackState(state);
@@ -119,9 +174,11 @@ public class BluetoothAvrcpMediaBrowserService extends MediaBrowserService {
     @Override
     public void onDestroy() {
         Log.d(TAG + " onDestroy");
+        mPlayback.releaseMediaPlayer();
         mMediaSession.release();
         mMediaSession = null;
         mSessionToken = null;
+        sAvrcpMediaBrowserService = null;
         super.onDestroy();
     }
 
@@ -139,7 +196,8 @@ public class BluetoothAvrcpMediaBrowserService extends MediaBrowserService {
 
     /**
      * Returns the TAG string
-     * @return  <code>BluetoothAvrcpMediaBrowserService</code>'s tag
+     *
+     * @return <code>BluetoothSL4AAudioSrcMBS</code>'s tag
      */
     public static String getTag() {
         return TAG;
