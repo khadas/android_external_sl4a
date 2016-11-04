@@ -88,7 +88,7 @@ public class BluetoothPbapClientFacade extends RpcReceiver {
     if (sPbapClientProfile == null) return false;
     try {
       BluetoothDevice device =
-          BluetoothFacade.getDevice(BluetoothFacade.DiscoveredDevices, deviceStr);
+          BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), deviceStr);
       Log.d("Connecting to device " + device.getAliasName());
       return pbapClientConnect(device);
     } catch (Exception e) {
