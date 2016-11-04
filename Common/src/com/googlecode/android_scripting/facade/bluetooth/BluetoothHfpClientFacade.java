@@ -80,6 +80,31 @@ public class BluetoothHfpClientFacade extends RpcReceiver {
     return sIsHfpClientReady;
   }
 
+  @Rpc(description = "Set priority of the profile")
+  public void bluetoothHfpClientSetPriority(
+      @RpcParameter(name = "device", description = "Mac address of a BT device.")
+      String deviceStr,
+      @RpcParameter(name = "priority", description = "Priority that needs to be set.")
+      Integer priority)
+      throws Exception {
+    if (sHfpClientProfile == null) return;
+    BluetoothDevice device =
+        BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), deviceStr);
+    Log.d("Changing priority of device " + device.getAliasName() + " p: " + priority);
+    sHfpClientProfile.setPriority(device, priority);
+  }
+
+  @Rpc(description = "Get priority of the profile")
+  public Integer bluetoothHfpClientGetPriority(
+      @RpcParameter(name = "device", description = "Mac address of a BT device.")
+      String deviceStr)
+      throws Exception {
+    if (sHfpClientProfile == null) return BluetoothProfile.PRIORITY_UNDEFINED;
+    BluetoothDevice device =
+        BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), deviceStr);
+    return sHfpClientProfile.getPriority(device);
+  }
+
   @Rpc(description = "Connect to an HFP Client device.")
   public Boolean bluetoothHfpClientConnect(
       @RpcParameter(name = "device", description = "Name or MAC address of a bluetooth device.")

@@ -73,6 +73,31 @@ public class BluetoothA2dpSinkFacade extends RpcReceiver {
     return sA2dpSinkProfile.disconnect(device);
   }
 
+  @Rpc(description = "Set priority of the profile")
+  public void bluetoothA2dpSinkSetPriority(
+      @RpcParameter(name = "device", description = "Mac address of a BT device.")
+      String deviceStr,
+      @RpcParameter(name = "priority", description = "Priority that needs to be set.")
+      Integer priority)
+      throws Exception {
+    if (sA2dpSinkProfile == null) return;
+    BluetoothDevice device =
+        BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), deviceStr);
+    Log.d("Changing priority of device " + device.getAliasName() + " p: " + priority);
+    sA2dpSinkProfile.setPriority(device, priority);
+  }
+
+  @Rpc(description = "get priority of the profile")
+  public Integer bluetoothA2dpSinkGetPriority(
+      @RpcParameter(name = "device", description = "Mac address of a BT device.")
+      String deviceStr)
+      throws Exception {
+    if (sA2dpSinkProfile == null) return BluetoothProfile.PRIORITY_UNDEFINED;
+    BluetoothDevice device =
+        BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), deviceStr);
+    return sA2dpSinkProfile.getPriority(device);
+  }
+
   @Rpc(description = "Is A2dpSink profile ready.")
   public Boolean bluetoothA2dpSinkIsReady() {
     return (sA2dpSinkProfile != null);
@@ -81,12 +106,13 @@ public class BluetoothA2dpSinkFacade extends RpcReceiver {
   @Rpc(description = "Connect to an A2DP Sink device.")
   public Boolean bluetoothA2dpSinkConnect(
       @RpcParameter(name = "device", description = "Name or MAC address of a bluetooth device.")
-      String device)
+      String deviceStr)
       throws Exception {
     if (sA2dpSinkProfile == null) return false;
-    BluetoothDevice mDevice = BluetoothFacade.getDevice(BluetoothFacade.DiscoveredDevices, device);
-    Log.d("Connecting to device " + mDevice.getAliasName());
-    return a2dpSinkConnect(mDevice);
+    BluetoothDevice device =
+        BluetoothFacade.getDevice(BluetoothFacade.DiscoveredDevices, deviceStr);
+    Log.d("Connecting to device " + device.getAliasName());
+    return a2dpSinkConnect(device);
   }
 
   @Rpc(description = "Disconnect an A2DP Sink device.")

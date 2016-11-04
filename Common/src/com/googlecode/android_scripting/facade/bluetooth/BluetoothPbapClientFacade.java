@@ -80,6 +80,31 @@ public class BluetoothPbapClientFacade extends RpcReceiver {
     return sIsPbapClientReady;
   }
 
+  @Rpc(description = "Set priority of the profile")
+  public void bluetoothPbapClientSetPriority(
+      @RpcParameter(name = "device", description = "Mac address of a BT device.")
+      String deviceStr,
+      @RpcParameter(name = "priority", description = "Priority that needs to be set.")
+      Integer priority)
+      throws Exception {
+    if (sPbapClientProfile == null) return;
+    BluetoothDevice device =
+        BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), deviceStr);
+    Log.d("Changing priority of device " + device.getAliasName() + " p: " + priority);
+    sPbapClientProfile.setPriority(device, priority);
+  }
+
+  @Rpc(description = "Get priority of the profile")
+  public Integer bluetoothPbapClientGetPriority(
+      @RpcParameter(name = "device", description = "Mac address of a BT device.")
+      String deviceStr)
+      throws Exception {
+    if (sPbapClientProfile == null) return BluetoothProfile.PRIORITY_UNDEFINED;
+    BluetoothDevice device =
+        BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), deviceStr);
+    return sPbapClientProfile.getPriority(device);
+  }
+
   @Rpc(description = "Connect to an PBAP Client device.")
   public Boolean bluetoothPbapClientConnect(
       @RpcParameter(name = "device", description = "Name or MAC address of a bluetooth device.")
