@@ -53,7 +53,7 @@ import org.json.JSONObject;
  */
 public class ContactsFacade extends RpcReceiver {
   private static final String TAG = "ContactsFacade";
-  private static final Uri CONTACTS_URI = Uri.parse("content://contacts/people");
+  private static final Uri CONTACTS_URI = ContactsContract.Contacts.CONTENT_URI;
   private static final String ERASE_COMPLETE = "ContactsErased";
   private final ContentResolver mContentResolver;
   private final Service mService;
@@ -98,7 +98,7 @@ public class ContactsFacade extends RpcReceiver {
     returns = "A map of result values."
   )
   public Intent contactsDisplayContactPickList() throws JSONException {
-    return mCommonIntentsFacade.pick("content://contacts/people");
+    return mCommonIntentsFacade.pick(CONTACTS_URI.toString());
   }
 
   @Rpc(
@@ -107,7 +107,7 @@ public class ContactsFacade extends RpcReceiver {
   )
   public String contactsDisplayPhonePickList() throws JSONException {
     String phoneNumber = null;
-    Intent data = mCommonIntentsFacade.pick("content://contacts/phones");
+    Intent data = mCommonIntentsFacade.pick(CONTACTS_URI.toString());
     if (data != null) {
       Uri phoneData = data.getData();
       Cursor cursor = mService.getContentResolver().query(phoneData, null, null, null, null);
@@ -157,7 +157,8 @@ public class ContactsFacade extends RpcReceiver {
     String[] columns;
     if (attributes == null || attributes.length() == 0) {
       // In case no attributes are specified we set the default ones.
-      columns = new String[] {"_id", "name", "primary_phone", "primary_email", "type"};
+      columns = new String[] {ContactsContract.Contacts.NAME_RAW_CONTACT_ID,
+              ContactsContract.Contacts.DISPLAY_NAME};
     } else {
       // Convert selected attributes list into usable string list.
       columns = new String[attributes.length()];
@@ -168,9 +169,6 @@ public class ContactsFacade extends RpcReceiver {
     List<String> queryList = new ArrayList<String>();
     for (String s : columns) {
       queryList.add(s);
-    }
-    if (!queryList.contains("_id")) {
-      queryList.add("_id");
     }
 
     String[] query = queryList.toArray(new String[queryList.size()]);
