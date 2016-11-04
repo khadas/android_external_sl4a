@@ -194,6 +194,11 @@
                 <action android:name="com.googlecode.android_scripting.service.FacadeService.ACTION_BIND" />
             </intent-filter>
         </service>
+        <service android:name=".facade.bluetooth.BluetoothAvrcpMediaBrowserService">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService"/>
+            </intent-filter>
+        </service>
         <activity android:name=".activity.InterpreterManager" android:launchMode="singleTask" android:configChanges="keyboardHidden|orientation" />
         <activity android:name=".activity.LogcatViewer" android:launchMode="singleTask" android:configChanges="keyboardHidden|orientation" />
         <activity android:name=".activity.ScriptsLiveFolder" android:label="Scripts" android:icon="@drawable/live_folder" android:configChanges="keyboardHidden|orientation">
