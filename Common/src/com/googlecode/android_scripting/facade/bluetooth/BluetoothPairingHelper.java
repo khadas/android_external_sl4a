@@ -43,6 +43,8 @@ public class BluetoothPairingHelper extends BroadcastReceiver {
     Log.d("Bluetooth pairing intent received: " + action);
     BluetoothDevice mDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
     if(action.equals(BluetoothDevice.ACTION_PAIRING_REQUEST)) {
+      mDevice.setMessageAccessPermission(BluetoothDevice.ACCESS_ALLOWED);
+      mDevice.setPhonebookAccessPermission(BluetoothDevice.ACCESS_ALLOWED);
       int type = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, BluetoothDevice.ERROR);
       Log.d("Processing Action Paring Request with type " + type);
       int pin = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_KEY,0);
