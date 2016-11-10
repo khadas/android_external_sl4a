@@ -24,9 +24,12 @@ import android.os.Bundle;
 
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.EventFacade;
+import com.googlecode.android_scripting.event.Event;
 
 public class BluetoothPairingHelper extends BroadcastReceiver {
   private final EventFacade mEventFacade;
+  private static final int DEFAULT_TIMEOUT_MS = 5000;
+  private boolean mAutoConfirm = true;
 
   public BluetoothPairingHelper(EventFacade eventFacade) {
     super();
@@ -34,7 +37,7 @@ public class BluetoothPairingHelper extends BroadcastReceiver {
     Log.d("Pairing helper created.");
   }
   /**
-   * Blindly confirm bluetooth connection/bonding requests.
+   *  Confirms bluetooth connection/bonding requests.
    */
   @Override
   public void onReceive(Context c, Intent intent) {
@@ -48,14 +51,45 @@ public class BluetoothPairingHelper extends BroadcastReceiver {
       int type = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_VARIANT, BluetoothDevice.ERROR);
       Log.d("Processing Action Paring Request with type " + type);
       int pin = intent.getIntExtra(BluetoothDevice.EXTRA_PAIRING_KEY,0);
+      String deviceAddress = mDevice.getAddress();
       result.putInt("Pin", pin);
       result.putInt("PairingVariant", type);
-      mEventFacade.postEvent("BluetoothActionPairingRequest" + Integer.toString(type), result.clone());
+      result.putString("DeviceAddress", deviceAddress);
+      mEventFacade.postEvent("BluetoothActionPairingRequest", result.clone());
       result.clear();
-      if(type == BluetoothDevice.PAIRING_VARIANT_PASSKEY_CONFIRMATION ||
-         type == BluetoothDevice.PAIRING_VARIANT_CONSENT) {
+      if(type == BluetoothDevice.PAIRING_VARIANT_CONSENT) {
         mDevice.setPairingConfirmation(true);
-        Log.d("Connection confirmed");
+        Log.d("Connection auto-confirmed by consent");
+        abortBroadcast(); // Abort the broadcast so Settings app doesn't get it.
+      } else if (type == BluetoothDevice.PAIRING_VARIANT_PASSKEY_CONFIRMATION) {
+        if (mAutoConfirm) {
+           mDevice.setPairingConfirmation(true);
+          Log.d("Connection auto-confirmed");
+        } else {
+          // Wait for confirmation
+          Event userConfirmEvent = null;
+          try {
+            userConfirmEvent = mEventFacade.eventWaitFor(
+              "BluetoothActionPairingRequestUserConfirm",
+              true, DEFAULT_TIMEOUT_MS);
+          } catch (InterruptedException e) {
+            Log.d("Connection interrupted");
+            userConfirmEvent = null;
+          }
+          if (userConfirmEvent == null) {
+            Log.d("Null response received from test server or timeout");
+            mDevice.setPairingConfirmation(false);
+          } else {
+            String userConfirmEventData = (String) userConfirmEvent.getData();
+            if (userConfirmEventData.equalsIgnoreCase("True")) {
+              mDevice.setPairingConfirmation(true);
+              Log.d("Connection confirmed");
+            } else {
+              mDevice.setPairingConfirmation(false);
+              Log.d("Connection rejected");
+            }
+          }
+        }
         abortBroadcast(); // Abort the broadcast so Settings app doesn't get it.
       }
     }
@@ -83,5 +117,12 @@ public class BluetoothPairingHelper extends BroadcastReceiver {
           c.sendBroadcast(newIntent, android.Manifest.permission.BLUETOOTH_ADMIN);
       }
     }
+  }
+
+  /**
+   * Set autoConfirm flag to Value
+   */
+  public synchronized void setAutoConfirm(boolean value) {
+    mAutoConfirm = value;
   }
 }
