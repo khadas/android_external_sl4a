@@ -487,16 +487,6 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.addNetwork(genWifiConfig(wifiConfig));
     }
 
-    @Rpc(description = "Builds a WifiConfiguration from Hotspot 2.0 MIME file.")
-    public WifiConfiguration wifiBuildConfig(
-            @RpcParameter(name = "uriString") String uriString,
-            @RpcParameter(name = "mimeType") String mimeType,
-            String dataString)
-                    throws JSONException {
-        byte[] data = base64StrToBytes(dataString);
-        return mWifi.buildWifiConfig(uriString, mimeType, data);
-    }
-
     @Rpc(description = "Cancel Wi-fi Protected Setup.")
     public void wifiCancelWps() throws JSONException {
         WifiWpsCallback listener = new WifiWpsCallback();
