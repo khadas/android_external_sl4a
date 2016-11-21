@@ -30,6 +30,7 @@ import android.util.Base64;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
+import com.googlecode.android_scripting.facade.wifi.WifiConstants;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcOptional;
@@ -499,28 +500,17 @@ public class WifiManagerFacade extends RpcReceiver {
     }
 
     /**
-     * Connects to a WPA protected wifi network
-     *
-     * @param wifiSSID SSID of the wifi network
-     * @param wifiPassword password for the wifi network
-     * @return true on success
-     * @throws ConnectException
+     * Connects to a wifi network using configuration.
+     * @param config JSONObject Dictionary of wifi connection parameters
      * @throws JSONException
      */
-    @Rpc(description = "Connects a wifi network by ssid", returns = "True if the operation succeeded.")
-    public Boolean wifiConnect(@RpcParameter(name = "config") JSONObject config)
-            throws ConnectException, JSONException {
+    @Rpc(description = "Connects to the network with the given configuration")
+    public void wifiConnectByConfig(@RpcParameter(name = "config") JSONObject config)
+            throws JSONException {
         WifiConfiguration wifiConfig = genWifiConfig(config);
-        int nId = mWifi.addNetwork(wifiConfig);
-        if (nId < 0) {
-            Log.e("Got negative network Id.");
-            return false;
-        }
-        if (!mWifi.enableNetwork(nId, true)) {
-            Log.e("Failed to enable wifi network.");
-            return false;
-        }
-        return mWifi.reconnect();
+        WifiActionListener listener = new WifiActionListener(mEventFacade,
+                WifiConstants.WIFI_CONNECT_BY_CONFIG_CALLBACK);
+        mWifi.connect(wifiConfig, listener);
     }
 
     @Rpc(description = "Disconnects from the currently active access point.", returns = "True if the operation succeeded.")
@@ -544,11 +534,19 @@ public class WifiManagerFacade extends RpcReceiver {
         mWifi.enableVerboseLogging(level);
     }
 
+    /**
+     * Connects to an 802.1x wifi network using configuration.
+     * @param config JSONObject Dictionary of wifi connection parameters
+     * @throws JSONException
+     * @throws GeneralSecurityException
+     * @return true if connection succeeds; false otherwise
+     */
     @Rpc(description = "Connect to a wifi network that uses Enterprise authentication methods.")
     public Boolean wifiEnterpriseConnect(@RpcParameter(name = "config") JSONObject config)
             throws JSONException, GeneralSecurityException {
         // Create Certificate
-        WifiActionListener listener = new WifiActionListener(mEventFacade, "EnterpriseConnect");
+        WifiActionListener listener = new WifiActionListener(mEventFacade,
+                WifiConstants.WIFI_ENTERPRISE_CONNECT_CALLBACK);
         WifiConfiguration wifiConfig = genWifiEnterpriseConfig(config);
         if (wifiConfig.isPasspoint()) {
             Log.d("Got a passpoint config, add it and save config.");
@@ -570,14 +568,15 @@ public class WifiManagerFacade extends RpcReceiver {
     }
 
     /**
-     * Forget a wifi network with priority
+     * Forget a wifi network by networkId.
      *
-     * @param networkID Id of wifi network
+     * @param networkId Id of wifi network
      */
-    @Rpc(description = "Forget a wifi network with priority")
-    public void wifiForgetNetwork(@RpcParameter(name = "wifiSSID") Integer newtorkId) {
-        WifiActionListener listener = new WifiActionListener(mEventFacade, "ForgetNetwork");
-        mWifi.forget(newtorkId, listener);
+    @Rpc(description = "Forget a wifi network by networkId")
+    public void wifiForgetNetwork(@RpcParameter(name = "wifiSSID") Integer networkId) {
+        WifiActionListener listener = new WifiActionListener(mEventFacade,
+                WifiConstants.WIFI_FORGET_NETWORK_CALLBACK);
+        mWifi.forget(networkId, listener);
     }
 
     @Rpc(description = "Gets the Wi-Fi AP Configuration.")
@@ -731,21 +730,6 @@ public class WifiManagerFacade extends RpcReceiver {
             mLock.release();
             mLock = null;
         }
-    }
-
-    /**
-     * Connects to a wifi network with priority
-     *
-     * @param wifiSSID SSID of the wifi network
-     * @param wifiPassword password for the wifi network
-     * @throws JSONException
-     */
-    @Rpc(description = "Connects a wifi network as priority by pasing ssid")
-    public void wifiPriorityConnect(@RpcParameter(name = "config") JSONObject config)
-            throws JSONException {
-        WifiConfiguration wifiConfig = genWifiConfig(config);
-        WifiActionListener listener = new WifiActionListener(mEventFacade, "PriorityConnect");
-        mWifi.connect(wifiConfig, listener);
     }
 
     @Rpc(description = "Reassociates with the currently active access point.", returns = "True if the operation succeeded.")
