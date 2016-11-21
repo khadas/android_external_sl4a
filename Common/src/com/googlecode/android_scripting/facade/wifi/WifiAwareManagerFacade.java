@@ -320,8 +320,8 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             }
 
             int discoverySessionId = getNextDiscoverySessionId();
-            session.publish(null, getPublishConfig(publishConfig),
-                    new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId));
+            session.publish(getPublishConfig(publishConfig),
+                    new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId), null);
             return discoverySessionId;
         }
     }
@@ -340,8 +340,8 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             }
 
             int discoverySessionId = getNextDiscoverySessionId();
-            session.subscribe(null, getSubscribeConfig(subscribeConfig),
-                    new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId));
+            session.subscribe(getSubscribeConfig(subscribeConfig),
+                    new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId), null);
             return discoverySessionId;
         }
     }
@@ -392,8 +392,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         synchronized (mLock) {
             mMessageStartTime.put(messageId, System.currentTimeMillis());
         }
-        session.sendMessage(new WifiAwareManager.OpaquePeerHandle(peerId), messageId, bytes,
-                retryCount);
+        session.sendMessage(new WifiAwareManager.PeerHandle(peerId), messageId, bytes, retryCount);
     }
 
     @Rpc(description = "Start peer-to-peer Aware ranging")
@@ -437,8 +436,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                             + sessionId + " is ready");
         }
         byte[] bytes = token.getBytes();
-        return session.createNetworkSpecifier(role, new WifiAwareManager.OpaquePeerHandle(peerId),
-                bytes);
+        return session.createNetworkSpecifier(role, new WifiAwareManager.PeerHandle(peerId), bytes);
     }
 
     private class AwareAttachCallbackPostsEvents extends WifiAwareAttachCallback {
@@ -548,11 +546,11 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onServiceDiscovered(Object peerHandle, byte[] serviceSpecificInfo,
-                byte[] matchFilter) {
+        public void onServiceDiscovered(WifiAwareManager.PeerHandle peerHandle,
+                byte[] serviceSpecificInfo, byte[] matchFilter) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mResults.putInt("peerId", ((WifiAwareManager.OpaquePeerHandle) peerHandle).peerId);
+            mResults.putInt("peerId", peerHandle.peerId);
             mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo); // TODO: base64
             mResults.putByteArray("matchFilter", matchFilter); // TODO: base64
             mResults.putLong("timestampMs", System.currentTimeMillis());
@@ -560,7 +558,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onMessageSent(int messageId) {
+        public void onMessageSendSucceeded(int messageId) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("messageId", messageId);
@@ -592,10 +590,10 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onMessageReceived(Object peerHandle, byte[] message) {
+        public void onMessageReceived(WifiAwareManager.PeerHandle peerHandle, byte[] message) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mResults.putInt("peerId", ((WifiAwareManager.OpaquePeerHandle) peerHandle).peerId);
+            mResults.putInt("peerId", peerHandle.peerId);
             mResults.putByteArray("message", message); // TODO: base64
             mResults.putString("messageAsString", new String(message));
             mEventFacade.postEvent("WifiAwareSessionOnMessageReceived", mResults);
