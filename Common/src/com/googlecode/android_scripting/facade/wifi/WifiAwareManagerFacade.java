@@ -418,8 +418,6 @@ public class WifiAwareManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Create a network specifier to be used when specifying a Aware network request")
     public String wifiAwareCreateNetworkSpecifier(
-            @RpcParameter(name = "role", description = "The role of the device: Initiator (0) or Responder (1)")
-                    Integer role,
             @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe")
                     Integer sessionId,
             @RpcParameter(name = "peerId", description = "The ID of the peer (obtained through OnMatch or OnMessageReceived")
@@ -436,7 +434,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                             + sessionId + " is ready");
         }
         byte[] bytes = token.getBytes();
-        return session.createNetworkSpecifier(role, new WifiAwareManager.PeerHandle(peerId), bytes);
+        return session.createNetworkSpecifier(new WifiAwareManager.PeerHandle(peerId), bytes);
     }
 
     private class AwareAttachCallbackPostsEvents extends WifiAwareAttachCallback {
