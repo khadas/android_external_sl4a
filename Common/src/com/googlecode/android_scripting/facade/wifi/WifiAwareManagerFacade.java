@@ -16,13 +16,6 @@
 
 package com.googlecode.android_scripting.facade.wifi;
 
-import com.googlecode.android_scripting.facade.EventFacade;
-import com.googlecode.android_scripting.facade.FacadeManager;
-import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
-import com.googlecode.android_scripting.rpc.Rpc;
-import com.googlecode.android_scripting.rpc.RpcOptional;
-import com.googlecode.android_scripting.rpc.RpcParameter;
-
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -49,11 +42,20 @@ import android.util.SparseArray;
 
 import com.android.internal.annotations.GuardedBy;
 
+import com.googlecode.android_scripting.facade.EventFacade;
+import com.googlecode.android_scripting.facade.FacadeManager;
+import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
+import com.googlecode.android_scripting.rpc.Rpc;
+import com.googlecode.android_scripting.rpc.RpcOptional;
+import com.googlecode.android_scripting.rpc.RpcParameter;
+
 import libcore.util.HexEncoding;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.List;
 
 /**
  * WifiAwareManager functions.
@@ -161,7 +163,8 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (j.has("MatchFilter")) {
             TlvBufferUtils.TlvConstructor constructor = getFilterData(
                     j.getJSONObject("MatchFilter"));
-            builder.setMatchFilter(constructor.getArray());
+            builder.setMatchFilter(
+                    new TlvBufferUtils.TlvIterable(0, 1, constructor.getArray()).toList());
         }
 
         if (j.has("PublishType")) {
@@ -199,7 +202,8 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (j.has("MatchFilter")) {
             TlvBufferUtils.TlvConstructor constructor = getFilterData(
                     j.getJSONObject("MatchFilter"));
-            builder.setMatchFilter(constructor.getArray());
+            builder.setMatchFilter(
+                    new TlvBufferUtils.TlvIterable(0, 1, constructor.getArray()).toList());
         }
 
         if (j.has("SubscribeType")) {
@@ -545,12 +549,13 @@ public class WifiAwareManagerFacade extends RpcReceiver {
 
         @Override
         public void onServiceDiscovered(WifiAwareManager.PeerHandle peerHandle,
-                byte[] serviceSpecificInfo, byte[] matchFilter) {
+                byte[] serviceSpecificInfo, List<byte[]> matchFilter) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("peerId", peerHandle.peerId);
             mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo); // TODO: base64
-            mResults.putByteArray("matchFilter", matchFilter); // TODO: base64
+            mResults.putByteArray("matchFilter", new TlvBufferUtils.TlvConstructor(0,
+                    1).allocateAndPut(matchFilter).getArray()); // TODO: base64
             mResults.putLong("timestampMs", System.currentTimeMillis());
             mEventFacade.postEvent("WifiAwareSessionOnServiceDiscovered", mResults);
         }
