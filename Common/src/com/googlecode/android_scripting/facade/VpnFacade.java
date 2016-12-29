@@ -37,6 +37,7 @@ import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.security.Credentials;
 import android.security.KeyStore;
+import com.googlecode.android_scripting.facade.CertInstallerHelper;
 
 /**
  * Access NFC functions.
@@ -45,10 +46,12 @@ public class VpnFacade extends RpcReceiver {
 
     private final Service mService;
     private final IConnectivityManager mConService;
+    private CertInstallerHelper mCertHelper;
 
     public VpnFacade(FacadeManager manager) {
         super(manager);
         mService = manager.getService();
+        mCertHelper = new CertInstallerHelper();
         mConService = IConnectivityManager.Stub
                 .asInterface(ServiceManager.getService(Context.CONNECTIVITY_SERVICE));
     }
@@ -107,4 +110,12 @@ public class VpnFacade extends RpcReceiver {
     public void shutdown() {
     }
 
+    @Rpc(description = "Install certificate for RSA VPNs.")
+    public void installCertificate(@RpcParameter(name = "vpnProfile") JSONObject vpnProfile,
+                                   @RpcParameter(name = "certFile") String certFile,
+                                   @RpcParameter(name = "password") String password)
+            throws RemoteException {
+        VpnProfile profile = genLegacyVpnProfile(vpnProfile);
+        mCertHelper.installCertificate(profile, certFile, password);
+    }
 }
