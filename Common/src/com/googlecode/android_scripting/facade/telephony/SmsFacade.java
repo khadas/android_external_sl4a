@@ -1,17 +1,17 @@
 /*
- * Copyright (C) 2016 Google Inc.
+ * Copyright (C) 2017 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.googlecode.android_scripting.facade.telephony;
@@ -20,16 +20,11 @@ import com.google.android.mms.ContentType;
 import com.google.android.mms.InvalidHeaderValueException;
 import com.google.android.mms.pdu.CharacterSets;
 import com.google.android.mms.pdu.EncodedStringValue;
-import com.google.android.mms.pdu.GenericPdu;
 import com.google.android.mms.pdu.PduBody;
 import com.google.android.mms.pdu.PduComposer;
 import com.google.android.mms.pdu.PduHeaders;
-import com.google.android.mms.pdu.PduParser;
 import com.google.android.mms.pdu.PduPart;
-import com.google.android.mms.pdu.PduPersister;
-import com.google.android.mms.pdu.SendConf;
 import com.google.android.mms.pdu.SendReq;
-import com.google.android.mms.MmsException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,7 +43,6 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Telephony.Sms.Intents;
-import android.provider.Telephony.Mms;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.telephony.SmsCbMessage;
@@ -64,10 +58,8 @@ import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
-import com.googlecode.android_scripting.rpc.RpcDefault;
 import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
-import com.googlecode.android_scripting.facade.telephony.TelephonyConstants;
 
 //FIXME: Change the build order to use constants defined in here
 //import com.googlecode.android_scripting.provider.TelephonyTestProvider;

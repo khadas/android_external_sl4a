@@ -1,45 +1,36 @@
 /*
- * Copyright (C) 2016 Google Inc.
+ * Copyright (C) 2017 The Android Open Source Project
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.googlecode.android_scripting.facade.telephony;
 
-import android.app.Activity;
 import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
-import android.provider.ContactsContract;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
-import android.telephony.ModemActivityInfo;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.provider.Telephony;
-import android.telephony.SubscriptionInfo;
-import android.telecom.VideoProfile;
-import android.telecom.TelecomManager;
-import android.util.Base64;
 
-import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.telephony.RILConstants;
 import com.android.internal.telephony.TelephonyProperties;
 import com.google.common.io.BaseEncoding;
@@ -69,14 +60,9 @@ import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcDefault;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 import com.googlecode.android_scripting.Log;
-import com.googlecode.android_scripting.MainThread;
 import com.googlecode.android_scripting.rpc.RpcOptional;
 
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
-import java.net.URLEncoder;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.HashMap;
 
 /**
