@@ -541,10 +541,9 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onSessionTerminated(int reason) {
+        public void onSessionTerminated() {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mResults.putInt("reason", reason);
             mEventFacade.postEvent("WifiAwareSessionOnSessionTerminated", mResults);
         }
 
