@@ -47,6 +47,7 @@ import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
+import com.googlecode.android_scripting.rpc.RpcDeprecated;
 import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
@@ -510,6 +511,14 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Checks Wifi state.", returns = "True if Wifi is enabled.")
     public Boolean wifiCheckState() {
         return mWifi.getWifiState() == WifiManager.WIFI_STATE_ENABLED;
+    }
+
+    @RpcDeprecated(value = "wifiConnectByConfig")
+    @Rpc(description = "Connects to the network with the given configuration")
+    public Boolean wifiConnect(@RpcParameter(name = "config") JSONObject config)
+            throws JSONException {
+        wifiConnectByConfig(config);
+        return true;
     }
 
     /**
