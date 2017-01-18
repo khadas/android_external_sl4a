@@ -22,7 +22,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := sl4a.Common
 LOCAL_MODULE_OWNER := google
 
-LOCAL_STATIC_JAVA_LIBRARIES := guava android-common sl4a.Utils
+LOCAL_STATIC_JAVA_LIBRARIES := guava android-common sl4a.Utils junit
 LOCAL_JAVA_LIBRARIES := telephony-common
 LOCAL_JAVA_LIBRARIES += ims-common
 LOCAL_JAVA_LIBRARIES += bouncycastle
