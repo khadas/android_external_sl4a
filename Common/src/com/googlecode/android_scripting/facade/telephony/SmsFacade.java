@@ -16,22 +16,6 @@
 
 package com.googlecode.android_scripting.facade.telephony;
 
-import com.google.android.mms.ContentType;
-import com.google.android.mms.InvalidHeaderValueException;
-import com.google.android.mms.pdu.CharacterSets;
-import com.google.android.mms.pdu.EncodedStringValue;
-import com.google.android.mms.pdu.PduBody;
-import com.google.android.mms.pdu.PduComposer;
-import com.google.android.mms.pdu.PduHeaders;
-import com.google.android.mms.pdu.PduPart;
-import com.google.android.mms.pdu.SendReq;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -43,16 +27,26 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Telephony.Sms.Intents;
+import android.telephony.SmsCbCmasInfo;
+import android.telephony.SmsCbEtwsInfo;
+import android.telephony.SmsCbMessage;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
-import android.telephony.SmsCbMessage;
-import com.android.internal.telephony.gsm.SmsCbConstants;
-import com.android.internal.telephony.cdma.sms.SmsEnvelope;
-import android.telephony.SmsCbEtwsInfo;
-import android.telephony.SmsCbCmasInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 
+import com.android.internal.telephony.cdma.sms.SmsEnvelope;
+import com.android.internal.telephony.gsm.SmsCbConstants;
+
+import com.google.android.mms.ContentType;
+import com.google.android.mms.InvalidHeaderValueException;
+import com.google.android.mms.pdu.CharacterSets;
+import com.google.android.mms.pdu.EncodedStringValue;
+import com.google.android.mms.pdu.PduBody;
+import com.google.android.mms.pdu.PduComposer;
+import com.google.android.mms.pdu.PduHeaders;
+import com.google.android.mms.pdu.PduPart;
+import com.google.android.mms.pdu.SendReq;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
@@ -60,6 +54,12 @@ import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 //FIXME: Change the build order to use constants defined in here
 //import com.googlecode.android_scripting.provider.TelephonyTestProvider;
@@ -316,8 +316,6 @@ public class SmsFacade extends RpcReceiver {
         // Default to 1 week;
         mms.setExpirySeconds(MmsBuilder.DEFAULT_EXPIRY_TIME);
 
-        Uri contentUri = null;
-
         String randomFileName = "mms." + String.valueOf(System.currentTimeMillis()) + ".dat";
 
         byte[] mmsBytes = mms.build();
@@ -327,19 +325,19 @@ public class SmsFacade extends RpcReceiver {
         }
 
         if (writeBytesToCacheFile(randomFileName, mmsBytes) == false) {
-            Log.e("Failed to write PDU to file");
+            Log.e("Failed to write PDU to file " + randomFileName);
             return;
         }
 
-        contentUri = (new Uri.Builder())
-                .authority("com.googlecode.android_scripting.provider.telephonytestprovider")
-                .path("mms/" + randomFileName)
-                .scheme(ContentResolver.SCHEME_CONTENT)
-                .build();
+        Uri contentUri = (new Uri.Builder())
+                          .authority(
+                          "com.googlecode.android_scripting.facade.telephony.MmsFileProvider")
+                          .path(randomFileName)
+                          .scheme(ContentResolver.SCHEME_CONTENT)
+                          .build();
 
         if (contentUri != null) {
             Log.d(String.format("URI String: %s", contentUri.toString()));
-
             SmsManager.getDefault().sendMultimediaMessage(mContext,
                     contentUri, null/* locationUrl */, null/* configOverrides */,
                     PendingIntent.getBroadcast(mService, 0,
@@ -550,6 +548,7 @@ public class SmsFacade extends RpcReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             Bundle event = new Bundle();
+            event.putString("Type", "MmsDeliverStatus");
             String action = intent.getAction();
             int resultCode = getResultCode();
             event.putString("ResultCode", Integer.toString(resultCode));
@@ -567,7 +566,7 @@ public class SmsFacade extends RpcReceiver {
         }
     }
 
-    // b/21569494 - Never receiving ANY of these events: requires debugging
+    // add mms matching after mms message parser is added in sl4a. b/34276948
     private class MmsIncomingListener extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -575,15 +574,21 @@ public class SmsFacade extends RpcReceiver {
             String action = intent.getAction();
             if (Intents.MMS_DOWNLOADED_ACTION.equals(action)) {
                 Log.d("New MMS Downloaded");
-                mEventFacade.postEvent(TelephonyConstants.EventMmsDownloaded, new Bundle());
+                Bundle event = new Bundle();
+                event.putString("Type", "NewMmsReceived");
+                mEventFacade.postEvent(TelephonyConstants.EventMmsDownloaded, event);
             }
             else if (Intents.WAP_PUSH_RECEIVED_ACTION.equals(action)) {
                 Log.d("New Wap Push Received");
-                mEventFacade.postEvent(TelephonyConstants.EventWapPushReceived, new Bundle());
+                Bundle event = new Bundle();
+                event.putString("Type", "NewWapPushReceived");
+                mEventFacade.postEvent(TelephonyConstants.EventWapPushReceived, event);
             }
-            else if (Intents.DATA_SMS_RECEIVED_ACTION.equals(action)) {
+            if (Intents.DATA_SMS_RECEIVED_ACTION.equals(action)) {
                 Log.d("New Data SMS Received");
-                mEventFacade.postEvent(TelephonyConstants.EventDataSmsReceived, new Bundle());
+                Bundle event = new Bundle();
+                event.putString("Type", "NewDataSMSReceived");
+                mEventFacade.postEvent(TelephonyConstants.EventDataSmsReceived, event);
             }
             else {
                 Log.e("MmsIncomingListener Received Unexpected Event" + intent.toString());
@@ -954,7 +959,7 @@ public class SmsFacade extends RpcReceiver {
             final PduPart part = new PduPart();
             part.setCharset(CharacterSets.UTF_8);
             part.setContentType(ContentType.TEXT_PLAIN.getBytes());
-            part.setContentLocation("text0".getBytes());
+            part.setContentLocation(TEMP_CONTENT_FILE_NAME.getBytes());
             int index = TEMP_CONTENT_FILE_NAME.lastIndexOf(".");
             String contentId = (index == -1) ? TEMP_CONTENT_FILE_NAME
                     : TEMP_CONTENT_FILE_NAME.substring(0, index);
