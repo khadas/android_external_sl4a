@@ -738,8 +738,14 @@ public class TelephonyManagerFacade extends RpcReceiver {
         }
     }
 
-    @Rpc(description = "Set Puk and Pin for locked SIM.")
-    public boolean telephonySetPuk(
+    /**
+    * Supply the puk code and pin for locked SIM.
+    * @param puk the puk code string
+    * @param pin the puk pin string
+    * @return    true or false for supplying the puk code and pin successfully or unsuccessfully.
+    */
+    @Rpc(description = "Supply Puk and Pin for locked SIM.")
+    public boolean telephonySupplyPuk(
             @RpcParameter(name = "puk") String puk,
             @RpcParameter(name = "pin") String pin) {
         return mTelephonyManager.supplyPuk(puk, pin);
