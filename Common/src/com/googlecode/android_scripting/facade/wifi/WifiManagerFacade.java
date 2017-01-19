@@ -517,7 +517,25 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Connects to the network with the given configuration")
     public Boolean wifiConnect(@RpcParameter(name = "config") JSONObject config)
             throws JSONException {
-        wifiConnectByConfig(config);
+        try {
+            wifiConnectByConfig(config);
+        } catch (GeneralSecurityException e) {
+            String msg = "Caught GeneralSecurityException with the provided"
+                         + "configuration";
+            throw new RuntimeException(msg);
+        }
+        return true;
+    }
+
+    @RpcDeprecated(value = "wifiConnectByConfig")
+    @Rpc(description = "Connect to Enterprise network with given configuration")
+    public Boolean wifiEnterpriseConnect(@RpcParameter(name = "config")
+            JSONObject config) throws JSONException, GeneralSecurityException {
+        try {
+            wifiConnectByConfig(config);
+        } catch (GeneralSecurityException e) {
+            throw e;
+        }
         return true;
     }
 
@@ -525,12 +543,20 @@ public class WifiManagerFacade extends RpcReceiver {
      * Connects to a wifi network using configuration.
      * @param config JSONObject Dictionary of wifi connection parameters
      * @throws JSONException
+     * @throws GeneralSecurityException
      */
     @Rpc(description = "Connects to the network with the given configuration")
     public void wifiConnectByConfig(@RpcParameter(name = "config") JSONObject config)
-            throws JSONException {
-        WifiConfiguration wifiConfig = genWifiConfig(config);
-        WifiActionListener listener = new WifiActionListener(mEventFacade,
+            throws JSONException, GeneralSecurityException {
+        WifiConfiguration wifiConfig;
+        WifiActionListener listener;
+        // Check if this is 802.1x or 802.11x config.
+        if (config.has(WifiEnterpriseConfig.EAP_KEY)) {
+            wifiConfig = genWifiEnterpriseConfig(config);
+        } else {
+            wifiConfig = genWifiConfig(config);
+        }
+        listener = new WifiActionListener(mEventFacade,
                 WifiConstants.WIFI_CONNECT_BY_CONFIG_CALLBACK);
         mWifi.connect(wifiConfig, listener);
     }
@@ -554,34 +580,6 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Enable WiFi verbose logging.")
     public void wifiEnableVerboseLogging(@RpcParameter(name = "level") Integer level) {
         mWifi.enableVerboseLogging(level);
-    }
-
-    /**
-     * Connects to an 802.1x wifi network using configuration.
-     * @param config JSONObject Dictionary of wifi connection parameters
-     * @throws JSONException
-     * @throws GeneralSecurityException
-     * @return true if connection succeeds; false otherwise
-     */
-    @Rpc(description = "Connect to a wifi network that uses Enterprise authentication methods.")
-    public Boolean wifiEnterpriseConnect(@RpcParameter(name = "config") JSONObject config)
-            throws JSONException, GeneralSecurityException {
-        // Create Certificate
-        WifiActionListener listener = new WifiActionListener(mEventFacade,
-                WifiConstants.WIFI_ENTERPRISE_CONNECT_CALLBACK);
-        WifiConfiguration wifiConfig = genWifiEnterpriseConfig(config);
-        if (wifiConfig.isPasspoint()) {
-            Log.d("Got a passpoint config, add it and save config.");
-            if (mWifi.addNetwork(wifiConfig) == -1) {
-                Log.e("Failed to add a wifi network");
-                return false;
-            }
-            return mWifi.saveConfiguration();
-        } else {
-            Log.d("Got a non-passpoint enterprise config, connect directly.");
-            mWifi.connect(wifiConfig, listener);
-            return true;
-        }
     }
 
     @Rpc(description = "Resets all WifiManager settings.")

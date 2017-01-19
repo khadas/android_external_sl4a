@@ -23,7 +23,6 @@ public class WifiConstants {
     // Wifi ActionListener callback constants
     public static final String WIFI_CONNECT_BY_CONFIG_CALLBACK = "ConnectByConfig";
     public static final String WIFI_CONNECT_BY_NETID_CALLBACK = "ConnectByNetId";
-    public static final String WIFI_ENTERPRISE_CONNECT_CALLBACK = "EnterpriseConnect";
     public static final String WIFI_FORGET_NETWORK_CALLBACK = "ForgetNetwork";
 }
 
