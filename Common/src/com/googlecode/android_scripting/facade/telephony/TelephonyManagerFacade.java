@@ -79,6 +79,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.HashMap;
 
+
 /**
  * Exposes TelephonyManager functionality.
  *
@@ -661,6 +662,18 @@ public class TelephonyManagerFacade extends RpcReceiver {
             mTelephonyManager.getPhoneType());
     }
 
+    /**
+    * Get device phone type for a subscription.
+    * @param subId the subscriber id
+    * @return the phone type string for the subscriber.
+    */
+    @Rpc(description = "Returns the device phone type for a subscription.")
+    public String telephonyGetPhoneTypeForSubscription(
+                  @RpcParameter(name = "subId") Integer subId) {
+        return TelephonyUtils.getPhoneTypeString(
+            mTelephonyManager.getCurrentPhoneType(subId));
+    }
+
     @Rpc(description = "Returns the MCC for default subscription ID")
     public String telephonyGetSimCountryIso() {
          return telephonyGetSimCountryIsoForSubscription(
@@ -753,6 +766,13 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Exception in phoneGetIccSimChallengeResponseForSubscription" + e.toString());
             return null;
         }
+    }
+
+    @Rpc(description = "Set Puk and Pin for locked SIM.")
+    public boolean telephonySetPuk(
+            @RpcParameter(name = "puk") String puk,
+            @RpcParameter(name = "pin") String pin) {
+        return mTelephonyManager.supplyPuk(puk, pin);
     }
 
     @Rpc(description = "Returns the unique subscriber ID (such as IMSI) " +
