@@ -18,10 +18,13 @@ package com.googlecode.android_scripting.facade.telephony;
 
 import android.app.Service;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.RemoteException;
+import android.os.SystemProperties;
+import android.provider.Telephony;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.NeighboringCellInfo;
@@ -29,15 +32,12 @@ import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.provider.Telephony;
 
 import com.android.internal.telephony.RILConstants;
 import com.android.internal.telephony.TelephonyProperties;
+
 import com.google.common.io.BaseEncoding;
-
-import android.content.ContentValues;
-import android.os.SystemProperties;
-
+import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.AndroidFacade;
 import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
@@ -58,12 +58,11 @@ import com.googlecode.android_scripting.facade.telephony.TelephonyStateListeners
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcDefault;
-import com.googlecode.android_scripting.rpc.RpcParameter;
-import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.rpc.RpcOptional;
+import com.googlecode.android_scripting.rpc.RpcParameter;
 
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Exposes TelephonyManager functionality.
@@ -737,6 +736,13 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Exception in phoneGetIccSimChallengeResponseForSubscription" + e.toString());
             return null;
         }
+    }
+
+    @Rpc(description = "Set Puk and Pin for locked SIM.")
+    public boolean telephonySetPuk(
+            @RpcParameter(name = "puk") String puk,
+            @RpcParameter(name = "pin") String pin) {
+        return mTelephonyManager.supplyPuk(puk, pin);
     }
 
     @Rpc(description = "Returns the unique subscriber ID (such as IMSI) " +
