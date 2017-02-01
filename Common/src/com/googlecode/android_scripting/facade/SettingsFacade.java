@@ -240,7 +240,7 @@ public class SettingsFacade extends RpcReceiver {
         mLockPatternUtils.setLockScreenDisabled(true, UserHandle.myUserId());
         mLockPatternUtils.setCredentialRequiredToDecrypt(false);
         mLockPatternUtils.clearEncryptionPassword();
-        mLockPatternUtils.clearLock(UserHandle.myUserId());
+        mLockPatternUtils.clearLock(null, UserHandle.myUserId());
         mLockPatternUtils.setLockScreenDisabled(true, UserHandle.myUserId());
     }
 
