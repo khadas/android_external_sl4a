@@ -57,6 +57,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
 
     public static int AIRPLANE_MODE_OFF = 0;
     public static int AIRPLANE_MODE_ON = 1;
+    public static int DATA_ROAMING_ON = 1;
 
     class ConnectivityReceiver extends BroadcastReceiver {
 
@@ -714,6 +715,35 @@ public class ConnectivityManagerFacade extends RpcReceiver {
             enabled = !connectivityCheckAirplaneMode();
         }
         mManager.setAirplaneMode(enabled);
+    }
+
+    /**
+    * Check global data roaming setting.
+    * @return True if roaming is enabled; false otherwise.
+    */
+    @Rpc(description = "Checks data roaming mode setting.",
+            returns = "True if data roaming mode is enabled.")
+    public Boolean connectivityCheckDataRoamingMode() {
+        try {
+            return Settings.Global.getInt(mService.getContentResolver(),
+                    Settings.Global.DATA_ROAMING) == DATA_ROAMING_ON;
+        } catch (Settings.SettingNotFoundException e) {
+            Log.e("Settings.Global.DATA_ROAMING not found!");
+            return false;
+        }
+    }
+
+    /**
+    * Enable or disable data roaming.
+    * @param roaming 1: Enable data roaming; 0: Disable data roaming.
+    * @return True for setting roaming mode successfully; false otherwise.
+    */
+    @Rpc(description = "Set Data Roaming Enabled or Disabled")
+    public boolean connectivitySetDataRoaming(
+            @RpcParameter(name = "roaming") Integer roaming) {
+        Log.d("connectivitySetDataRoaming by SubscriptionManager");
+        return Settings.Global.putInt(mService.getContentResolver(),
+                    Settings.Global.DATA_ROAMING, roaming);
     }
 
     @Rpc(description = "Check if tethering supported or not.",
