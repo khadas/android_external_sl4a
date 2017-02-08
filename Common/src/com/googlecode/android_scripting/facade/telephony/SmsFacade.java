@@ -27,6 +27,7 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Telephony.Sms.Intents;
+import android.provider.Telephony.Mms;
 import android.telephony.SmsCbCmasInfo;
 import android.telephony.SmsCbEtwsInfo;
 import android.telephony.SmsCbMessage;
@@ -60,9 +61,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-//FIXME: Change the build order to use constants defined in here
-//import com.googlecode.android_scripting.provider.TelephonyTestProvider;
 
 /**
  * Exposes SmsManager functionality.
