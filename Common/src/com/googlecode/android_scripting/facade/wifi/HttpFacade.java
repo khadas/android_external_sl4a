@@ -88,6 +88,7 @@ public class HttpFacade extends RpcReceiver {
         while ((str = r.readLine()) != null) {
             sb.append(str);
         }
+        r.close();
         return sb.toString();
     }
 
@@ -109,10 +110,6 @@ public class HttpFacade extends RpcReceiver {
         } catch (IOException e) {
             Log.e("Failed to open a connection to " + url);
             Log.e(e.toString());
-        } finally {
-            if (urlConnection != null) {
-                urlConnection.disconnect();
-            }
         }
         return urlConnection;
     }
@@ -135,7 +132,6 @@ public class HttpFacade extends RpcReceiver {
             @RpcParameter(name="outPath") @RpcOptional String outPath) throws IOException {
         // Create the input stream
         HttpURLConnection urlConnection = httpRequest(url);
-        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
         // Parse destination path and create the output stream. The function assumes that the path
         // is specified relative to the system default Download dir.
         File outFile = FileUtils.getExternalDownload();
@@ -174,9 +170,11 @@ public class HttpFacade extends RpcReceiver {
             }
             outFile = new File(outFile, filename);
         }
+        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
         OutputStream output = new FileOutputStream(outFile);
         inputStreamToOutputStream(in, output);
         Log.d("Downloaded file from " + url + " to " + outPath);
+        urlConnection.disconnect();
     }
 
     @Rpc(description = "Make an http request and return the response message.")
@@ -184,6 +182,7 @@ public class HttpFacade extends RpcReceiver {
         try {
             HttpURLConnection urlConnection = null;
             urlConnection = httpRequest(url);
+            urlConnection.disconnect();
             return urlConnection;
         } catch (UnknownHostException e) {
             return null;
@@ -196,6 +195,7 @@ public class HttpFacade extends RpcReceiver {
         InputStream in = new BufferedInputStream(urlConnection.getInputStream());
         String result = inputStreamToString(in);
         Log.d("Fetched: " + result);
+        urlConnection.disconnect();
         return result;
     }
 
