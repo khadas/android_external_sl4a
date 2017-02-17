@@ -260,20 +260,6 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         mService.unregisterReceiver(mStateChangedReceiver);
     }
 
-    @Rpc(description = "Enable Aware Usage.")
-    public void wifiAwareEnableUsage() throws RemoteException {
-        synchronized (mLock) {
-            mMgr.enableUsage();
-        }
-    }
-
-    @Rpc(description = "Disable Aware Usage.")
-    public void wifiAwareDisableUsage() throws RemoteException {
-        synchronized (mLock) {
-            mMgr.disableUsage();
-        }
-    }
-
     @Rpc(description = "Is Aware Usage Enabled?")
     public Boolean wifiIsAwareAvailable() throws RemoteException {
         synchronized (mLock) {
