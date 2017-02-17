@@ -140,6 +140,21 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (j.has("ClusterHigh")) {
             builder.setClusterHigh(j.getInt("ClusterHigh"));
         }
+        if (j.has("DiscoveryWindowInterval")) {
+            JSONArray interval = j.getJSONArray("DiscoveryWindowInterval");
+            if (interval.length() != 2) {
+                throw new JSONException(
+                        "Expect 'DiscoveryWindowInterval' to be an array with 2 elements!");
+            }
+            int intervalValue = interval.getInt(ConfigRequest.NAN_BAND_24GHZ);
+            if (intervalValue != ConfigRequest.DW_INTERVAL_NOT_INIT) {
+                builder.setDiscoveryWindowInterval(ConfigRequest.NAN_BAND_24GHZ, intervalValue);
+            }
+            intervalValue = interval.getInt(ConfigRequest.NAN_BAND_5GHZ);
+            if (intervalValue != ConfigRequest.DW_INTERVAL_NOT_INIT) {
+                builder.setDiscoveryWindowInterval(ConfigRequest.NAN_BAND_5GHZ, intervalValue);
+            }
+        }
 
         return builder.build();
     }
