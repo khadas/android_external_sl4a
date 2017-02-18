@@ -561,6 +561,19 @@ public class WifiManagerFacade extends RpcReceiver {
         mWifi.connect(wifiConfig, listener);
     }
 
+     /**
+     * Connects to a wifi network using networkId.
+     * @param networkId the network identity for the network in the supplicant
+     */
+    @Rpc(description = "Connects to the network with the given networkId")
+    public void wifiConnectByNetworkId(
+            @RpcParameter(name = "networkId") Integer networkId) {
+        WifiActionListener listener;
+        listener = new WifiActionListener(mEventFacade,
+                WifiConstants.WIFI_CONNECT_BY_NETID_CALLBACK);
+        mWifi.connect(networkId, listener);
+    }
+
     @Rpc(description = "Disconnects from the currently active access point.", returns = "True if the operation succeeded.")
     public Boolean wifiDisconnect() {
         return mWifi.disconnect();
