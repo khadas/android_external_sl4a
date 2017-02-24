@@ -27,6 +27,8 @@ import android.net.DhcpInfo;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.NetworkInfo.DetailedState;
+import android.net.wifi.hotspot2.ConfigParser;
+import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiActivityEnergyInfo;
 import android.net.wifi.WifiConfiguration;
@@ -41,6 +43,7 @@ import android.os.Bundle;
 import android.provider.Settings.Global;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Base64;
+import java.util.Arrays;
 
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.EventFacade;
@@ -75,7 +78,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * WifiManager functions.
  */
@@ -83,6 +85,8 @@ import java.util.List;
 // e.g. wifi connection result will be null when flight mode is on
 public class WifiManagerFacade extends RpcReceiver {
     private final static String mEventType = "WifiManager";
+    // MIME type for passpoint config.
+    private final static String TYPE_WIFICONFIG = "application/x-wifi-config";
     private final Service mService;
     private final WifiManager mWifi;
     private final EventFacade mEventFacade;
@@ -559,6 +563,63 @@ public class WifiManagerFacade extends RpcReceiver {
         listener = new WifiActionListener(mEventFacade,
                 WifiConstants.WIFI_CONNECT_BY_CONFIG_CALLBACK);
         mWifi.connect(wifiConfig, listener);
+    }
+
+   /**
+     * Generate a Passpoint configuration from JSON config.
+     * @param config JSON config containing base64 encoded Passpoint profile
+     */
+    @Rpc(description = "Generate Passpoint configuration", returns = "PasspointConfiguration object")
+    public PasspointConfiguration genWifiPasspointConfig(@RpcParameter(
+            name = "config") JSONObject config)
+            throws JSONException,CertificateException, IOException {
+        String profileStr = "";
+        if (config == null) {
+            return null;
+        }
+        if (config.has("profile")) {
+            profileStr =  config.getString("profile");
+        }
+        return ConfigParser.parsePasspointConfig(TYPE_WIFICONFIG,
+                profileStr.getBytes());
+    }
+
+   /**
+     * Add or update a Passpoint configuration.
+     * @param config base64 encoded message containing Passpoint profile
+     * @throws JSONException
+     */
+    @Rpc(description = "Add or update a Passpoint configuration")
+    public boolean addUpdatePasspointConfig(@RpcParameter(
+            name = "config") JSONObject config)
+            throws JSONException,CertificateException, IOException {
+        PasspointConfiguration passpointConfig = genWifiPasspointConfig(config);
+        return mWifi.addOrUpdatePasspointConfiguration(passpointConfig);
+    }
+
+    /**
+     * Remove a Passpoint configuration.
+     * @param fqdn The FQDN of the passpoint configuration to be removed
+     * @return true on success; false otherwise
+     */
+    @Rpc(description = "Remove a Passpoint configuration", returns = "true if operation succeeds; false otherwise")
+    public boolean removePasspointConfig(
+            @RpcParameter(name = "fqdn") String fqdn) {
+        return mWifi.removePasspointConfiguration(fqdn);
+    }
+
+    /**
+     * Get list of Passpoint configurations.
+     * @return A list of FQDNs of the Passpoint configurations
+     */
+    @Rpc(description = "Return the list of installed Passpoint configurations", returns = "A list of Passpoint configurations")
+    public List<String> getPasspointConfigs() {
+        List<String> fqdnList = new ArrayList<String>();
+        for(PasspointConfiguration passpoint :
+            mWifi.getPasspointConfigurations()) {
+            fqdnList.add(passpoint.getHomeSp().getFqdn());
+        }
+        return fqdnList;
     }
 
      /**
