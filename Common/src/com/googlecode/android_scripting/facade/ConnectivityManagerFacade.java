@@ -799,6 +799,11 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         return inet6Address.getHostAddress();
     }
 
+    @Rpc(description = "Returns active link properties")
+    public LinkProperties connectivityGetActiveLinkProperties() {
+        return mManager.getActiveLinkProperties();
+    }
+
     @Override
     public void shutdown() {
         connectivityStopTrackingConnectivityStateChange();
