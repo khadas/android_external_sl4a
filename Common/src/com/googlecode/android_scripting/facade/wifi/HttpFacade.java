@@ -209,7 +209,8 @@ public class HttpFacade extends RpcReceiver {
     @Rpc(description = "Ping to host(URL or IP), return success (true) or fail (false).")
     // The optional timeout parameter is in unit of second.
     public Boolean pingHost(@RpcParameter(name = "host") String hostString,
-            @RpcParameter(name = "timeout") @RpcOptional Integer timeout) {
+            @RpcParameter(name = "timeout") @RpcOptional Integer timeout,
+            @RpcParameter(name = "ping") @RpcOptional String pingType) {
         try {
             String host;
             try {
@@ -222,6 +223,9 @@ public class HttpFacade extends RpcReceiver {
 
             Log.d("Host:" + host);
             String pingCmdString = "ping -c 1 ";
+            if(pingType!=null && pingType.equals("ping6")) {
+                pingCmdString = "ping6 -c 1 ";
+            }
             if (timeout != null) {
                 pingCmdString = pingCmdString + "-W " + timeout + " ";
             }
