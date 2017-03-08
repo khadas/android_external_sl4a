@@ -428,8 +428,8 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     Integer sessionId,
             @RpcParameter(name = "peerId", description = "The ID of the peer (obtained through OnMatch or OnMessageReceived")
                     Integer peerId,
-            @RpcParameter(name = "token", description = "Arbitrary token message to be sent to peer as part of data-path creation process")
-                    String token) {
+            @RpcParameter(name = "passphrase", description = "Passphrase of the data-path. Optional, can be empty/null.")
+            @RpcOptional String passphrase) {
         DiscoverySession session;
         synchronized (mLock) {
             session = mDiscoverySessions.get(sessionId);
@@ -439,8 +439,11 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     "Calling WifiAwareStartRanging before session (session ID "
                             + sessionId + " is ready");
         }
-        byte[] bytes = token.getBytes();
-        return session.createNetworkSpecifier(new PeerHandle(peerId), bytes);
+        if (passphrase == null || passphrase.length() == 0) {
+            return session.createNetworkSpecifierOpen(new PeerHandle(peerId));
+        } else {
+            return session.createNetworkSpecifierPassphrase(new PeerHandle(peerId), passphrase);
+        }
     }
 
     private class AwareAttachCallbackPostsEvents extends AttachCallback {
