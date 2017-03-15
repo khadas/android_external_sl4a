@@ -517,8 +517,11 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.getWifiState() == WifiManager.WIFI_STATE_ENABLED;
     }
 
-    @RpcDeprecated(value = "wifiConnectByConfig")
+    /**
+    * @deprecated Use {@link #wifiConnectByConfig(config)} instead.
+    */
     @Rpc(description = "Connects to the network with the given configuration")
+    @Deprecated
     public Boolean wifiConnect(@RpcParameter(name = "config") JSONObject config)
             throws JSONException {
         try {
@@ -531,8 +534,11 @@ public class WifiManagerFacade extends RpcReceiver {
         return true;
     }
 
-    @RpcDeprecated(value = "wifiConnectByConfig")
-    @Rpc(description = "Connect to Enterprise network with given configuration")
+    /**
+    * @deprecated Use {@link #wifiConnectByConfig(config)} instead.
+    */
+    @Rpc(description = "Connects to the network with the given configuration")
+    @Deprecated
     public Boolean wifiEnterpriseConnect(@RpcParameter(name = "config")
             JSONObject config) throws JSONException, GeneralSecurityException {
         try {
