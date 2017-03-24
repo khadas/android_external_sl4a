@@ -149,6 +149,16 @@ public class TelephonyManagerFacade extends RpcReceiver {
         }
     }
 
+    /**
+    * Set network selection mode to automatic for subscriber.
+    * @param subId the subriber id to be set.
+    */
+    @Rpc(description = "Set network selection mode to automatic for subscriber.")
+    public void telephonySetNetworkSelectionModeAutomaticForSubscription(
+            @RpcParameter(name = "subId") Integer subId) {
+        mTelephonyManager.setNetworkSelectionModeAutomatic(subId);
+    }
+
     @Rpc(description = "Get network preference.")
     public String telephonyGetPreferredNetworkTypes() {
         return telephonyGetPreferredNetworkTypesForSubscription(
@@ -657,6 +667,18 @@ public class TelephonyManagerFacade extends RpcReceiver {
     public String telephonyGetPhoneType() {
         return TelephonyUtils.getPhoneTypeString(
             mTelephonyManager.getPhoneType());
+    }
+
+    /**
+    * Get device phone type for a subscription.
+    * @param subId the subscriber id
+    * @return the phone type string for the subscriber.
+    */
+    @Rpc(description = "Returns the device phone type for a subscription.")
+    public String telephonyGetPhoneTypeForSubscription(
+                  @RpcParameter(name = "subId") Integer subId) {
+        return TelephonyUtils.getPhoneTypeString(
+            mTelephonyManager.getCurrentPhoneType(subId));
     }
 
     @Rpc(description = "Returns the MCC for default subscription ID")
