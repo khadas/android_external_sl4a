@@ -186,9 +186,6 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (j.has("PublishType")) {
             builder.setPublishType(j.getInt("PublishType"));
         }
-        if (j.has("PublishCount")) {
-            builder.setPublishCount(j.getInt("PublishCount"));
-        }
         if (j.has("TtlSec")) {
             builder.setTtlSec(j.getInt("TtlSec"));
         }
@@ -224,9 +221,6 @@ public class WifiAwareManagerFacade extends RpcReceiver {
 
         if (j.has("SubscribeType")) {
             builder.setSubscribeType(j.getInt("SubscribeType"));
-        }
-        if (j.has("SubscribeCount")) {
-            builder.setSubscribeCount(j.getInt("SubscribeCount"));
         }
         if (j.has("TtlSec")) {
             builder.setTtlSec(j.getInt("TtlSec"));
