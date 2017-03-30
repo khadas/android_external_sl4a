@@ -29,10 +29,12 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
+import android.net.StringNetworkSpecifier;
 import android.os.Bundle;
 import android.provider.Settings;
 
 import com.googlecode.android_scripting.Log;
+import com.googlecode.android_scripting.facade.wifi.WifiAwareManagerFacade;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcOptional;
@@ -634,6 +636,26 @@ public class ConnectivityManagerFacade extends RpcReceiver {
     public String connectivityRequestNetwork(@RpcParameter(name = "configJson")
     JSONObject configJson) throws JSONException {
         NetworkRequest networkRequest = buildNetworkRequestFromJson(configJson);
+        mNetworkCallback = new NetworkCallback(NetworkCallback.EVENT_ALL);
+        mManager.requestNetwork(networkRequest, mNetworkCallback);
+        String key = mNetworkCallback.mId;
+        mNetworkCallbackMap.put(key, mNetworkCallback);
+        return key;
+    }
+
+    @Rpc(description = "Request a Wi-Fi Aware network")
+    public String connectivityRequestWifiAwareNetwork(@RpcParameter(name = "configJson")
+            JSONObject configJson) throws JSONException {
+        NetworkRequest networkRequest = buildNetworkRequestFromJson(configJson);
+        if (networkRequest.networkCapabilities.getNetworkSpecifier() instanceof
+                StringNetworkSpecifier) {
+            String ns =
+                    ((StringNetworkSpecifier) networkRequest.networkCapabilities
+                            .getNetworkSpecifier()).specifier;
+            JSONObject j = new JSONObject(ns);
+            networkRequest.networkCapabilities.setNetworkSpecifier(
+                    WifiAwareManagerFacade.getNetworkSpecifier(j));
+        }
         mNetworkCallback = new NetworkCallback(NetworkCallback.EVENT_ALL);
         mManager.requestNetwork(networkRequest, mNetworkCallback);
         String key = mNetworkCallback.mId;
