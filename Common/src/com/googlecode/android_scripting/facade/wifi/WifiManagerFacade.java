@@ -744,6 +744,11 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.isAdditionalStaSupported();
     }
 
+    @Rpc(description = "Return true if WiFi is enabled.")
+    public Boolean wifiGetisWifiEnabled() {
+        return mWifi.isWifiEnabled();
+    }
+
     @Rpc(description = "Return whether Wi-Fi AP is enabled or disabled.")
     public Boolean wifiIsApEnabled() {
         return mWifi.isWifiApEnabled();
