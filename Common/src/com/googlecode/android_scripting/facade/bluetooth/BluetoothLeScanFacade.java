@@ -16,19 +16,13 @@
 
 package com.googlecode.android_scripting.facade.bluetooth;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
-import android.bluetooth.BluetoothAdapter.LeScanCallback;
 import android.bluetooth.le.ScanFilter.Builder;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
@@ -43,6 +37,12 @@ import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.Callable;
 
 /**
  * BluetoothLe Scan functions.
@@ -345,6 +345,28 @@ public class BluetoothLeScanFacade extends RpcReceiver {
             @RpcParameter(name = "scanMode")
             Integer scanMode) {
         mScanSettingsBuilder.setScanMode(scanMode);
+    }
+
+    /**
+     * Set the scan setting's legacy mode
+     * @param legacy Wether scan is legacy.
+     */
+    @Rpc(description = "Set the scan setting's legacy mode")
+    public void bleSetScanSettingsLegacy(
+            @RpcParameter(name = "legacy")
+            Boolean legacy) {
+        mScanSettingsBuilder.setLegacy(legacy);
+    }
+
+    /**
+     * Set the scan setting's phy mode
+     * @param phy
+     */
+    @Rpc(description = "Set the scan setting's phy mode")
+    public void bleSetScanSettingsPhy(
+            @RpcParameter(name = "phy")
+            Integer phy) {
+        mScanSettingsBuilder.setPhy(phy);
     }
 
     /**

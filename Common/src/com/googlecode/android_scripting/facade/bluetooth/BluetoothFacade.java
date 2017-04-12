@@ -366,6 +366,57 @@ public class BluetoothFacade extends RpcReceiver {
         return mBluetoothAdapter.isHardwareTrackingFiltersAvailable();
     }
 
+    /**
+     * Return true if LE 2M PHY feature is supported.
+     *
+     * @return true if chipset supports LE 2M PHY feature
+     */
+    @Rpc(description = "Return true if LE 2M PHY feature is supported")
+    public boolean bluetoothIsLe2MPhySupported() {
+        return mBluetoothAdapter.isLe2MPhySupported();
+    }
+
+    /**
+     * Return true if LE Coded PHY feature is supported.
+     *
+     * @return true if chipset supports LE Coded PHY feature
+     */
+    @Rpc(description = "Return true if LE Coded PHY feature is supported")
+    public boolean bluetoothIsLeCodedPhySupported() {
+        return mBluetoothAdapter.isLeCodedPhySupported();
+    }
+
+    /**
+     * Return true if LE Extended Advertising feature is supported.
+     *
+     * @return true if chipset supports LE Extended Advertising feature
+     */
+    @Rpc(description = "Return true if LE Extended Advertising is supported")
+    public boolean bluetoothIsLeExtendedAdvertisingSupported() {
+        return mBluetoothAdapter.isLeExtendedAdvertisingSupported();
+    }
+
+    /**
+     * Return true if LE Periodic Advertising feature is supported.
+     *
+     * @return true if chipset supports LE Periodic Advertising feature
+     */
+    @Rpc(description = "Return true if LE Periodic Advertising is supported")
+    public boolean bluetoothIsLePeriodicAdvertisingSupported() {
+        return mBluetoothAdapter.isLePeriodicAdvertisingSupported();
+    }
+
+    /**
+     * Return the maximum LE advertising data length,
+     * if LE Extended Advertising feature is supported.
+     *
+     * @return the maximum LE advertising data length.
+     */
+    @Rpc(description = "Return the maximum LE advertising data length")
+    public int bluetoothGetLeMaximumAdvertisingDataLength() {
+        return mBluetoothAdapter.getLeMaximumAdvertisingDataLength();
+    }
+
     @Rpc(description = "Gets the current state of LE.")
     public int bluetoothGetLeState() {
         return mBluetoothAdapter.getLeState();
