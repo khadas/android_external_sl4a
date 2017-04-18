@@ -21,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.NetworkSpecifier;
 import android.net.wifi.RttManager;
 import android.net.wifi.RttManager.RttResult;
 import android.net.wifi.aware.AttachCallback;
@@ -35,10 +36,12 @@ import android.net.wifi.aware.SubscribeConfig;
 import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.TlvBufferUtils;
 import android.net.wifi.aware.WifiAwareManager;
+import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.RemoteException;
+import android.util.Base64;
 import android.util.SparseArray;
 
 import com.android.internal.annotations.GuardedBy;
@@ -93,6 +96,75 @@ public class WifiAwareManagerFacade extends RpcReceiver {
 
     @GuardedBy("mLock")
     private SparseArray<Long> mMessageStartTime = new SparseArray<>();
+
+    private static final String NS_KEY_TYPE = "type";
+    private static final String NS_KEY_ROLE = "role";
+    private static final String NS_KEY_CLIENT_ID = "client_id";
+    private static final String NS_KEY_SESSION_ID = "session_id";
+    private static final String NS_KEY_PEER_ID = "peer_id";
+    private static final String NS_KEY_PEER_MAC = "peer_mac";
+    private static final String NS_KEY_PMK = "pmk";
+    private static final String NS_KEY_PASSPHRASE = "passphrase";
+
+    private static String getJsonString(WifiAwareNetworkSpecifier ns) throws JSONException {
+        JSONObject j = new JSONObject();
+
+        j.put(NS_KEY_TYPE, ns.type);
+        j.put(NS_KEY_ROLE, ns.role);
+        j.put(NS_KEY_CLIENT_ID, ns.clientId);
+        j.put(NS_KEY_SESSION_ID, ns.sessionId);
+        j.put(NS_KEY_PEER_ID, ns.peerId);
+        if (ns.peerMac != null) {
+            j.put(NS_KEY_PEER_MAC, Base64.encodeToString(ns.peerMac, Base64.DEFAULT));
+        }
+        if (ns.pmk != null) {
+            j.put(NS_KEY_PMK, Base64.encodeToString(ns.pmk, Base64.DEFAULT));
+        }
+        if (ns.passphrase != null) {
+            j.put(NS_KEY_PASSPHRASE, ns.passphrase);
+        }
+
+        return j.toString();
+    }
+
+    public static NetworkSpecifier getNetworkSpecifier(JSONObject j) throws JSONException {
+        if (j == null) {
+            return null;
+        }
+
+        int type = 0, role = 0, clientId = 0, sessionId = 0, peerId = 0;
+        byte[] peerMac = null;
+        byte[] pmk = null;
+        String passphrase = null;
+
+        if (j.has(NS_KEY_TYPE)) {
+            type = j.getInt((NS_KEY_TYPE));
+        }
+        if (j.has(NS_KEY_ROLE)) {
+            role = j.getInt((NS_KEY_ROLE));
+        }
+        if (j.has(NS_KEY_CLIENT_ID)) {
+            clientId = j.getInt((NS_KEY_CLIENT_ID));
+        }
+        if (j.has(NS_KEY_SESSION_ID)) {
+            sessionId = j.getInt((NS_KEY_SESSION_ID));
+        }
+        if (j.has(NS_KEY_PEER_ID)) {
+            peerId = j.getInt((NS_KEY_PEER_ID));
+        }
+        if (j.has(NS_KEY_PEER_MAC)) {
+            peerMac = Base64.decode(j.getString(NS_KEY_PEER_MAC), Base64.DEFAULT);
+        }
+        if (j.has(NS_KEY_PMK)) {
+            pmk = Base64.decode(j.getString(NS_KEY_PMK), Base64.DEFAULT);
+        }
+        if (j.has(NS_KEY_PASSPHRASE)) {
+            passphrase = j.getString((NS_KEY_PASSPHRASE));
+        }
+
+        return new WifiAwareNetworkSpecifier(type, role, clientId, sessionId, peerId, peerMac, pmk,
+                passphrase);
+    }
 
     private static TlvBufferUtils.TlvConstructor getFilterData(JSONObject j) throws JSONException {
         if (j == null) {
@@ -423,7 +495,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             @RpcParameter(name = "peerId", description = "The ID of the peer (obtained through OnMatch or OnMessageReceived")
                     Integer peerId,
             @RpcParameter(name = "passphrase", description = "Passphrase of the data-path. Optional, can be empty/null.")
-            @RpcOptional String passphrase) {
+            @RpcOptional String passphrase) throws JSONException {
         DiscoverySession session;
         synchronized (mLock) {
             session = mDiscoverySessions.get(sessionId);
@@ -433,11 +505,14 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     "Calling WifiAwareStartRanging before session (session ID "
                             + sessionId + " is ready");
         }
+        NetworkSpecifier ns = null;
         if (passphrase == null || passphrase.length() == 0) {
-            return session.createNetworkSpecifierOpen(new PeerHandle(peerId));
+            ns = session.createNetworkSpecifierOpen(new PeerHandle(peerId));
         } else {
-            return session.createNetworkSpecifierPassphrase(new PeerHandle(peerId), passphrase);
+            ns = session.createNetworkSpecifierPassphrase(new PeerHandle(peerId), passphrase);
         }
+
+        return getJsonString((WifiAwareNetworkSpecifier) ns);
     }
 
     private class AwareAttachCallbackPostsEvents extends AttachCallback {
