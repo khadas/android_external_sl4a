@@ -373,6 +373,28 @@ public class GattClientFacade extends RpcReceiver {
     }
 
     /**
+     * Reads the characteristic from the associated remote device.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param uuid the characteristic uuid to read
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Reads the characteristic from the associated remote device.")
+    public boolean gattClientReadUsingCharacteristicUuid(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "uuid") String uuid,
+            @RpcParameter(name = "startHandle") Integer startHandle,
+            @RpcParameter(name = "endHandle") Integer endHandle) throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        UUID cUuid = UUID.fromString(uuid);
+        return bluetoothGatt.readUsingCharacteristicUuid(cUuid, startHandle, endHandle);
+    }
+
+    /**
      * /** Reads the value for a given descriptor from the associated remote device
      *
      * @param gattIndex - the gatt index to use
