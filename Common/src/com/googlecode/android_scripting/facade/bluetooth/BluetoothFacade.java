@@ -339,14 +339,6 @@ public class BluetoothFacade extends RpcReceiver {
         return DiscoveredDevices.values();
     }
 
-    @Rpc(description = "Enable or disable the Bluetooth HCI snoop log")
-    public boolean bluetoothConfigHciSnoopLog(
-            @RpcParameter(name = "value", description = "enable or disable log")
-            Boolean value
-            ) {
-        return mBluetoothAdapter.configHciSnoopLog(value);
-    }
-
     @Rpc(description = "Get Bluetooth controller activity energy info.")
     public String bluetoothGetControllerActivityEnergyInfo(
         @RpcParameter(name = "value")
