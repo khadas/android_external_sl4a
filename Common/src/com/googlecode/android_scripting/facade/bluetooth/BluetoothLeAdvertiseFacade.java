@@ -49,7 +49,7 @@ public class BluetoothLeAdvertiseFacade extends RpcReceiver {
     private static int BleAdvertiseCallbackCount;
     private static int BleAdvertiseSettingsCount;
     private static int BleAdvertiseDataCount;
-    private final HashMap<Integer, myAdvertiseCallback> mAdvertiseCallbackList;
+    private final HashMap<Integer, MyAdvertiseCallback> mAdvertiseCallbackList;
     private final BluetoothLeAdvertiser mAdvertise;
     private final Service mService;
     private Builder mAdvertiseDataBuilder;
@@ -68,7 +68,7 @@ public class BluetoothLeAdvertiseFacade extends RpcReceiver {
                     }
                 });
         mEventFacade = manager.getReceiver(EventFacade.class);
-        mAdvertiseCallbackList = new HashMap<Integer, myAdvertiseCallback>();
+        mAdvertiseCallbackList = new HashMap<Integer, MyAdvertiseCallback>();
         mAdvertise = mBluetoothAdapter.getBluetoothLeAdvertiser();
         mAdvertiseDataList = new HashMap<Integer, AdvertiseData>();
         mAdvertiseSettingsList = new HashMap<Integer, AdvertiseSettings>();
@@ -77,15 +77,15 @@ public class BluetoothLeAdvertiseFacade extends RpcReceiver {
     }
 
     /**
-     * Constructs a myAdvertiseCallback obj and returns its index
+     * Constructs a MyAdvertiseCallback obj and returns its index
      *
-     * @return myAdvertiseCallback.index
+     * @return MyAdvertiseCallback.index
      */
     @Rpc(description = "Generate a new myAdvertisement Object")
     public Integer bleGenBleAdvertiseCallback() {
         BleAdvertiseCallbackCount += 1;
         int index = BleAdvertiseCallbackCount;
-        myAdvertiseCallback mCallback = new myAdvertiseCallback(index);
+        MyAdvertiseCallback mCallback = new MyAdvertiseCallback(index);
         mAdvertiseCallbackList.put(mCallback.index,
                 mCallback);
         return mCallback.index;
@@ -536,12 +536,12 @@ public class BluetoothLeAdvertiseFacade extends RpcReceiver {
         mAdvertiseDataBuilder.setIncludeDeviceName(includeDeviceName);
     }
 
-    private class myAdvertiseCallback extends AdvertiseCallback {
+    private class MyAdvertiseCallback extends AdvertiseCallback {
         public Integer index;
         private final Bundle mResults;
         String mEventType;
 
-        public myAdvertiseCallback(int idx) {
+        public MyAdvertiseCallback(int idx) {
             index = idx;
             mEventType = "BleAdvertise";
             mResults = new Bundle();
@@ -585,7 +585,7 @@ public class BluetoothLeAdvertiseFacade extends RpcReceiver {
     @Override
     public void shutdown() {
         if (mBluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
-            for (myAdvertiseCallback mAdvertise : mAdvertiseCallbackList
+            for (MyAdvertiseCallback mAdvertise : mAdvertiseCallbackList
                 .values()) {
                 if (mAdvertise != null) {
                     try{
