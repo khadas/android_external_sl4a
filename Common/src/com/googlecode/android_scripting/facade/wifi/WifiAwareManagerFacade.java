@@ -40,6 +40,7 @@ import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.Process;
 import android.os.RemoteException;
 import android.util.Base64;
 import android.util.SparseArray;
@@ -163,7 +164,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         return new WifiAwareNetworkSpecifier(type, role, clientId, sessionId, peerId, peerMac, pmk,
-                passphrase);
+                passphrase, Process.myUid());
     }
 
     private static TlvBufferUtils.TlvConstructor getFilterData(JSONObject j) throws JSONException {
