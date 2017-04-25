@@ -107,16 +107,20 @@ public class GattClientFacade extends RpcReceiver {
             @RpcParameter(name = "index") Integer index,
             @RpcParameter(name = "macAddress") String macAddress,
             @RpcParameter(name = "autoConnect") Boolean autoConnect,
-            @RpcParameter(name = "transport") Integer transport)
+            @RpcParameter(name = "transport") Integer transport,
+            @RpcParameter(name = "phy") Integer phy)
             throws Exception {
         if (mGattCallbackList.get(index) != null) {
             BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(macAddress);
+            if (phy == null) phy = BluetoothDevice.PHY_LE_1M;
+
             BluetoothGatt mBluetoothGatt =
                     device.connectGatt(
                             mService.getApplicationContext(),
                             autoConnect,
                             mGattCallbackList.get(index),
-                            transport);
+                            transport,
+                            phy);
             BluetoothGattCount += 1;
             mBluetoothGattList.put(BluetoothGattCount, mBluetoothGatt);
             return BluetoothGattCount;
@@ -206,6 +210,39 @@ public class GattClientFacade extends RpcReceiver {
             throws Exception {
         if (mBluetoothGattList.get(index) != null) {
             return mBluetoothGattList.get(index).requestMtu(mtu);
+        } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Read the current transmitter PHY and receiver PHY of the connection.
+     *
+     * @param index the bluetooth gatt index
+     * @throws Exception
+     */
+    @Rpc(description = "Read PHY")
+    public void gattClientReadPhy(@RpcParameter(name = "index") Integer index) throws Exception {
+        if (mBluetoothGattList.get(index) != null) {
+            mBluetoothGattList.get(index).readPhy();
+        } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Set the preferred connection PHY.
+     *
+     * @param index the bluetooth gatt index
+     * @throws Exception
+     */
+    @Rpc(description = "Set the preferred connection PHY")
+    public void gattClientSetPreferredPhy(@RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "txPhy") Integer txPhy,
+            @RpcParameter(name = "rxPhy") Integer rxPhy,
+            @RpcParameter(name = "txPhy") Integer phyOptions) throws Exception {
+        if (mBluetoothGattList.get(index) != null) {
+            mBluetoothGattList.get(index).setPreferredPhy(txPhy, rxPhy, phyOptions);
         } else {
             throw new Exception("Invalid index input:" + index);
         }
@@ -907,6 +944,26 @@ public class GattClientFacade extends RpcReceiver {
         }
 
         @Override
+        public void onPhyRead(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
+            Log.d("gatt_connect change onPhyRead " + mEventType + " " + index);
+            mResults.putInt("TxPhy", txPhy);
+            mResults.putInt("RxPhy", rxPhy);
+            mResults.putInt("Status", status);
+            mEventFacade.postEvent(mEventType + index + "onPhyRead", mResults.clone());
+            mResults.clear();
+        }
+
+        @Override
+        public void onPhyUpdate(BluetoothGatt gatt, int txPhy, int rxPhy, int status) {
+            Log.d("gatt_connect change onPhyUpdate " + mEventType + " " + index);
+            mResults.putInt("TxPhy", txPhy);
+            mResults.putInt("RxPhy", rxPhy);
+            mResults.putInt("Status", status);
+            mEventFacade.postEvent(mEventType + index + "onPhyUpdate", mResults.clone());
+            mResults.clear();
+        }
+
+        @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             Log.d("gatt_connect change onServicesDiscovered " + mEventType + " " + index);
             int idx = BluetoothGattDiscoveredServicesCount++;
@@ -996,6 +1053,20 @@ public class GattClientFacade extends RpcReceiver {
             mResults.putInt("Status", status);
             mResults.putInt("MTU", mtu);
             mEventFacade.postEvent(mEventType + index + "onMtuChanged", mResults.clone());
+            mResults.clear();
+        }
+
+        public void onConnectionUpdated(BluetoothGatt gatt, int interval, int latency,
+                                            int timeout, int status) {
+            Log.d("gatt_connect change onConnecitonUpdated " + mEventType + " " + index
+                    + ", interval: " + interval + ", latency: " + latency
+                    + ", timeout: " + timeout + ", status: " + status);
+
+            mResults.putInt("Status", status);
+            mResults.putInt("Interval", interval);
+            mResults.putInt("Latency", latency);
+            mResults.putInt("Timeout", timeout);
+            mEventFacade.postEvent(mEventType + index + "onConnectionUpdated", mResults.clone());
             mResults.clear();
         }
     }
