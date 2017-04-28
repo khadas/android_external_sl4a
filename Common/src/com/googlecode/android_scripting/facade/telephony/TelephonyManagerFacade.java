@@ -736,7 +736,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
     @Rpc(description = "Returns the state of the SIM card for default slot ID.")
     public String telephonyGetSimState() {
         return telephonyGetSimStateForSlotId(
-                  mTelephonyManager.getDefaultSim());
+                  mTelephonyManager.getSlotIndex());
     }
 
     @Rpc(description = "Returns the state of the SIM card for specified slot ID.")
@@ -859,7 +859,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
     @Rpc(description = "Returns the unique device ID such as MEID or IMEI " +
                        "for deault sim slot ID, null if unavailable")
     public String telephonyGetDeviceId() {
-        return telephonyGetDeviceIdForSlotId(mTelephonyManager.getDefaultSim());
+        return telephonyGetDeviceIdForSlotId(mTelephonyManager.getSlotIndex());
     }
 
     @Rpc(description = "Returns the unique device ID such as MEID or IMEI for" +
