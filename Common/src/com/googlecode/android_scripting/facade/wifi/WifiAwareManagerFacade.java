@@ -349,13 +349,15 @@ public class WifiAwareManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Attach to Aware.")
     public Integer wifiAwareAttach(
+            @RpcParameter(name = "identityCb") @RpcOptional Boolean identityCb,
             @RpcParameter(name = "awareConfig") @RpcOptional JSONObject awareConfig)
             throws RemoteException, JSONException {
         synchronized (mLock) {
             int sessionId = getNextSessionId();
             mMgr.attach(null, getConfigRequest(awareConfig),
                     new AwareAttachCallbackPostsEvents(sessionId),
-                    new AwareIdentityChangeListenerPostsEvents(sessionId));
+                    (identityCb != null && identityCb.booleanValue())
+                            ? new AwareIdentityChangeListenerPostsEvents(sessionId) : null);
             return sessionId;
         }
     }
