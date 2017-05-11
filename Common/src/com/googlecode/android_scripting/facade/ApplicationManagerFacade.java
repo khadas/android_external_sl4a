@@ -76,6 +76,14 @@ public class ApplicationManagerFacade extends RpcReceiver {
     mAndroidFacade.startActivity(intent);
   }
 
+  @Rpc(description = "Start activity with the given class name with result")
+  public Intent launchForResult(@RpcParameter(name = "className") String className) {
+    Intent intent = new Intent(Intent.ACTION_MAIN);
+    String packageName = className.substring(0, className.lastIndexOf("."));
+    intent.setClassName(packageName, className);
+    return mAndroidFacade.startActivityForResult(intent);
+  }
+
   @Rpc(description = "Launch the specified app.")
   public void appLaunch(@RpcParameter(name = "name") String name) {
       Intent LaunchIntent = mPackageManager.getLaunchIntentForPackage(name);
