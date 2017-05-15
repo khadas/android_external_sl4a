@@ -510,6 +510,11 @@ public class BluetoothConnectionFacade extends RpcReceiver {
         return mBluetoothManager.getConnectedDevices(profile);
     }
 
+    @Rpc(description = "Bluetooth init Bond by Mac Address")
+    public boolean bluetoothBond(@RpcParameter(name = "macAddress") String macAddress) {
+        return mBluetoothAdapter.getRemoteDevice(macAddress).createBond();
+    }
+
     @Rpc(description = "Return true if a bluetooth device is connected.")
     public Boolean bluetoothIsDeviceConnected(String deviceID) {
         for (BluetoothDevice bd : mBluetoothAdapter.getBondedDevices()) {

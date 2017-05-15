@@ -227,6 +227,19 @@ public class BluetoothFacade extends RpcReceiver {
         }
     }
 
+    @Rpc(description = "Fetch UUIDS with SDP")
+    public boolean bluetoothFetchUuidsWithSdp(
+            @RpcParameter(name = "address", description = "Bluetooth Address For Target Device")
+            String address) {
+        try {
+            BluetoothDevice mDevice;
+            mDevice = mBluetoothAdapter.getRemoteDevice(address);
+            return mDevice.fetchUuidsWithSdp();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     @Rpc(description = "Get local Bluetooth device name")
     public String bluetoothGetLocalName() {
         return mBluetoothAdapter.getName();
