@@ -349,15 +349,26 @@ public class WifiAwareManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Attach to Aware.")
     public Integer wifiAwareAttach(
-            @RpcParameter(name = "identityCb") @RpcOptional Boolean identityCb,
-            @RpcParameter(name = "awareConfig") @RpcOptional JSONObject awareConfig)
+            @RpcParameter(name = "identityCb",
+                description = "Controls whether an identity callback is provided")
+                @RpcOptional Boolean identityCb,
+            @RpcParameter(name = "awareConfig",
+                description = "The session configuration, or null for default config")
+                @RpcOptional JSONObject awareConfig,
+            @RpcParameter(name = "useIdInCallbackEvent",
+                description =
+                    "Specifies whether the callback events should be decorated with session Id")
+                @RpcOptional Boolean useIdInCallbackEvent)
             throws RemoteException, JSONException {
         synchronized (mLock) {
             int sessionId = getNextSessionId();
+            boolean useIdInCallbackEventName =
+                (useIdInCallbackEvent != null) ? useIdInCallbackEvent : false;
             mMgr.attach(null, getConfigRequest(awareConfig),
-                    new AwareAttachCallbackPostsEvents(sessionId),
+                    new AwareAttachCallbackPostsEvents(sessionId, useIdInCallbackEventName),
                     (identityCb != null && identityCb.booleanValue())
-                            ? new AwareIdentityChangeListenerPostsEvents(sessionId) : null);
+                        ? new AwareIdentityChangeListenerPostsEvents(sessionId,
+                        useIdInCallbackEventName) : null);
             return sessionId;
         }
     }
@@ -518,10 +529,12 @@ public class WifiAwareManagerFacade extends RpcReceiver {
     private class AwareAttachCallbackPostsEvents extends AttachCallback {
         private int mSessionId;
         private long mCreateTimestampMs;
+        private boolean mUseIdInCallbackEventName;
 
-        public AwareAttachCallbackPostsEvents(int sessionId) {
+        public AwareAttachCallbackPostsEvents(int sessionId, boolean useIdInCallbackEventName) {
             mSessionId = sessionId;
             mCreateTimestampMs = System.currentTimeMillis();
+            mUseIdInCallbackEventName = useIdInCallbackEventName;
         }
 
         @Override
@@ -534,7 +547,11 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             mResults.putInt("sessionId", mSessionId);
             mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
             mResults.putLong("timestampMs", System.currentTimeMillis());
-            mEventFacade.postEvent("WifiAwareOnAttached", mResults);
+            if (mUseIdInCallbackEventName) {
+                mEventFacade.postEvent("WifiAwareOnAttached_" + mSessionId, mResults);
+            } else {
+                mEventFacade.postEvent("WifiAwareOnAttached", mResults);
+            }
         }
 
         @Override
@@ -542,15 +559,22 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             Bundle mResults = new Bundle();
             mResults.putInt("sessionId", mSessionId);
             mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
-            mEventFacade.postEvent("WifiAwareOnAttachFailed", mResults);
+            if (mUseIdInCallbackEventName) {
+                mEventFacade.postEvent("WifiAwareOnAttachFailed_" + mSessionId, mResults);
+            } else {
+                mEventFacade.postEvent("WifiAwareOnAttachFailed", mResults);
+            }
         }
     }
 
     private class AwareIdentityChangeListenerPostsEvents extends IdentityChangedListener {
         private int mSessionId;
+        private boolean mUseIdInCallbackEventName;
 
-        public AwareIdentityChangeListenerPostsEvents(int sessionId) {
+        public AwareIdentityChangeListenerPostsEvents(int sessionId,
+            boolean useIdInCallbackEventName) {
             mSessionId = sessionId;
+            mUseIdInCallbackEventName = useIdInCallbackEventName;
         }
 
         @Override
@@ -559,7 +583,11 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             mResults.putInt("sessionId", mSessionId);
             mResults.putString("mac", String.valueOf(HexEncoding.encode(mac)));
             mResults.putLong("timestampMs", System.currentTimeMillis());
-            mEventFacade.postEvent("WifiAwareOnIdentityChanged", mResults);
+            if (mUseIdInCallbackEventName) {
+                mEventFacade.postEvent("WifiAwareOnIdentityChanged_" + mSessionId, mResults);
+            } else {
+                mEventFacade.postEvent("WifiAwareOnIdentityChanged", mResults);
+            }
         }
     }
 
