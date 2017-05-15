@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.lang.reflect.Field;
 import java.lang.Thread;
+import java.lang.reflect.*;
 
 import org.apache.commons.codec.binary.Base64Codec;
 
@@ -90,6 +91,44 @@ public class BluetoothRfcommFacade extends RpcReceiver {
     conn.setUUID(uuid);
     return uuid;
   }
+
+  /**
+     * Create L2CAP socket to Bluetooth device
+     *
+     * @param address the bluetooth address to open the socket on
+     * @param channel the channel to open the socket on
+     * @throws Exception
+     */
+    @Rpc(description = "Create L2CAP socket to Bluetooth deice")
+    public void rfcommCreateL2capSocket(
+            @RpcParameter(name = "address") String address,
+            @RpcParameter(name = "channel") Integer channel) throws Exception {
+        BluetoothDevice mDevice;
+        mDevice = mBluetoothAdapter.getRemoteDevice(address);
+        Class bluetoothDeviceClass = Class.forName("android.bluetooth.BluetoothDevice");
+        Method createL2capSocketMethod = bluetoothDeviceClass.getMethod(
+            "createL2capSocket", int.class);
+        createL2capSocketMethod.invoke(mDevice, channel);
+    }
+
+    /**
+     * Create RFCOMM socket to Bluetooth device
+     *
+     * @param address the bluetooth address to open the socket on
+     * @param channel the channel to open the socket on
+     * @throws Exception
+     */
+    @Rpc(description = "Create RFCOMM socket to Bluetooth deice")
+    public void rfcommCreateRfcommSocket(
+            @RpcParameter(name = "address") String address,
+            @RpcParameter(name = "channel") Integer channel) throws Exception {
+        BluetoothDevice mDevice;
+        mDevice = mBluetoothAdapter.getRemoteDevice(address);
+        Class bluetoothDeviceClass = Class.forName("android.bluetooth.BluetoothDevice");
+        Method createL2capSocketMethod = bluetoothDeviceClass.getMethod(
+            "createL2capSocket", int.class);
+        createL2capSocketMethod.invoke(mDevice, channel);
+    }
 
   @Rpc(description = "Begins a thread initiate an Rfcomm connection over Bluetooth. ")
   public void bluetoothRfcommBeginConnectThread(

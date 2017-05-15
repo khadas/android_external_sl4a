@@ -20,6 +20,7 @@ import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.bluetooth.IBluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
@@ -38,11 +39,12 @@ import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 import com.googlecode.android_scripting.rpc.RpcStopEvent;
 
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.UUID;
 
 public class GattClientFacade extends RpcReceiver {
     private final EventFacade mEventFacade;
@@ -375,6 +377,8 @@ public class GattClientFacade extends RpcReceiver {
     /**
      * Reads the requested characteristic from the associated remote device.
      *
+     * @deprecated Use {@link #gattClientReadCharacteristicByIndex(gattIndex,
+     *     discoveredServiceListIndex, serviceIndex, characteristicIndex)} instead.
      * @param gattIndex the BluetoothGatt server accociated with the device
      * @param discoveredServiceListIndex the index returned from the discovered services callback
      * @param serviceIndex the service index of the discovered services
@@ -383,6 +387,7 @@ public class GattClientFacade extends RpcReceiver {
      * @throws Exception
      */
     @Rpc(description = "Reads the requested characteristic from the associated remote device.")
+    @Deprecated
     public boolean gattClientReadCharacteristic(
             @RpcParameter(name = "gattIndex") Integer gattIndex,
             @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
@@ -432,8 +437,603 @@ public class GattClientFacade extends RpcReceiver {
     }
 
     /**
+     * Reads the requested characteristic from the associated remote device.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param serviceIndex the service index of the discovered services
+     * @param characteristicIndex the characteristic index
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Reads the requested characteristic from the associated remote device.")
+    public boolean gattClientReadCharacteristicByIndex(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = gattServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex " + characteristicIndex);
+        }
+        return bluetoothGatt.readCharacteristic(charList.get(characteristicIndex));
+    }
+
+    /**
+     * Reads the requested characteristic from the associated remote device by instance id.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Reads the requested characteristic from the associated remote "
+            + "device by instance id.")
+    public boolean gattClientReadCharacteristicByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "characteristicInstanceId") Integer characteristicInstanceId)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            List<BluetoothGattCharacteristic> charList = mGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic mGattChar : charList) {
+                if (mGattChar.getInstanceId() == characteristicInstanceId) {
+                    Log.i("Found Characteristic to read. instanceId: "
+                        + Integer.toString(characteristicInstanceId)
+                        + " UUID: " + mGattChar.getUuid().toString());
+                    return bluetoothGatt.readCharacteristic(mGattChar);
+                }
+            }
+        }
+        Log.e("Failed to find Characteristic with instanceId: " + Integer.toString(
+            characteristicInstanceId));
+        return false;
+    }
+
+    /**
+     * Writes the requested characteristic from the associated remote device by instance id.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param characteristicInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Writes the requested characteristic from the associated remote "
+            + "device by instance id.")
+    public boolean gattClientWriteDescriptorByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "descriptorInstanceId") Integer descriptorInstanceId,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            List<BluetoothGattCharacteristic> charList = mGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic mGattChar : charList) {
+                List<BluetoothGattDescriptor> descList = mGattChar.getDescriptors();
+                for (BluetoothGattDescriptor mGattDesc : descList) {
+                    if (mGattDesc.getInstanceId() == descriptorInstanceId) {
+                        mGattDesc.setValue(value);
+                        Log.i("Found Descriptor to write. instanceId: "
+                            + Integer.toString(descriptorInstanceId)
+                            + " UUID: " + mGattDesc.getUuid().toString());
+                        return bluetoothGatt.writeDescriptor(mGattDesc);
+                    }
+                }
+            }
+        }
+        Log.e("Failed to find Descriptor with instanceId: " + Integer.toString(
+            descriptorInstanceId));
+        return false;
+    }
+
+    /**
+     * Writes the requested characteristic from the associated remote device by instance id.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Writes the requested characteristic from the associated remote "
+            + "device by instance id.")
+    public boolean gattClientWriteCharacteristicByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "characteristicInstanceId") Integer characteristicInstanceId,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            List<BluetoothGattCharacteristic> charList = mGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic mGattChar : charList) {
+                if (mGattChar.getInstanceId() == characteristicInstanceId) {
+                    mGattChar.setValue(value);
+                    Log.i("Found Characteristic to write. instanceId: "
+                        + Integer.toString(characteristicInstanceId)
+                        + " UUID: " + mGattChar.getUuid().toString());
+                    return bluetoothGatt.writeCharacteristic(mGattChar);
+                }
+            }
+        }
+        Log.e("Failed to find Characteristic with instanceId: " + Integer.toString(
+            characteristicInstanceId));
+        return false;
+    }
+
+    /**
+     * Writes the requested characteristic in which write is not permitted. For conformance tests
+     * only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Writes the requested characteristic from the associated remote "
+            + "device by instance id.")
+    public boolean gattClientModifyAccessAndWriteCharacteristicByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "characteristicInstanceId") Integer characteristicInstanceId,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            List<BluetoothGattCharacteristic> charList = mGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic mGattChar : charList) {
+                if (mGattChar.getInstanceId() == characteristicInstanceId) {
+                    Log.i("Found Characteristic to write. instanceId: "
+                        + Integer.toString(characteristicInstanceId)
+                        + " UUID: " + mGattChar.getUuid().toString());
+                    BluetoothGattCharacteristic modChar = new BluetoothGattCharacteristic(
+                        mGattChar.getUuid(), 0x08, 0x10);
+                    modChar.setInstanceId(mGattChar.getInstanceId());
+                    mGattService.addCharacteristic(modChar);
+                    modChar.setValue(value);
+                    return bluetoothGatt.writeCharacteristic(modChar);
+                }
+            }
+        }
+        Log.e("Failed to find Characteristic with instanceId: " + Integer.toString(
+            characteristicInstanceId));
+        return false;
+    }
+
+    /**
+     * Writes the requested descriptor in which write is not permitted. For conformance tests only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Writes a Characteristic with an invalid instanceId to each service.")
+    public boolean gattClientWriteInvalidCharacteristicByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "instanceId") Integer instanceId,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            BluetoothGattCharacteristic invalidHandleChar = new BluetoothGattCharacteristic(
+                UUID.fromString("aa7edd5a-4d1d-4f0e-883a-d145616a1630"), 0x08, 0x10);
+            invalidHandleChar.setInstanceId(instanceId);
+            mGattService.addCharacteristic(invalidHandleChar);
+            invalidHandleChar.setValue(value);
+            //todo: this used to be return bluetoothGatt. Retest with and without return
+            bluetoothGatt.writeCharacteristic(invalidHandleChar);
+        }
+        return true;
+    }
+
+    /**
+     * Writes the requested characteristic in which write is not permitted. For conformance tests
+     * only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Read the requested characteristic from the associated remote "
+            + "device by instance id.")
+    public boolean gattClientModifyAccessAndReadCharacteristicByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "characteristicInstanceId") Integer characteristicInstanceId)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            List<BluetoothGattCharacteristic> charList = mGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic mGattChar : charList) {
+                if (mGattChar.getInstanceId() == characteristicInstanceId) {
+                    Log.i("Found Characteristic to read. instanceId: "
+                        + Integer.toString(characteristicInstanceId)
+                        + " UUID: " + mGattChar.getUuid().toString());
+                    BluetoothGattCharacteristic modChar = new BluetoothGattCharacteristic(
+                        mGattChar.getUuid(), 0x02, 0x01);
+                    modChar.setInstanceId(mGattChar.getInstanceId());
+                    mGattService.addCharacteristic(modChar);
+                    return bluetoothGatt.readCharacteristic(modChar);
+                }
+            }
+        }
+        Log.e("Failed to find Characteristic with instanceId: " + Integer.toString(
+            characteristicInstanceId));
+        return false;
+    }
+
+    /**
+     * Writes the requested descriptor in which write is not permitted. For conformance tests only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Read a Characteristic with an invalid instanceId to each service.")
+    public boolean gattClientReadInvalidCharacteristicByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "characteristicInstanceId") Integer characteristicInstanceId)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            BluetoothGattCharacteristic invalidHandleChar = new BluetoothGattCharacteristic(
+                UUID.fromString("aa7edd5a-4d1d-4f0e-883a-d145616a1630"), 0x02, 0x01);
+            invalidHandleChar.setInstanceId(characteristicInstanceId);
+            mGattService.addCharacteristic(invalidHandleChar);
+            bluetoothGatt.readCharacteristic(invalidHandleChar);
+        }
+        return true;
+    }
+
+    /**
+     * Writes the requested descriptor in which write is not permitted. For conformance tests
+     * only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Writes the requested descriptor from the associated remote "
+            + "device by instance id.")
+    public boolean gattClientModifyAccessAndWriteDescriptorByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "descriptorInstanceId") Integer descriptorInstanceId,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            List<BluetoothGattCharacteristic> charList = mGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic mGattChar : charList) {
+                for (BluetoothGattDescriptor mGattDesc : mGattChar.getDescriptors()) {
+                    if (mGattDesc.getInstanceId() == descriptorInstanceId) {
+                        Log.i("Found Descriptor to write. instanceId: "
+                            + Integer.toString(descriptorInstanceId)
+                            + " UUID: " + mGattChar.getUuid().toString());
+                        BluetoothGattDescriptor modDesc = new BluetoothGattDescriptor(
+                            mGattDesc.getUuid(), 0x10);
+                        modDesc.setInstanceId(descriptorInstanceId);
+                        mGattChar.addDescriptor(modDesc);
+                        modDesc.setValue(value);
+                        return bluetoothGatt.writeDescriptor(modDesc);
+                    }
+                }
+            }
+        }
+        Log.e("Failed to find Descriptor with instanceId: " + Integer.toString(
+            descriptorInstanceId));
+        return false;
+    }
+
+    /**
+     * Writes the requested descriptor in which write is not permitted. For conformance tests only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Writes a Characteristic with an invalid instanceId to each service.")
+    public boolean gattClientWriteInvalidDescriptorByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "instanceId") Integer instanceId,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            for (BluetoothGattCharacteristic mGattChar : mGattService.getCharacteristics()) {
+                BluetoothGattDescriptor invalidHandleDesc = new BluetoothGattDescriptor(
+                    UUID.fromString("aa7edd5a-4d1d-4f0e-883a-d145616a1630"), 0x10);
+                invalidHandleDesc.setInstanceId(instanceId);
+                mGattChar.addDescriptor(invalidHandleDesc);
+                invalidHandleDesc.setValue(value);
+                bluetoothGatt.writeDescriptor(invalidHandleDesc);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Writes the requested descriptor in which write is not permitted. For conformance tests
+     * only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Read the requested descriptor from the associated remote "
+            + "device by instance id.")
+    public boolean gattClientModifyAccessAndReadDescriptorByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "descriptorInstanceId") Integer descriptorInstanceId)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            List<BluetoothGattCharacteristic> charList = mGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic mGattChar : charList) {
+                for (BluetoothGattDescriptor mGattDesc : mGattChar.getDescriptors()) {
+                    if (mGattDesc.getInstanceId() == descriptorInstanceId) {
+                        Log.i("Found Descriptor to read. instanceId: "
+                            + Integer.toString(descriptorInstanceId)
+                            + " UUID: " + mGattDesc.getUuid().toString());
+                        BluetoothGattDescriptor modDesc = new BluetoothGattDescriptor(
+                            mGattDesc.getUuid(), 0x01);
+                        modDesc.setInstanceId(descriptorInstanceId);
+                        mGattChar.addDescriptor(modDesc);
+                        return bluetoothGatt.readDescriptor(modDesc);
+                    }
+                }
+            }
+        }
+        Log.e("Failed to find Descriptor with instanceId: " + Integer.toString(
+            descriptorInstanceId));
+        return false;
+    }
+
+    /**
+     * Writes the requested descriptor in which write is not permitted. For conformance tests only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Read a Characteristic with an invalid instanceId to each service.")
+    public boolean gattClientReadInvalidDescriptorByInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "descriptorInstanceId") Integer descriptorInstanceId)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            for (BluetoothGattCharacteristic mGattChar : mGattService.getCharacteristics()) {
+                BluetoothGattDescriptor invalidHandleDesc = new BluetoothGattDescriptor(
+                    UUID.fromString("aa7edd5a-4d1d-4f0e-883a-d145616a1630"), 0x01);
+                invalidHandleDesc.setInstanceId(descriptorInstanceId);
+                mGattChar.addDescriptor(invalidHandleDesc);
+                bluetoothGatt.readDescriptor(invalidHandleDesc);
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Writes the requested characteristic in which write is not permitted. For conformance tests
+     * only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Read the requested characteristic from the associated remote "
+            + "device by uuid.")
+    public boolean gattClientModifyAccessAndReadCharacteristicByUuidAndInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "characteristicInstanceId") Integer characteristicInstanceId,
+            @RpcParameter(name = "characteristicUuid") String characteristicUuid)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            List<BluetoothGattCharacteristic> charList = mGattService.getCharacteristics();
+            for (BluetoothGattCharacteristic mGattChar : charList) {
+                if (mGattChar.getUuid().toString().equalsIgnoreCase(characteristicUuid) &&
+                        mGattChar.getInstanceId() == characteristicInstanceId) {
+                    Log.i("Found Characteristic to read. UUID: " + mGattChar.getUuid().toString());
+                    BluetoothGattCharacteristic modChar = new BluetoothGattCharacteristic(
+                        mGattChar.getUuid(), 0x02, 0x01);
+                    modChar.setInstanceId(characteristicInstanceId);
+                    mGattService.addCharacteristic(modChar);
+                    bluetoothGatt.readCharacteristic(modChar);
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Writes the requested descriptor in which write is not permitted. For conformance tests only.
+     *
+     * @param gattIndex the BluetoothGatt server accociated with the device
+     * @param discoveredServiceListIndex the index returned from the discovered services callback
+     * @param descriptorInstanceId the integer instance id of the Characteristic to write to
+     * @param value the value to write to the characteristic
+     * @return true, if the read operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Read a Characteristic with an invalid Uuid to each service.")
+    public boolean gattClientReadInvalidCharacteristicByUuidAndInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "characteristicUuid") String characteristicUuid)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        for (BluetoothGattService mGattService : gattServiceList) {
+            BluetoothGattCharacteristic invalidHandleChar = new BluetoothGattCharacteristic(
+                UUID.fromString(characteristicUuid), 0x02, 0x01);
+            mGattService.addCharacteristic(invalidHandleChar);
+            bluetoothGatt.readCharacteristic(invalidHandleChar);
+        }
+        return true;
+    }
+
+    /**
      * /** Reads the value for a given descriptor from the associated remote device
      *
+     * @deprecated Use {@link #gattClientReadDescriptorByIndex(
+     * gattIndex, discoveredServiceListIndex, serviceIndex, characteristicIndex, descriptorIndex)}
+     * instead.
      * @param gattIndex - the gatt index to use
      * @param discoveredServiceListIndex - the discvered serivice list index
      * @param serviceIndex - the servce index of the discoveredServiceListIndex
@@ -442,6 +1042,7 @@ public class GattClientFacade extends RpcReceiver {
      * @return
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Reads the value for a given descriptor from the associated remote device")
     public boolean gattClientReadDescriptor(
             @RpcParameter(name = "gattIndex") Integer gattIndex,
@@ -475,9 +1076,57 @@ public class GattClientFacade extends RpcReceiver {
         return bluetoothGatt.readDescriptor(gattDescriptor);
     }
 
-        /**
+
+    /**
+     * /** Reads the value for a given descriptor from the associated remote device
+     *
+     * @param gattIndex - the gatt index to use
+     * @param discoveredServiceListIndex - the discvered serivice list index
+     * @param serviceIndex - the servce index of the discoveredServiceListIndex
+     * @param characteristicIndex - the characteristic index
+     * @param descriptorIndex - the descriptor index to read
+     * @return
+     * @throws Exception
+     */
+    @Rpc(description = "Reads the value for a given descriptor from the associated remote device")
+    public boolean gattClientReadDescriptorByIndex(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex,
+            @RpcParameter(name = "descriptorIndex") Integer descriptorIndex)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = gattServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex " + characteristicIndex);
+        }
+        BluetoothGattCharacteristic gattCharacteristic = charList.get(characteristicIndex);
+        List<BluetoothGattDescriptor> descList = gattCharacteristic.getDescriptors();
+        if (descList.get(descriptorIndex) == null) {
+            throw new Exception("Invalid descriptorIndex " + descriptorIndex);
+        }
+        return bluetoothGatt.readDescriptor(descList.get(descriptorIndex));
+    }
+
+    /**
      * Write the value of a given descriptor to the associated remote device
      *
+     * @deprecated Use {@link #gattClientWriteDescriptorByIndex(
+     * gattIndex, discoveredServiceListIndex, serviceIndex, characteristicIndex, descriptorIndex)}
+     * instead.
      * @param index the bluetooth gatt index
      * @param serviceIndex the service index to write to
      * @param characteristicUuid the uuid where the descriptor lives
@@ -485,6 +1134,7 @@ public class GattClientFacade extends RpcReceiver {
      * @return true, if the write operation was initiated successfully
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Write the value of a given descriptor to the associated remote device")
     public boolean gattClientWriteDescriptor(
             @RpcParameter(name = "gattIndex") Integer gattIndex,
@@ -519,7 +1169,54 @@ public class GattClientFacade extends RpcReceiver {
     }
 
     /**
+     * Write the value of a given descriptor to the associated remote device
+     *
+     * @param index the bluetooth gatt index
+     * @param serviceIndex the service index to write to
+     * @param characteristicIndex the characteristic index to write to
+     * @param descriptorIndex the descriptor index to write to
+     * @return true, if the write operation was initiated successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Write the value of a given descriptor to the associated remote device")
+    public boolean gattClientWriteDescriptorByIndex(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex,
+            @RpcParameter(name = "descriptorIndex") Integer descriptorIndex)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = gattServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex " + characteristicIndex);
+        }
+        BluetoothGattCharacteristic gattCharacteristic = charList.get(characteristicIndex);
+        List<BluetoothGattDescriptor> descList = gattCharacteristic.getDescriptors();
+        if (descList.get(descriptorIndex) == null) {
+            throw new Exception("Invalid descriptorIndex " + descriptorIndex);
+        }
+        return bluetoothGatt.writeDescriptor(descList.get(descriptorIndex));
+    }
+
+    /**
      * Write the value to a discovered descriptor.
+     *
+     * @deprecated Use {@link #gattClientDescriptorSetValueByIndex(
+     *  gattIndex, discoveredServiceListIndex, serviceIndex, characteristicIndex, descriptorIndex,
+     *  value)} instead.
      * @param gattIndex - the gatt index to use
      * @param discoveredServiceListIndex - the discovered service list index
      * @param serviceIndex - the service index of the discoveredServiceListIndex
@@ -529,6 +1226,7 @@ public class GattClientFacade extends RpcReceiver {
      * @return true is the value was set to the descriptor
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Write the value of a given descriptor to the associated remote device")
     public boolean gattClientDescriptorSetValue(
             @RpcParameter(name = "gattIndex") Integer gattIndex,
@@ -563,14 +1261,64 @@ public class GattClientFacade extends RpcReceiver {
     }
 
     /**
+     * Write the value to a discovered descriptor.
+     *
+     * @param gattIndex - the gatt index to use
+     * @param discoveredServiceListIndex - the discovered service list index
+     * @param serviceIndex - the service index of the discoveredServiceListIndex
+     * @param characteristicIndex - the characteristic index
+     * @param descriptorIndex - the descriptor index to set
+     * @param value - the value to set the descriptor to
+     * @return true is the value was set to the descriptor
+     * @throws Exception
+     */
+    @Rpc(description = "Write the value of a given descriptor to the associated remote device")
+    public boolean gattClientDescriptorSetValueByIndex(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex,
+            @RpcParameter(name = "descriptorIndex") Integer descriptorIndex,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = gattServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex " + characteristicIndex);
+        }
+        BluetoothGattCharacteristic gattCharacteristic = charList.get(characteristicIndex);
+        List<BluetoothGattDescriptor> descList = gattCharacteristic.getDescriptors();
+        if (descList.get(descriptorIndex) == null) {
+            throw new Exception("Invalid descriptorIndex " + descriptorIndex);
+        }
+        return descList.get(descriptorIndex).setValue(value);
+    }
+
+
+    /**
      * Write the value of a given characteristic to the associated remote device
      *
+     * @deprecated Use {@link #gattClientWriteCharacteristicByIndex(
+     *  gattIndex, discoveredServiceListIndex, serviceIndex, characteristicIndex)} instead.
      * @param index the bluetooth gatt index
      * @param serviceIndex the service where the characteristic lives
      * @param characteristicUuid the characteristic uuid to write to
      * @return true, if the write operation was successful
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Write the value of a given characteristic to the associated remote device")
     public boolean gattClientWriteCharacteristic(
             @RpcParameter(name = "gattIndex") Integer gattIndex,
@@ -599,7 +1347,162 @@ public class GattClientFacade extends RpcReceiver {
     }
 
     /**
+     * Write the value of a given characteristic to the associated remote device
+     *
+     * @param index the bluetooth gatt index
+     * @param serviceIndex the service where the characteristic lives
+     * @param characteristicIndex the characteristic index
+     * @return true, if the write operation was successful
+     * @throws Exception
+     */
+    @Rpc(description = "Write the value of a given characteristic to the associated remote device")
+    public boolean gattClientWriteCharacteristicByIndex(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = gattServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex " + characteristicIndex);
+        }
+        return bluetoothGatt.writeCharacteristic(charList.get(characteristicIndex));
+    }
+
+    /**
+     * PTS HELPER... Write the value of a given characteristic to the associated remote device
+     *
+     * @param index the bluetooth gatt index
+     * @param serviceIndex the service where the characteristic lives
+     * @param characteristicIndex the characteristic index
+     * @return true, if the write operation was successful
+     * @throws Exception
+     */
+    @Rpc(description = "Write the value of a given characteristic to the associated remote device")
+    public boolean gattClientReadInvalidCharacteristicInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "instanceId") Integer instanceId)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = gattServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        charList.get(0).setInstanceId(instanceId);
+        return bluetoothGatt.readCharacteristic(charList.get(0));
+    }
+
+    /**
+     * Get the input Characteristic's instance ID.
+     *
+     * @param index the bluetooth gatt index
+     * @param serviceIndex the service where the characteristic lives
+     * @param characteristicIndex the characteristic index
+     * @return true, if the write operation was successful
+     * @throws Exception
+     */
+    @Rpc(description = "Write the value of a given characteristic to the associated remote device")
+    public Integer gattClientGetCharacteristicInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = gattServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex " + characteristicIndex);
+        }
+        return charList.get(characteristicIndex).getInstanceId();
+    }
+
+    /**
+     * Get the input Descriptor's instance ID.
+     *
+     * @param index the bluetooth gatt index
+     * @param serviceIndex the service where the characteristic lives
+     * @param characteristicIndex the characteristic index
+     * @param descriptorIndex the descriptor index
+     * @return true, if the write operation was successful
+     * @throws Exception
+     */
+    @Rpc(description = "Write the value of a given characteristic to the associated remote device")
+    public Integer gattClientGetDescriptorInstanceId(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex,
+            @RpcParameter(name = "descriptorIndex") Integer descriptorIndex)
+            throws Exception {
+        BluetoothGatt bluetoothGatt = mBluetoothGattList.get(gattIndex);
+        if (bluetoothGatt == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> gattServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (gattServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = gattServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex " + characteristicIndex);
+        }
+        BluetoothGattCharacteristic gattCharacteristic = charList.get(characteristicIndex);
+        if (gattCharacteristic == null) {
+            throw new Exception("Invalid characteristicIndex " + serviceIndex);
+        }
+        List<BluetoothGattDescriptor> descList = gattCharacteristic.getDescriptors();
+        if (descList.get(descriptorIndex) == null) {
+            throw new Exception("Invalid descriptorIndex " + descriptorIndex);
+        }
+        return descList.get(descriptorIndex).getInstanceId();
+    }
+
+    /**
      * Write the value to a discovered characteristic.
+     *
+     * @deprecated Use {@link #gattClientCharacteristicSetValueByIndex(
+     *  gattIndex, discoveredServiceListIndex, serviceIndex, characteristicIndex, value)} instead.
      * @param gattIndex - the gatt index to use
      * @param discoveredServiceListIndex - the discovered service list index
      * @param serviceIndex - the service index of the discoveredServiceListIndex
@@ -608,6 +1511,7 @@ public class GattClientFacade extends RpcReceiver {
      * @return true, if the value was set to the characteristic
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Write the value of a given characteristic to the associated remote device")
     public boolean gattClientCharacteristicSetValue(
             @RpcParameter(name = "gattIndex") Integer gattIndex,
@@ -636,7 +1540,49 @@ public class GattClientFacade extends RpcReceiver {
     }
 
     /**
+     * Write the value to a discovered characteristic.
+     *
+     * @param gattIndex - the gatt index to use
+     * @param discoveredServiceListIndex - the discovered service list index
+     * @param serviceIndex - the service index of the discoveredServiceListIndex
+     * @param characteristicIndex - the characteristic index
+     * @param value - the value to set the characteristic to
+     * @return true, if the value was set to the characteristic
+     * @throws Exception
+     */
+    @Rpc(description = "Write the value of a given characteristic to the associated remote device")
+    public boolean gattClientCharacteristicSetValueByIndex(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        if (mBluetoothGattList.get(gattIndex) == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> discoveredServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (discoveredServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = discoveredServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex: " + characteristicIndex);
+        }
+        return charList.get(characteristicIndex).setValue(value);
+    }
+
+    /**
      * Set write type to a discovered characteristic.
+     *
+     * @deprecated Use {@link #gattClientCharacteristicSetWriteTypeByIndex(
+     *  gattIndex, discoveredServiceListIndex, serviceIndex, ccharacteristicUuid, writeType)}
+     * instead.
      * @param gattIndex - the gatt index to use
      * @param discoveredServiceListIndex - the discovered service list index
      * @param serviceIndex - the service index of the discoveredServiceListIndex
@@ -645,6 +1591,7 @@ public class GattClientFacade extends RpcReceiver {
      * @return true, if the value was set to the characteristic
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Set write type of a given characteristic to the associated remote device")
     public boolean gattClientCharacteristicSetWriteType(
             @RpcParameter(name = "gattIndex") Integer gattIndex,
@@ -671,6 +1618,44 @@ public class GattClientFacade extends RpcReceiver {
         }
         gattCharacteristic.setWriteType(writeType);
         return true;
+    }
+
+    /**
+     * Set write type to a discovered characteristic.
+     *
+     * @param gattIndex - the gatt index to use
+     * @param discoveredServiceListIndex - the discovered service list index
+     * @param serviceIndex - the service index of the discoveredServiceListIndex
+     * @param characteristicIndex - the characteristic index
+     * @param writeType - the write type for characteristic
+     * @return true, if the value was set to the characteristic
+     * @throws Exception
+     */
+    @Rpc(description = "Set write type of a given characteristic to the associated remote device")
+    public void gattClientCharacteristicSetWriteTypeByIndex(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex,
+            @RpcParameter(name = "writeType") Integer writeType)
+            throws Exception {
+        if (mBluetoothGattList.get(gattIndex) == null) {
+            throw new Exception("Invalid gattIndex " + gattIndex);
+        }
+        List<BluetoothGattService> discoveredServiceList =
+                mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+        if (discoveredServiceList == null) {
+            throw new Exception("Invalid discoveredServiceListIndex " + discoveredServiceListIndex);
+        }
+        BluetoothGattService gattService = discoveredServiceList.get(serviceIndex);
+        if (gattService == null) {
+            throw new Exception("Invalid serviceIndex " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList = gattService.getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex: " + characteristicIndex);
+        }
+        charList.get(characteristicIndex).setWriteType(writeType);
     }
 
     /**
@@ -730,15 +1715,18 @@ public class GattClientFacade extends RpcReceiver {
         return result;
     }
 
-        /**
+    /**
      * Sets the characteristic notification of a bluetooth gatt
      *
+     * @deprecated Use {@link #gattClientSetCharacteristicNotificationByIndex(
+     *  gattIndex, discoveredServiceListIndex, serviceIndex, characteristicIndex, enable)} instead.
      * @param index the bluetooth gatt index
      * @param characteristicIndex the characteristic index
      * @param enable Enable or disable notifications/indications for a given characteristic
      * @return true, if the requested notification status was set successfully
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Sets the characteristic notification of a bluetooth gatt")
     public boolean gattClientSetCharacteristicNotification(
             @RpcParameter(name = "gattIndex")
@@ -769,6 +1757,50 @@ public class GattClientFacade extends RpcReceiver {
                 }
             } else {
                 throw new Exception("Invalid discoveredServiceListIndex: " + discoveredServiceListIndex);
+            }
+        } else {
+            throw new Exception("Invalid gattIndex input: " + gattIndex);
+        }
+    }
+
+    /**
+     * Sets the characteristic notification of a bluetooth gatt
+     *
+     * @param index the bluetooth gatt index
+     * @param characteristicIndex the characteristic index
+     * @param enable Enable or disable notifications/indications for a given characteristic
+     * @return true, if the requested notification status was set successfully
+     * @throws Exception
+     */
+    @Rpc(description = "Sets the characteristic notification of a bluetooth gatt")
+    public boolean gattClientSetCharacteristicNotificationByIndex(
+            @RpcParameter(name = "gattIndex") Integer gattIndex,
+            @RpcParameter(name = "discoveredServiceListIndex") Integer discoveredServiceListIndex,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex,
+            @RpcParameter(name = "enable") Boolean enable)
+            throws Exception {
+        if (mBluetoothGattList.get(gattIndex) != null) {
+            if (mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex) != null) {
+                List<BluetoothGattService> discoveredServiceList =
+                        mBluetoothGattDiscoveredServicesList.get(discoveredServiceListIndex);
+                if (discoveredServiceList.get(serviceIndex) != null) {
+                    List<BluetoothGattCharacteristic> charList =
+                            discoveredServiceList.get(serviceIndex).getCharacteristics();
+                    if (charList.get(characteristicIndex) != null) {
+                        return mBluetoothGattList
+                                .get(gattIndex)
+                                .setCharacteristicNotification(charList.get(characteristicIndex),
+                                    enable);
+                    } else {
+                        throw new Exception("Invalid characteristicIndex: " + characteristicIndex);
+                    }
+                } else {
+                    throw new Exception("Invalid serviceIndex " + serviceIndex);
+                }
+            } else {
+                throw new Exception(
+                    "Invalid discoveredServiceListIndex: " + discoveredServiceListIndex);
             }
         } else {
             throw new Exception("Invalid gattIndex input: " + gattIndex);
@@ -853,8 +1885,11 @@ public class GattClientFacade extends RpcReceiver {
         }
     }
 
-        /**
+    /**
      * Get discovered descriptor uuids from the pheripheral device.
+     *
+     * @deprecated Use {@link #gattClientGetDiscoveredDescriptorUuidsByIndex(
+     *  index, serviceIndex, characteristicIndex)} instead.
      * @param index the discovered services list index
      * @param serviceIndex the service index of the discovered services list
      * @param characteristicUuid the characteristicUuid to select from the
@@ -862,6 +1897,7 @@ public class GattClientFacade extends RpcReceiver {
      * @return the list of descriptor uuids
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Get Bluetooth Gatt Services")
     public ArrayList<String> gattClientGetDiscoveredDescriptorUuids (
             @RpcParameter(name = "index")
@@ -895,6 +1931,42 @@ public class GattClientFacade extends RpcReceiver {
             throw new Exception("Invalid index input:"
                     + index);
         }
+    }
+
+    /**
+     * Get discovered descriptor uuids from the pheripheral device.
+     *
+     * @param index the discovered services list index
+     * @param serviceIndex the service index of the discovered services list
+     * @param characteristicIndex the characteristicIndex to select from the discovered service
+     *       which contains the list of descriptors.
+     * @return the list of descriptor uuids
+     * @throws Exception
+     */
+    @Rpc(description = "Get Bluetooth Gatt Services")
+    public ArrayList<String> gattClientGetDiscoveredDescriptorUuidsByIndex(
+            @RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "characteristicIndex") Integer characteristicIndex)
+            throws Exception {
+        if (mBluetoothGattDiscoveredServicesList.get(index) == null) {
+            throw new Exception("Invalid index: " + index);
+        }
+        if (mBluetoothGattDiscoveredServicesList.get(index).get(serviceIndex) == null) {
+            throw new Exception("Invalid serviceIndex: " + serviceIndex);
+        }
+        List<BluetoothGattCharacteristic> charList =
+                mBluetoothGattDiscoveredServicesList.get(index).get(
+                    serviceIndex).getCharacteristics();
+        if (charList.get(characteristicIndex) == null) {
+            throw new Exception("Invalid characteristicIndex: " + characteristicIndex);
+        }
+        List<BluetoothGattDescriptor> descList = charList.get(characteristicIndex).getDescriptors();
+        ArrayList<String> uuidList = new ArrayList<String>();
+        for (BluetoothGattDescriptor mDesc : descList) {
+            uuidList.add(mDesc.getUuid().toString());
+        }
+        return uuidList;
     }
 
     private class myBluetoothGattCallback extends BluetoothGattCallback {
