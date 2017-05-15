@@ -37,6 +37,7 @@ import com.googlecode.android_scripting.facade.bluetooth.BluetoothHfpClientFacad
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothHidFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothHspFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothLeAdvertiseFacade;
+import com.googlecode.android_scripting.facade.bluetooth.BluetoothLeAdvertisingSetFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothLeScanFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothMapClientFacade;
 import com.googlecode.android_scripting.facade.bluetooth.BluetoothMapFacade;
@@ -152,6 +153,7 @@ public class FacadeConfiguration {
             sFacadeClassList.add(BluetoothPbapClientFacade.class);
             sFacadeClassList.add(NsdManagerFacade.class);
             sFacadeClassList.add(BluetoothMapClientFacade.class);
+            sFacadeClassList.add(BluetoothLeAdvertisingSetFacade.class);
         }
 
         for (Class<? extends RpcReceiver> recieverClass : sFacadeClassList) {
