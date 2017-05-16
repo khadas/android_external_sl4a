@@ -37,6 +37,7 @@ import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -185,30 +186,24 @@ public class GattServerFacade extends RpcReceiver {
         if (gattServer == null) {
             throw new Exception("Invalid gattServerIndex: " + Integer.toString(gattServerIndex));
         }
-        List<BluetoothDevice> connectedDevices = mGattServerDiscoveredDevicesList.get(
-                gattServerIndex);
-        if (connectedDevices == null) {
-            throw new Exception(
-                    "Connected device list empty for gattServerIndex:" + Integer.toString(
-                        gattServerIndex));
-        }
+        List<BluetoothDevice> connectedDevices =
+                mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT_SERVER);
         BluetoothDevice bluetoothDevice = connectedDevices.get(bluetoothDeviceIndex);
-        if (bluetoothDevice == null) {
-            throw new Exception(
-                    "Invalid bluetoothDeviceIndex: " + Integer.toString(bluetoothDeviceIndex));
-        }
         gattServer.sendResponse(bluetoothDevice, requestId, status, offset, value);
     }
 
     /**
      * Notify that characteristic was changed
      *
+     * @deprecated Use {@link #gattServerNotifyCharacteristicChangedByInstanceId(
+     *  gattServerIndex, bluetoothDeviceIndex, instanceId, confirm)} instead.
      * @param gattServerIndex the gatt server index
      * @param bluetoothDeviceIndex the remotely connected bluetooth device
      * @param characteristicIndex characteristic index
      * @param confirm shall we expect confirmation
      * @throws Exception
      */
+    @Deprecated
     @Rpc(description = "Notify that characteristic was changed.")
     public void gattServerNotifyCharacteristicChanged(
             @RpcParameter(name = "gattServerIndex") Integer gattServerIndex,
@@ -220,8 +215,8 @@ public class GattServerFacade extends RpcReceiver {
         if (gattServer == null) {
             throw new Exception("Invalid gattServerIndex: " + Integer.toString(gattServerIndex));
         }
-        List<BluetoothDevice> connectedDevices = mGattServerDiscoveredDevicesList.get(
-                gattServerIndex);
+        List<BluetoothDevice> connectedDevices =
+                mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT_SERVER);
         if (connectedDevices == null) {
             throw new Exception(
                     "Connected device list empty for gattServerIndex:" + Integer.toString(
@@ -241,6 +236,49 @@ public class GattServerFacade extends RpcReceiver {
         }
 
         gattServer.notifyCharacteristicChanged(bluetoothDevice, bluetoothCharacteristic, confirm);
+    }
+
+    /**
+     * Notify that characteristic was changed
+     *
+     * @param gattServerIndex the gatt server index
+     * @param bluetoothDeviceIndex the remotely connected bluetooth device
+     * @param characteristicIndex characteristic index
+     * @param confirm shall we expect confirmation
+     * @throws Exception
+     */
+    @Rpc(description = "Notify that characteristic was changed by Instance Id.")
+    public void gattServerNotifyCharacteristicChangedByInstanceId(
+            @RpcParameter(name = "gattServerIndex") Integer gattServerIndex,
+            @RpcParameter(name = "bluetoothDeviceIndex") Integer bluetoothDeviceIndex,
+            @RpcParameter(name = "instanceId") Integer instanceId,
+            @RpcParameter(name = "confirm") Boolean confirm) throws Exception {
+
+        BluetoothGattServer gattServer = mBluetoothGattServerList.get(gattServerIndex);
+        if (gattServer == null) {
+            throw new Exception("Invalid gattServerIndex: " + Integer.toString(gattServerIndex));
+        }
+        List<BluetoothDevice> connectedDevices =
+                mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT_SERVER);
+        if (connectedDevices == null) {
+            throw new Exception(
+                    "Connected device list empty for gattServerIndex:" + Integer.toString(
+                        gattServerIndex));
+        }
+        BluetoothDevice bluetoothDevice = connectedDevices.get(bluetoothDeviceIndex);
+        if (bluetoothDevice == null) {
+            throw new Exception(
+                    "Invalid bluetoothDeviceIndex: " + Integer.toString(bluetoothDeviceIndex));
+        }
+
+        for (BluetoothGattCharacteristic mGattChar : mCharacteristicList.values()) {
+            if (mGattChar.getInstanceId() == instanceId) {
+                        Log.i("Found Characteristic to get value. instanceId: "
+                        + Integer.toString(instanceId)
+                        + " UUID: " + mGattChar.getUuid().toString());
+                gattServer.notifyCharacteristicChanged(bluetoothDevice, mGattChar, confirm);
+            }
+        }
     }
 
     /**
@@ -348,6 +386,115 @@ public class GattServerFacade extends RpcReceiver {
     }
 
     /**
+     * Read the current transmitter PHY and receiver PHY of the connection.
+     *
+     * @param gattServerIndex the bluetooth gatt index
+     * @throws Exception
+     */
+    @Rpc(description = "Read PHY")
+    public void gattServerReadPhy(
+            @RpcParameter(name = "gattServerIndex") Integer gattServerIndex,
+            @RpcParameter(name = "bluetoothDeviceIndex") Integer bluetoothDeviceIndex)
+                throws Exception {
+        BluetoothGattServer gattServer = mBluetoothGattServerList.get(gattServerIndex);
+        if (gattServer == null) {
+            throw new Exception("Invalid gattServerIndex: " + Integer.toString(gattServerIndex));
+        }
+        List<BluetoothDevice> connectedDevices = mGattServerDiscoveredDevicesList.get(
+                gattServerIndex);
+        if (connectedDevices == null) {
+            throw new Exception(
+                    "Connected device list empty for gattServerIndex:" + Integer.toString(
+                        gattServerIndex));
+        }
+        BluetoothDevice bluetoothDevice = connectedDevices.get(bluetoothDeviceIndex);
+        if (bluetoothDevice == null) {
+            throw new Exception(
+                    "Invalid bluetoothDeviceIndex: " + Integer.toString(bluetoothDeviceIndex));
+        }
+
+        if (mBluetoothGattServerList.get(gattServerIndex) != null) {
+            mBluetoothGattServerList.get(gattServerIndex).readPhy(bluetoothDevice);
+        } else {
+            throw new Exception("Invalid index input:" + gattServerIndex);
+        }
+    }
+
+    /**
+     * Set the preferred connection PHY.
+     *
+     * @param gattServerIndex the bluetooth gatt index
+     * @throws Exception
+     */
+    @Rpc(description = "Set the preferred connection PHY")
+    public void gattServerSetPreferredPhy(
+            @RpcParameter(name = "gattServerIndex") Integer gattServerIndex,
+            @RpcParameter(name = "bluetoothDeviceIndex") Integer bluetoothDeviceIndex,
+            @RpcParameter(name = "txPhy") Integer txPhy,
+            @RpcParameter(name = "rxPhy") Integer rxPhy,
+            @RpcParameter(name = "txPhy") Integer phyOptions) throws Exception {
+        BluetoothGattServer gattServer = mBluetoothGattServerList.get(gattServerIndex);
+        if (gattServer == null) {
+            throw new Exception("Invalid gattServerIndex: " + Integer.toString(gattServerIndex));
+        }
+        List<BluetoothDevice> connectedDevices = mGattServerDiscoveredDevicesList.get(
+                gattServerIndex);
+        if (connectedDevices == null) {
+            throw new Exception(
+                    "Connected device list empty for gattServerIndex:" + Integer.toString(
+                        gattServerIndex));
+        }
+        BluetoothDevice bluetoothDevice = connectedDevices.get(bluetoothDeviceIndex);
+        if (bluetoothDevice == null) {
+            throw new Exception(
+                    "Invalid bluetoothDeviceIndex: " + Integer.toString(bluetoothDeviceIndex));
+        }
+
+        if (mBluetoothGattServerList.get(gattServerIndex) != null) {
+            mBluetoothGattServerList.get(gattServerIndex)
+                .setPreferredPhy(bluetoothDevice, txPhy, rxPhy, phyOptions);
+        } else {
+            throw new Exception("Invalid index input:" + gattServerIndex);
+        }
+    }
+
+    /**
+     * Get GATT Server UUID by characteristic index
+     *
+     * @param charIndex of the characteristic
+     * @return String Uuid
+     * @throws Exception
+     */
+    @Rpc(description = "Get UUID of the input characteristic")
+    public String gattServerGetCharacteristicUuid(
+            @RpcParameter(name = "charIndex") Integer charIndex)
+            throws Exception {
+        BluetoothGattCharacteristic gattChar = mCharacteristicList.get(charIndex);
+        if (gattChar == null) {
+            throw new Exception("Invalid index input: " + charIndex);
+        }
+        return gattChar.getUuid().toString();
+    }
+
+    /**
+     * Get GATT Server UUID by characteristic index
+     *
+     * @param charIndex of the characteristic
+     * @return Integer instanceId
+     * @throws Exception
+     */
+    @Rpc(description = "Get instanceId of the input characteristic")
+    public Integer gattServerGetCharacteristicInstanceId(
+            @RpcParameter(name = "charIndex") Integer charIndex)
+            throws Exception {
+        BluetoothGattCharacteristic gattChar = mCharacteristicList.get(charIndex);
+        if (gattChar == null) {
+            throw new Exception("Invalid index input: " + charIndex);
+        }
+        return gattChar.getInstanceId();
+    }
+
+    /**
      * Get the service from an input UUID
      *
      * @param index the bluetooth gatt index
@@ -432,15 +579,318 @@ public class GattServerFacade extends RpcReceiver {
     /**
      * Set value to a bluetooth gatt characteristic
      *
+     * @deprecated Use {@link #gattServerCharacteristicSetValueByInstanceId(
+     * instanceId, value)} instead.
+     * @param index the bluetooth gatt characteristic
+     * @param value value
+     * @throws Exception
+     */
+    @Deprecated
+    @Rpc(description = "Set byte value to a Characteristic")
+    public void gattServerCharacteristicSetValue(@RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "value") byte[] value) throws Exception {
+        if (mCharacteristicList.get(index) != null) {
+            mCharacteristicList.get(index).setValue(value);
+            } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Set value to a bluetooth gatt characteristic by instance id
+     *
+     * @param index the bluetooth gatt characteristic by instance id
+     * @param value value
+     * @throws Exception
+     */
+    @Rpc(description = "Set byte value to a Characteristic by instance id")
+    public boolean gattServerCharacteristicSetValueByInstanceId(
+            @RpcParameter(name = "instanceId") Integer instanceId,
+            @RpcParameter(name = "value") byte[] value) throws Exception {
+        for (BluetoothGattCharacteristic mGattChar : mCharacteristicList.values()) {
+            //test this to be sure
+            if (mGattChar.getInstanceId() == instanceId) {
+                return mGattChar.setValue(value);
+            }
+        }
+        throw new Exception("Cannot find instance ID:" + instanceId);
+    }
+
+    /**
+     * Set value to a bluetooth gatt characteristic
+     *
+     * @param index the bluetooth gatt characteristic
+     * @param value value
+     * @throws Exception
+     */
+    @Rpc(description = "Set Characteristic Byte Value")
+    public boolean gattServerCharacteristicSetByteValue(@RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "value") byte[] value) throws Exception {
+        if (mCharacteristicList.get(index) != null) {
+            return mCharacteristicList.get(index).setValue(value);
+        } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Set value to a bluetooth gatt descriptor
+     *
+     * @param index the bluetooth gatt descriptor
+     * @param value byte[] value to set
+     * @throws Exception
+     */
+    @Rpc(description = "Set Characteristic Byte Value")
+    public boolean gattServerDescriptorSetByteValue(
+            @RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "value") byte[] value) throws Exception {
+        if (mDescriptorList.get(index) != null) {
+            return mDescriptorList.get(index).setValue(value);
+        } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Get Read value by instance ID
+     *
+     * @param instanceId of the Characteristic of the Descriptor to get the value of
+     * @throws Exception
+     */
+    @Rpc(description = "Returns the read value of a matching instanceId")
+    public byte[] gattServerGetReadValueByInstanceId(
+            @RpcParameter(name = "instanceId") Integer instanceId)
+            throws Exception {
+        for (BluetoothGattCharacteristic mGattChar : mCharacteristicList.values()) {
+            if (mGattChar.getInstanceId() == instanceId) {
+                        Log.i("Found Characteristic to get value. instanceId: "
+                        + Integer.toString(instanceId)
+                        + " UUID: " + mGattChar.getUuid().toString());
+                return mGattChar.getValue();
+            }
+            List<BluetoothGattDescriptor> descList = mGattChar.getDescriptors();
+            for (BluetoothGattDescriptor mGattDesc : descList) {
+                if (mGattDesc.getInstanceId() == instanceId) {
+                    Log.i("Found Descriptor to get value. instanceId: "
+                        + Integer.toString(instanceId)
+                        + " UUID: " + mGattDesc.getUuid().toString());
+                    return mGattDesc.getValue();
+                }
+            }
+        }
+        throw new Exception("Cannot find instance ID:" + instanceId);
+    }
+
+    /**
+     * Set value by instance ID
+     *
+     * @param instanceId of the Characteristic of the Descriptor to get the value of
+     * @value value set bytearray value
+     * @throws Exception
+     */
+    @Rpc(description = "Sets the value of a Characteristic or Descriptor by instance id")
+    public boolean gattServerSetByteArrayValueByInstanceId(
+            @RpcParameter(name = "instanceId") Integer instanceId,
+            @RpcParameter(name = "value") byte[] value)
+            throws Exception {
+        for (BluetoothGattCharacteristic mGattChar : mCharacteristicList.values()) {
+            if (mGattChar.getInstanceId() == instanceId) {
+                        Log.i("Found Characteristic to get value. instanceId: "
+                        + Integer.toString(instanceId)
+                        + " UUID: " + mGattChar.getUuid().toString());
+                return mGattChar.setValue(value);
+            }
+            List<BluetoothGattDescriptor> descList = mGattChar.getDescriptors();
+            for (BluetoothGattDescriptor mGattDesc : descList) {
+                if (mGattDesc.getInstanceId() == instanceId) {
+                    Log.i("Found Descriptor to set value. instanceId: "
+                        + Integer.toString(instanceId)
+                        + " UUID: " + mGattDesc.getUuid().toString());
+                    return mGattDesc.setValue(value);
+                }
+            }
+        }
+        throw new Exception("Cannot find instance ID:" + instanceId);
+    }
+
+    /**
+     * Set BluetoothGattService instance ID to input value
+     *
+     * @param index the bluetooth gatt service
+     * @param instanceId instanceId
+     * @throws Exception
+     */
+    @Rpc(description = "GATT Server Set Instance ID of Service")
+    public void gattServerServiceSetInstanceId(
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "instanceId") Integer instanceId) throws Exception {
+        if (mGattServiceList.get(serviceIndex) == null) {
+            throw new Exception("Invalid serviceIndex input:" + Integer.toString(serviceIndex));
+        }
+        Class bluetoothGattServiceClass = Class.forName("android.bluetooth.BluetoothGattService");
+        Method setInstanceIdMethod = bluetoothGattServiceClass.getMethod(
+            "setInstanceId", int.class);
+        setInstanceIdMethod.invoke(mGattServiceList.get(serviceIndex), instanceId);
+    }
+
+    /**
+     * GATT Server set the number of handles to reserve for this service
+     *
+     * @param index the bluetooth gatt service
+     * @param numHandles number of handles to reserve
+     * @throws Exception
+     */
+    @Rpc(description = "GATT Server Set the number of handles to reserve for this service")
+    public void gattServerServiceSetHandlesToReserve(
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "numHandles") Integer numHandles) throws Exception {
+        if (mGattServiceList.get(serviceIndex) == null) {
+            throw new Exception("Invalid serviceIndex input:" + Integer.toString(serviceIndex));
+        }
+        Class bluetoothGattServiceClass = Class.forName("android.bluetooth.BluetoothGattService");
+        Method setHandlesMethod = bluetoothGattServiceClass.getMethod(
+            "setHandles", int.class);
+        setHandlesMethod.invoke(mGattServiceList.get(serviceIndex), numHandles);
+    }
+
+    /**
+     * GATT Server set service advertise perferred value
+     *
+     * @param index the bluetooth gatt service
+     * @param isPreferred if advertisement is preferred or not
+     * @throws Exception
+     */
+    @Rpc(description = "GATT Server Set the number of handles to reserve for this service")
+    public void gattServerServiceIsAdvertisePreferred(
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "isPreferred") Boolean isPreferred) throws Exception {
+        if (mGattServiceList.get(serviceIndex) == null) {
+            throw new Exception("Invalid serviceIndex input:" + Integer.toString(serviceIndex));
+        }
+        Class bluetoothGattServiceClass = Class.forName("android.bluetooth.BluetoothGattService");
+        Method setAdvertisePreferredMethod = bluetoothGattServiceClass.getMethod(
+            "setAdvertisePrefereed", boolean.class);
+        setAdvertisePreferredMethod.invoke(mGattServiceList.get(serviceIndex), isPreferred);
+    }
+
+    /**
+     * GATT Service add included service.
+     *
+     * @param index the bluetooth gatt service
+     * @param serviceIncludedIndex index of the service to be included
+     * @throws Exception
+     */
+    @Rpc(description = "Gatt Server add included service")
+    public void gattServerServiceaddIncludedService(
+            @RpcParameter(name = "serviceIndex") Integer serviceIndex,
+            @RpcParameter(name = "serviceIncludedIndex") Integer serviceIncludedIndex)
+            throws Exception {
+        if (mGattServiceList.get(serviceIndex) == null) {
+            throw new Exception("Invalid serviceIndex input:" + Integer.toString(serviceIndex));
+        }
+        if (mGattServiceList.get(serviceIncludedIndex) == null) {
+            throw new Exception("Invalid serviceIncludedIndex input:" + Integer.toString(
+                serviceIncludedIndex));
+        }
+        Class bluetoothGattServiceClass = Class.forName("android.bluetooth.BluetoothGattService");
+        Method addIncludedServiceMethod = bluetoothGattServiceClass.getMethod(
+            "addIncludedService", BluetoothGattService.class);
+        addIncludedServiceMethod.invoke(
+            mGattServiceList.get(serviceIndex), mGattServiceList.get(serviceIncludedIndex));
+    }
+
+    /**
+     * Set value to a bluetooth gatt characteristic
+     *
      * @param index the bluetooth gatt characteristic
      * @param value value
      * @throws Exception
      */
     @Rpc(description = "add descriptor to blutooth gatt characteristic")
-    public void gattServerCharacteristicSetValue(@RpcParameter(name = "index") Integer index,
-            @RpcParameter(name = "value") byte[] value) throws Exception {
+    public boolean gattServerCharacteristicSetStringValue(
+            @RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "value") String value) throws Exception {
         if (mCharacteristicList.get(index) != null) {
-            mCharacteristicList.get(index).setValue(value);
+            return mCharacteristicList.get(index).setValue(value);
+        } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Set value to a bluetooth gatt characteristic
+     *
+     * @param index the bluetooth gatt characteristic
+     * @param value value
+     * @throws Exception
+     */
+    @Rpc(description = "add descriptor to blutooth gatt characteristic")
+    public boolean gattServerCharacteristicSetIntValue(@RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "value") Integer value,
+            @RpcParameter(name = "type") Integer type,
+            @RpcParameter(name = "offset") Integer offset)
+            throws Exception {
+        if (mCharacteristicList.get(index) != null) {
+            return mCharacteristicList.get(index).setValue(value, type, offset);
+        } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Set the instance id of the Bluetooth Gatt Characteristic
+     *
+     * @param index the bluetooth gatt characteristic
+     * @param instanceId the instanceId to set
+     * @throws Exception
+     */
+    @Rpc(description = "Set Caracteristic Instance id")
+    public void gattServerCharacteristicSetInstanceId(@RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "instanceId") Integer instanceId)
+            throws Exception {
+        if (mCharacteristicList.get(index) != null) {
+            mCharacteristicList.get(index).setInstanceId(instanceId);
+        } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Set the instance id of the Bluetooth Gatt Descriptor
+     *
+     * @param index the bluetooth gatt descriptor
+     * @param instanceId the instanceId to set
+     * @throws Exception
+     */
+    @Rpc(description = "Set Descriptor Instance Id")
+    public void gattServerDescriptorSetInstanceId(@RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "instanceId") Integer instanceId)
+            throws Exception {
+        if (mDescriptorList.get(index) != null) {
+            Class bluetoothGattDescriptorClass = Class.forName(
+                "android.bluetooth.BluetoothGattDescriptor");
+            Method setInstanceIdMethod = bluetoothGattDescriptorClass.getMethod(
+                "setInstanceId", int.class);
+            setInstanceIdMethod.invoke(
+                mDescriptorList.get(index), instanceId);
+        } else {
+            throw new Exception("Invalid index input:" + index);
+        }
+    }
+
+    /**
+     * Get the instance id of the Bluetooth Gatt Characteristic
+     *
+     * @param index the bluetooth gatt characteristic
+     * @throws Exception
+     * @return the instance id of the characteristic
+     */
+    @Rpc(description = "add descriptor to blutooth gatt characteristic")
+    public int gattServerCharacteristicGetInstanceId(
+            @RpcParameter(name = "index") Integer index)
+            throws Exception {
+        if (mCharacteristicList.get(index) != null) {
+            return mCharacteristicList.get(index).getInstanceId();
         } else {
             throw new Exception("Invalid index input:" + index);
         }
@@ -613,6 +1063,43 @@ public class GattServerFacade extends RpcReceiver {
             mEventFacade.postEvent(mEventType + mIndex + "onMtuChanged", mResults.clone());
             mResults.clear();
         }
+
+        @Override
+        public void onPhyRead(BluetoothDevice device, int txPhy, int rxPhy, int status) {
+            Log.d("gatt_server change onPhyRead " + mEventType + " " + mIndex);
+            mResults.putParcelable("BluetoothDevice", device);
+            mResults.putInt("TxPhy", txPhy);
+            mResults.putInt("RxPhy", rxPhy);
+            mResults.putInt("Status", status);
+            mEventFacade.postEvent(mEventType + mIndex + "onPhyRead", mResults.clone());
+            mResults.clear();
+        }
+
+        @Override
+        public void onPhyUpdate(BluetoothDevice device, int txPhy, int rxPhy, int status) {
+            Log.d("gatt_server change onPhyUpdate " + mEventType + " " + mIndex);
+            mResults.putParcelable("BluetoothDevice", device);
+            mResults.putInt("TxPhy", txPhy);
+            mResults.putInt("RxPhy", rxPhy);
+            mResults.putInt("Status", status);
+            mEventFacade.postEvent(mEventType + mIndex + "onPhyUpdate", mResults.clone());
+            mResults.clear();
+        }
+
+        public void onConnectionUpdated(BluetoothDevice device, int interval, int latency,
+                                            int timeout, int status) {
+            Log.d("gatt_server change onConnecitonUpdated " + mEventType + " " + mIndex
+                    + ", interval: " + interval + ", latency: " + latency
+                    + ", timeout: " + timeout + ", status: " + status);
+
+            mResults.putInt("Status", status);
+            mResults.putInt("Interval", interval);
+            mResults.putInt("Latency", latency);
+            mResults.putInt("Timeout", timeout);
+            mEventFacade.postEvent(mEventType + mIndex + "onConnectionUpdated", mResults.clone());
+            mResults.clear();
+        }
+
     }
 
     @Override
