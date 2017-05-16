@@ -149,6 +149,28 @@ public class GattClientFacade extends RpcReceiver {
     }
 
     /**
+     * Trigger discovering of services by UUID on the BluetoothGatt object
+     *
+     * @param index The BluetoothGatt object index
+     * @param uuid service UUID
+     * @return true, if the remote service discovery has been started
+     * @throws Exception
+     */
+    @Rpc(description = "Trigger discovering of services on the BluetoothGatt object")
+    public boolean gattClientDiscoverServiceByUuid(@RpcParameter(name = "index") Integer index,
+            @RpcParameter(name = "uuid") String uuid) throws Exception {
+        BluetoothGatt gatt = mBluetoothGattList.get(index);
+        if (gatt != null) {
+            Object ret = gatt.getClass().getMethod("discoverServiceByUuid", UUID.class)
+                            .invoke(gatt, UUID.fromString(uuid));
+            return (Boolean) ret;
+        } else {
+            throw new Exception("Invalid index input:" + Integer.toString(index));
+        }
+    }
+
+
+    /**
      * Get the services from the BluetoothGatt object
      *
      * @param index The BluetoothGatt object index
