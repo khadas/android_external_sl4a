@@ -196,6 +196,13 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         return constructor;
     }
 
+    private static String getStringOrNull(JSONObject j, String name) throws JSONException {
+        if (j.isNull(name)) {
+            return null;
+        }
+        return j.getString(name);
+    }
+
     private static ConfigRequest getConfigRequest(JSONObject j) throws JSONException {
         if (j == null) {
             return null;
@@ -250,13 +257,14 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         PublishConfig.Builder builder = new PublishConfig.Builder();
 
         if (j.has("ServiceName")) {
-            builder.setServiceName(j.getString("ServiceName"));
+            builder.setServiceName(getStringOrNull(j, "ServiceName"));
         }
 
         if (j.has("ServiceSpecificInfo")) {
-            String ssi = j.getString("ServiceSpecificInfo");
-            byte[] bytes = ssi.getBytes();
-            builder.setServiceSpecificInfo(bytes);
+            String ssi = getStringOrNull(j, "ServiceSpecificInfo");
+            if (ssi != null) {
+                builder.setServiceSpecificInfo(ssi.getBytes());
+            }
         }
 
         if (j.has("MatchFilter")) {
@@ -266,7 +274,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     new TlvBufferUtils.TlvIterable(0, 1, constructor.getArray()).toList());
         }
 
-        if (j.has("MatchFilterList")) {
+        if (!j.isNull("MatchFilterList")) {
             builder.setMatchFilter(getMatchFilter(j.getJSONArray("MatchFilterList")));
         }
 
@@ -295,8 +303,10 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         if (j.has("ServiceSpecificInfo")) {
-            String ssi = j.getString("ServiceSpecificInfo");
-            builder.setServiceSpecificInfo(ssi.getBytes());
+            String ssi = getStringOrNull(j, "ServiceSpecificInfo");
+            if (ssi != null) {
+                builder.setServiceSpecificInfo(ssi.getBytes());
+            }
         }
 
         if (j.has("MatchFilter")) {
@@ -306,7 +316,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     new TlvBufferUtils.TlvIterable(0, 1, constructor.getArray()).toList());
         }
 
-        if (j.has("MatchFilterList")) {
+        if (!j.isNull("MatchFilterList")) {
             builder.setMatchFilter(getMatchFilter(j.getJSONArray("MatchFilterList")));
         }
 
