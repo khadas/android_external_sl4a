@@ -420,7 +420,11 @@ public class WifiAwareManagerFacade extends RpcReceiver {
     @Rpc(description = "Publish.")
     public Integer wifiAwarePublish(
             @RpcParameter(name = "clientId", description = "The client ID returned when a connection was created") Integer clientId,
-            @RpcParameter(name = "publishConfig") JSONObject publishConfig)
+            @RpcParameter(name = "publishConfig") JSONObject publishConfig,
+            @RpcParameter(name = "useIdInCallbackEvent",
+            description =
+                "Specifies whether the callback events should be decorated with session Id")
+                @RpcOptional Boolean useIdInCallbackEvent)
             throws RemoteException, JSONException {
         synchronized (mLock) {
             WifiAwareSession session = mSessions.get(clientId);
@@ -429,10 +433,13 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                         "Calling WifiAwarePublish before session (client ID " + clientId
                                 + ") is ready/or already disconnected");
             }
+            boolean useIdInCallbackEventName =
+                (useIdInCallbackEvent != null) ? useIdInCallbackEvent : false;
 
             int discoverySessionId = getNextDiscoverySessionId();
             session.publish(getPublishConfig(publishConfig),
-                    new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId), null);
+                new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId,
+                    useIdInCallbackEventName), null);
             return discoverySessionId;
         }
     }
@@ -462,7 +469,11 @@ public class WifiAwareManagerFacade extends RpcReceiver {
     @Rpc(description = "Subscribe.")
     public Integer wifiAwareSubscribe(
             @RpcParameter(name = "clientId", description = "The client ID returned when a connection was created") Integer clientId,
-            @RpcParameter(name = "subscribeConfig") JSONObject subscribeConfig)
+            @RpcParameter(name = "subscribeConfig") JSONObject subscribeConfig,
+            @RpcParameter(name = "useIdInCallbackEvent",
+                description =
+                "Specifies whether the callback events should be decorated with session Id")
+                @RpcOptional Boolean useIdInCallbackEvent)
             throws RemoteException, JSONException {
         synchronized (mLock) {
             WifiAwareSession session = mSessions.get(clientId);
@@ -471,10 +482,13 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                         "Calling WifiAwareSubscribe before session (client ID " + clientId
                                 + ") is ready/or already disconnected");
             }
+            boolean useIdInCallbackEventName =
+                (useIdInCallbackEvent != null) ? useIdInCallbackEvent : false;
 
             int discoverySessionId = getNextDiscoverySessionId();
             session.subscribe(getSubscribeConfig(subscribeConfig),
-                    new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId), null);
+                new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId,
+                    useIdInCallbackEventName), null);
             return discoverySessionId;
         }
     }
@@ -667,11 +681,23 @@ public class WifiAwareManagerFacade extends RpcReceiver {
     private class AwareDiscoverySessionCallbackPostsEvents extends
             DiscoverySessionCallback {
         private int mDiscoverySessionId;
+        private boolean mUseIdInCallbackEventName;
         private long mCreateTimestampMs;
 
-        public AwareDiscoverySessionCallbackPostsEvents(int discoverySessionId) {
+        public AwareDiscoverySessionCallbackPostsEvents(int discoverySessionId,
+                boolean useIdInCallbackEventName) {
             mDiscoverySessionId = discoverySessionId;
+            mUseIdInCallbackEventName = useIdInCallbackEventName;
             mCreateTimestampMs = System.currentTimeMillis();
+        }
+
+        private void postEvent(String eventName, Bundle results) {
+            String finalEventName = eventName;
+            if (mUseIdInCallbackEventName) {
+                finalEventName += "_" + mDiscoverySessionId;
+            }
+
+            mEventFacade.postEvent(finalEventName, results);
         }
 
         @Override
@@ -684,7 +710,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
             mResults.putLong("timestampMs", System.currentTimeMillis());
-            mEventFacade.postEvent("WifiAwareSessionOnPublishStarted", mResults);
+            postEvent("WifiAwareSessionOnPublishStarted", mResults);
         }
 
         @Override
@@ -697,28 +723,28 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putLong("latencyMs", System.currentTimeMillis() - mCreateTimestampMs);
             mResults.putLong("timestampMs", System.currentTimeMillis());
-            mEventFacade.postEvent("WifiAwareSessionOnSubscribeStarted", mResults);
+            postEvent("WifiAwareSessionOnSubscribeStarted", mResults);
         }
 
         @Override
         public void onSessionConfigUpdated() {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mEventFacade.postEvent("WifiAwareSessionOnSessionConfigUpdated", mResults);
+            postEvent("WifiAwareSessionOnSessionConfigUpdated", mResults);
         }
 
         @Override
         public void onSessionConfigFailed() {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mEventFacade.postEvent("WifiAwareSessionOnSessionConfigFailed", mResults);
+            postEvent("WifiAwareSessionOnSessionConfigFailed", mResults);
         }
 
         @Override
         public void onSessionTerminated() {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
-            mEventFacade.postEvent("WifiAwareSessionOnSessionTerminated", mResults);
+            postEvent("WifiAwareSessionOnSessionTerminated", mResults);
         }
 
         @Override
@@ -736,7 +762,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             }
             mResults.putStringArrayList("matchFilterList", matchFilterStrings);
             mResults.putLong("timestampMs", System.currentTimeMillis());
-            mEventFacade.postEvent("WifiAwareSessionOnServiceDiscovered", mResults);
+            postEvent("WifiAwareSessionOnServiceDiscovered", mResults);
         }
 
         @Override
@@ -752,7 +778,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     mMessageStartTime.remove(messageId);
                 }
             }
-            mEventFacade.postEvent("WifiAwareSessionOnMessageSent", mResults);
+            postEvent("WifiAwareSessionOnMessageSent", mResults);
         }
 
         @Override
@@ -768,7 +794,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     mMessageStartTime.remove(messageId);
                 }
             }
-            mEventFacade.postEvent("WifiAwareSessionOnMessageSendFailed", mResults);
+            postEvent("WifiAwareSessionOnMessageSendFailed", mResults);
         }
 
         @Override
@@ -778,7 +804,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             mResults.putInt("peerId", peerHandle.peerId);
             mResults.putByteArray("message", message); // TODO: base64
             mResults.putString("messageAsString", new String(message));
-            mEventFacade.postEvent("WifiAwareSessionOnMessageReceived", mResults);
+            postEvent("WifiAwareSessionOnMessageReceived", mResults);
         }
     }
 
