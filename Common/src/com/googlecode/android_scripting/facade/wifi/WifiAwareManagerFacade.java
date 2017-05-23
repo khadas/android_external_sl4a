@@ -47,6 +47,8 @@ import android.util.SparseArray;
 
 import com.android.internal.annotations.GuardedBy;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import libcore.util.HexEncoding;
 
 import com.googlecode.android_scripting.facade.EventFacade;
@@ -194,6 +196,13 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         return constructor;
     }
 
+    private static String getStringOrNull(JSONObject j, String name) throws JSONException {
+        if (j.isNull(name)) {
+            return null;
+        }
+        return j.getString(name);
+    }
+
     private static ConfigRequest getConfigRequest(JSONObject j) throws JSONException {
         if (j == null) {
             return null;
@@ -232,6 +241,14 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         return builder.build();
     }
 
+    private static List<byte[]> getMatchFilter(JSONArray ja) throws JSONException {
+        List<byte[]> la = new ArrayList<>();
+        for (int i = 0; i < ja.length(); ++i) {
+            la.add(Base64.decode(ja.getString(i).getBytes(StandardCharsets.UTF_8), Base64.DEFAULT));
+        }
+        return la;
+    }
+
     private static PublishConfig getPublishConfig(JSONObject j) throws JSONException {
         if (j == null) {
             return null;
@@ -240,13 +257,14 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         PublishConfig.Builder builder = new PublishConfig.Builder();
 
         if (j.has("ServiceName")) {
-            builder.setServiceName(j.getString("ServiceName"));
+            builder.setServiceName(getStringOrNull(j, "ServiceName"));
         }
 
         if (j.has("ServiceSpecificInfo")) {
-            String ssi = j.getString("ServiceSpecificInfo");
-            byte[] bytes = ssi.getBytes();
-            builder.setServiceSpecificInfo(bytes);
+            String ssi = getStringOrNull(j, "ServiceSpecificInfo");
+            if (ssi != null) {
+                builder.setServiceSpecificInfo(ssi.getBytes());
+            }
         }
 
         if (j.has("MatchFilter")) {
@@ -256,8 +274,12 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     new TlvBufferUtils.TlvIterable(0, 1, constructor.getArray()).toList());
         }
 
-        if (j.has("PublishType")) {
-            builder.setPublishType(j.getInt("PublishType"));
+        if (!j.isNull("MatchFilterList")) {
+            builder.setMatchFilter(getMatchFilter(j.getJSONArray("MatchFilterList")));
+        }
+
+        if (j.has("DiscoveryType")) {
+            builder.setPublishType(j.getInt("DiscoveryType"));
         }
         if (j.has("TtlSec")) {
             builder.setTtlSec(j.getInt("TtlSec"));
@@ -281,8 +303,10 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         if (j.has("ServiceSpecificInfo")) {
-            String ssi = j.getString("ServiceSpecificInfo");
-            builder.setServiceSpecificInfo(ssi.getBytes());
+            String ssi = getStringOrNull(j, "ServiceSpecificInfo");
+            if (ssi != null) {
+                builder.setServiceSpecificInfo(ssi.getBytes());
+            }
         }
 
         if (j.has("MatchFilter")) {
@@ -292,8 +316,12 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     new TlvBufferUtils.TlvIterable(0, 1, constructor.getArray()).toList());
         }
 
-        if (j.has("SubscribeType")) {
-            builder.setSubscribeType(j.getInt("SubscribeType"));
+        if (!j.isNull("MatchFilterList")) {
+            builder.setMatchFilter(getMatchFilter(j.getJSONArray("MatchFilterList")));
+        }
+
+        if (j.has("DiscoveryType")) {
+            builder.setSubscribeType(j.getInt("DiscoveryType"));
         }
         if (j.has("TtlSec")) {
             builder.setTtlSec(j.getInt("TtlSec"));
@@ -409,6 +437,28 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
     }
 
+    @Rpc(description = "Update Publish.")
+    public void wifiAwareUpdatePublish(
+        @RpcParameter(name = "sessionId", description = "The discovery session ID")
+            Integer sessionId,
+        @RpcParameter(name = "publishConfig", description = "Publish configuration")
+            JSONObject publishConfig)
+        throws RemoteException, JSONException {
+        synchronized (mLock) {
+            DiscoverySession session = mDiscoverySessions.get(sessionId);
+            if (session == null) {
+                throw new IllegalStateException(
+                    "Calling wifiAwareUpdatePublish before session (session ID "
+                        + sessionId + ") is ready");
+            }
+            if (!(session instanceof PublishDiscoverySession)) {
+                throw new IllegalArgumentException(
+                    "Calling wifiAwareUpdatePublish with a subscribe session ID");
+            }
+            ((PublishDiscoverySession) session).updatePublish(getPublishConfig(publishConfig));
+        }
+    }
+
     @Rpc(description = "Subscribe.")
     public Integer wifiAwareSubscribe(
             @RpcParameter(name = "clientId", description = "The client ID returned when a connection was created") Integer clientId,
@@ -426,6 +476,29 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             session.subscribe(getSubscribeConfig(subscribeConfig),
                     new AwareDiscoverySessionCallbackPostsEvents(discoverySessionId), null);
             return discoverySessionId;
+        }
+    }
+
+    @Rpc(description = "Update Subscribe.")
+    public void wifiAwareUpdateSubscribe(
+        @RpcParameter(name = "sessionId", description = "The discovery session ID")
+            Integer sessionId,
+        @RpcParameter(name = "subscribeConfig", description = "Subscribe configuration")
+            JSONObject subscribeConfig)
+        throws RemoteException, JSONException {
+        synchronized (mLock) {
+            DiscoverySession session = mDiscoverySessions.get(sessionId);
+            if (session == null) {
+                throw new IllegalStateException(
+                    "Calling wifiAwareUpdateSubscribe before session (session ID "
+                        + sessionId + ") is ready");
+            }
+            if (!(session instanceof SubscribeDiscoverySession)) {
+                throw new IllegalArgumentException(
+                    "Calling wifiAwareUpdateSubscribe with a publish session ID");
+            }
+            ((SubscribeDiscoverySession) session)
+                .updateSubscribe(getSubscribeConfig(subscribeConfig));
         }
     }
 
@@ -654,9 +727,14 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
             mResults.putInt("peerId", peerHandle.peerId);
-            mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo); // TODO: base64
+            mResults.putByteArray("serviceSpecificInfo", serviceSpecificInfo);
             mResults.putByteArray("matchFilter", new TlvBufferUtils.TlvConstructor(0,
-                    1).allocateAndPut(matchFilter).getArray()); // TODO: base64
+                    1).allocateAndPut(matchFilter).getArray());
+            ArrayList<String> matchFilterStrings = new ArrayList<>(matchFilter.size());
+            for (byte[] be: matchFilter) {
+                matchFilterStrings.add(Base64.encodeToString(be, Base64.DEFAULT));
+            }
+            mResults.putStringArrayList("matchFilterList", matchFilterStrings);
             mResults.putLong("timestampMs", System.currentTimeMillis());
             mEventFacade.postEvent("WifiAwareSessionOnServiceDiscovered", mResults);
         }
