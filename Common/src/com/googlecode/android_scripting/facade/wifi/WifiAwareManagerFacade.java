@@ -284,7 +284,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (j.has("TtlSec")) {
             builder.setTtlSec(j.getInt("TtlSec"));
         }
-        if (j.has("EnableTerminateNotification")) {
+        if (j.has("TerminateNotificationEnabled")) {
             builder.setTerminateNotificationEnabled(j.getBoolean("TerminateNotificationEnabled"));
         }
 
@@ -326,7 +326,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (j.has("TtlSec")) {
             builder.setTtlSec(j.getInt("TtlSec"));
         }
-        if (j.has("EnableTerminateNotification")) {
+        if (j.has("TerminateNotificationEnabled")) {
             builder.setTerminateNotificationEnabled(j.getBoolean("TerminateNotificationEnabled"));
         }
 
