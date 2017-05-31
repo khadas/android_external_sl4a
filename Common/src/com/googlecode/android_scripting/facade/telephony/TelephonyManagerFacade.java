@@ -23,6 +23,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.net.TrafficStats;
 import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.provider.Telephony;
@@ -1093,6 +1094,56 @@ public class TelephonyManagerFacade extends RpcReceiver {
     public String telephonyGetDataConnectionState() {
         return TelephonyUtils.getDataConnectionStateString(
             mTelephonyManager.getDataState());
+    }
+
+    @Rpc(description = "Returns Total Rx Bytes.")
+    public long getTotalRxBytes() {
+        return TrafficStats.getTotalRxBytes();
+    }
+
+    @Rpc(description = "Returns Total Tx Bytes.")
+    public long getTotalTxBytes() {
+        return TrafficStats.getTotalTxBytes();
+    }
+
+    @Rpc(description = "Returns Total Rx Packets.")
+    public long getTotalRxPackets() {
+        return TrafficStats.getTotalRxPackets();
+    }
+
+    @Rpc(description = "Returns Total Tx Packets.")
+    public long getTotalTxPackets() {
+        return TrafficStats.getTotalTxPackets();
+    }
+
+    @Rpc(description = "Returns Mobile Network Rx Bytes.")
+    public long getMobileRxBytes() {
+        return TrafficStats.getMobileRxBytes();
+    }
+
+    @Rpc(description = "Returns Mobile Network Tx Bytes.")
+    public long getMobileTxBytes() {
+        return TrafficStats.getMobileTxBytes();
+    }
+
+    @Rpc(description = "Returns Mobile Network Packets.")
+    public long getMobileRxPackets() {
+        return TrafficStats.getMobileRxPackets();
+    }
+
+    @Rpc(description = "Returns Mobile Network Packets.")
+    public long getMobileTxPackets() {
+        return TrafficStats.getMobileTxPackets();
+    }
+
+    @Rpc(description = "Returns a given UID Rx Bytes.")
+    public long getUidRxBytes(int uid) {
+        return TrafficStats.getUidRxBytes(uid);
+    }
+
+    @Rpc(description = "Returns a given UID Rx Packets.")
+    public long getUidRxPackets(int uid) {
+        return TrafficStats.getUidRxPackets(uid);
     }
 
     @Rpc(description = "Enables or Disables Video Calling()")
