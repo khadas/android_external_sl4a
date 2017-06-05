@@ -42,6 +42,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.Process;
 import android.os.RemoteException;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.SparseArray;
 
@@ -600,7 +601,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
         if (session == null) {
             throw new IllegalStateException(
-                    "Calling WifiAwareStartRanging before session (session ID "
+                    "Calling wifiAwareCreateNetworkSpecifier before session (session ID "
                             + sessionId + " is ready");
         }
         NetworkSpecifier ns = null;
@@ -608,10 +609,46 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (peerId != null) {
             peerHandle = new PeerHandle(peerId);
         }
-        if (passphrase == null || passphrase.length() == 0) {
+        if (TextUtils.isEmpty(passphrase)) {
             ns = session.createNetworkSpecifierOpen(peerHandle);
         } else {
             ns = session.createNetworkSpecifierPassphrase(peerHandle, passphrase);
+        }
+
+        return getJsonString((WifiAwareNetworkSpecifier) ns);
+    }
+
+    @Rpc(description = "Create a network specifier to be used when specifying an OOB Aware network request")
+    public String wifiAwareCreateNetworkSpecifierOob(
+            @RpcParameter(name = "clientId",
+                    description = "The client ID")
+                    Integer clientId,
+            @RpcParameter(name = "role", description = "The role: INITIATOR(0), RESPONDER(1)")
+                    Integer role,
+            @RpcParameter(name = "peerMac",
+                    description = "The MAC address of the peer")
+                    String peerMac,
+            @RpcParameter(name = "passphrase",
+                    description = "Passphrase of the data-path. Optional, can be empty/null.")
+            @RpcOptional String passphrase) throws JSONException {
+        WifiAwareSession session;
+        synchronized (mLock) {
+            session = mSessions.get(clientId);
+        }
+        if (session == null) {
+            throw new IllegalStateException(
+                    "Calling wifiAwareCreateNetworkSpecifierOob before session (client ID "
+                            + clientId + " is ready");
+        }
+        NetworkSpecifier ns = null;
+        byte[] peerMacBytes = null;
+        if (peerMac != null) {
+            peerMacBytes = HexEncoding.decode(peerMac.toCharArray(), false);
+        }
+        if (TextUtils.isEmpty(passphrase)) {
+            ns = session.createNetworkSpecifierOpen(role, peerMacBytes);
+        } else {
+            ns = session.createNetworkSpecifierPassphrase(role, peerMacBytes, passphrase);
         }
 
         return getJsonString((WifiAwareNetworkSpecifier) ns);
