@@ -593,8 +593,13 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     Integer sessionId,
             @RpcParameter(name = "peerId", description = "The ID of the peer (obtained through OnMatch or OnMessageReceived")
                     Integer peerId,
-            @RpcParameter(name = "passphrase", description = "Passphrase of the data-path. Optional, can be empty/null.")
-            @RpcOptional String passphrase) throws JSONException {
+            @RpcParameter(name = "passphrase",
+                description = "Passphrase of the data-path. Optional, can be empty/null.")
+                @RpcOptional String passphrase,
+            @RpcParameter(name = "pmk",
+                description = "PMK of the data-path (base64 encoded). Optional, can be empty/null.")
+                @RpcOptional String pmk)
+        throws JSONException {
         DiscoverySession session;
         synchronized (mLock) {
             session = mDiscoverySessions.get(sessionId);
@@ -609,10 +614,13 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (peerId != null) {
             peerHandle = new PeerHandle(peerId);
         }
-        if (TextUtils.isEmpty(passphrase)) {
+        if (TextUtils.isEmpty(passphrase) && TextUtils.isEmpty(pmk)) {
             ns = session.createNetworkSpecifierOpen(peerHandle);
-        } else {
+        } else if (TextUtils.isEmpty(pmk)){
             ns = session.createNetworkSpecifierPassphrase(peerHandle, passphrase);
+        } else {
+            byte[] pmkDecoded = Base64.decode(pmk, Base64.DEFAULT);
+            ns = session.createNetworkSpecifierPmk(peerHandle, pmkDecoded);
         }
 
         return getJsonString((WifiAwareNetworkSpecifier) ns);
@@ -630,7 +638,10 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     String peerMac,
             @RpcParameter(name = "passphrase",
                     description = "Passphrase of the data-path. Optional, can be empty/null.")
-            @RpcOptional String passphrase) throws JSONException {
+            @RpcOptional String passphrase,
+            @RpcParameter(name = "pmk",
+                    description = "PMK of the data-path (base64). Optional, can be empty/null.")
+            @RpcOptional String pmk) throws JSONException {
         WifiAwareSession session;
         synchronized (mLock) {
             session = mSessions.get(clientId);
@@ -645,10 +656,13 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (peerMac != null) {
             peerMacBytes = HexEncoding.decode(peerMac.toCharArray(), false);
         }
-        if (TextUtils.isEmpty(passphrase)) {
+        if (TextUtils.isEmpty(passphrase) && TextUtils.isEmpty(pmk)) {
             ns = session.createNetworkSpecifierOpen(role, peerMacBytes);
-        } else {
+        } else if (TextUtils.isEmpty(pmk)){
             ns = session.createNetworkSpecifierPassphrase(role, peerMacBytes, passphrase);
+        } else {
+            byte[] pmkDecoded = Base64.decode(pmk, Base64.DEFAULT);
+            ns = session.createNetworkSpecifierPmk(role, peerMacBytes, pmkDecoded);
         }
 
         return getJsonString((WifiAwareNetworkSpecifier) ns);
