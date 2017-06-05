@@ -604,10 +604,14 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                             + sessionId + " is ready");
         }
         NetworkSpecifier ns = null;
+        PeerHandle peerHandle = null;
+        if (peerId != null) {
+            peerHandle = new PeerHandle(peerId);
+        }
         if (passphrase == null || passphrase.length() == 0) {
-            ns = session.createNetworkSpecifierOpen(new PeerHandle(peerId));
+            ns = session.createNetworkSpecifierOpen(peerHandle);
         } else {
-            ns = session.createNetworkSpecifierPassphrase(new PeerHandle(peerId), passphrase);
+            ns = session.createNetworkSpecifierPassphrase(peerHandle, passphrase);
         }
 
         return getJsonString((WifiAwareNetworkSpecifier) ns);
