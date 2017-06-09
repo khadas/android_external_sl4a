@@ -733,6 +733,8 @@ public class JsonBuilder {
         result.put("mnc", cellidentity.getMnc());
         result.put("cid", cellidentity.getCid());
         result.put("lac", cellidentity.getLac());
+        result.put("bsic", cellidentity.getBsic());
+        result.put("arfcn", cellidentity.getArfcn());
         result.put("signal_strength", signalstrength.getDbm());
         result.put("asulevel", signalstrength.getAsuLevel());
         return result;
