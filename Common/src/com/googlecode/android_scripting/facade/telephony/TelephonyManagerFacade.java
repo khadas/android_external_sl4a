@@ -23,6 +23,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.net.TrafficStats;
 import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.provider.Telephony;
@@ -1095,6 +1096,57 @@ public class TelephonyManagerFacade extends RpcReceiver {
             mTelephonyManager.getDataState());
     }
 
+
+    @Rpc(description = "Returns Total Rx Bytes.")
+    public long getTotalRxBytes() {
+        return TrafficStats.getTotalRxBytes();
+    }
+
+    @Rpc(description = "Returns Total Tx Bytes.")
+    public long getTotalTxBytes() {
+        return TrafficStats.getTotalTxBytes();
+    }
+
+    @Rpc(description = "Returns Total Rx Packets.")
+    public long getTotalRxPackets() {
+        return TrafficStats.getTotalRxPackets();
+    }
+
+    @Rpc(description = "Returns Total Tx Packets.")
+    public long getTotalTxPackets() {
+        return TrafficStats.getTotalTxPackets();
+    }
+
+    @Rpc(description = "Returns Mobile Network Rx Bytes.")
+    public long getMobileRxBytes() {
+        return TrafficStats.getMobileRxBytes();
+    }
+
+    @Rpc(description = "Returns Mobile Network Tx Bytes.")
+    public long getMobileTxBytes() {
+        return TrafficStats.getMobileTxBytes();
+    }
+
+    @Rpc(description = "Returns Mobile Network Packets.")
+    public long getMobileRxPackets() {
+        return TrafficStats.getMobileRxPackets();
+    }
+
+    @Rpc(description = "Returns Mobile Network Packets.")
+    public long getMobileTxPackets() {
+        return TrafficStats.getMobileTxPackets();
+    }
+
+    @Rpc(description = "Returns a given UID Rx Bytes.")
+    public long getUidRxBytes(int uid) {
+        return TrafficStats.getUidRxBytes(uid);
+    }
+
+    @Rpc(description = "Returns a given UID Rx Packets.")
+    public long getUidRxPackets(int uid) {
+        return TrafficStats.getUidRxPackets(uid);
+    }
+
     @Rpc(description = "Enables or Disables Video Calling()")
     public void telephonyEnableVideoCalling(
             @RpcParameter(name = "enable") boolean enable) {
@@ -1190,6 +1242,30 @@ public class TelephonyManagerFacade extends RpcReceiver {
             return Arrays.asList(fplmns);
         }
         return null;
+    }
+
+    /**
+    * Read the value of a NV item.
+    * @param itemId Integer the NV item id to be read.
+    * @return the NV item value String.
+    */
+    @Rpc(description = "Returns the NV item as a String")
+    public String telephonyNvReadItem(
+                   @RpcParameter(name = "itemId") Integer itemId) {
+        return mTelephonyManager.nvReadItem(itemId);
+    }
+
+    /**
+    * Write a value to a NV item.
+    * @param itemId Integer the NV item id to be written.
+    * @param itemValue String the NV item value to be written.
+    * @return true or false for successfully or unsuccessfully writing.
+    */
+    @Rpc(description = "Write the NV item by itemId and String value")
+    public Boolean telephonyNvWriteItem(
+                   @RpcParameter(name = "itemId") Integer itemId,
+                   @RpcParameter(name = "itemValue") String itemValue) {
+        return mTelephonyManager.nvWriteItem(itemId, itemValue);
     }
 
     private StateChangeListener getStateChangeListenerForSubscription(
