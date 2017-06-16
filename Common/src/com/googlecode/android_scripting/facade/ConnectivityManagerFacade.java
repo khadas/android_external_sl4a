@@ -188,11 +188,13 @@ public class ConnectivityManagerFacade extends RpcReceiver {
 
         private int mEvents;
         public String mId;
+        private long mCreateTimestamp;
 
         public NetworkCallback(int events) {
             super();
             mEvents = events;
             mId = this.toString();
+            mCreateTimestamp = System.currentTimeMillis();
         }
 
         public void startListeningForEvents(int events) {
@@ -211,7 +213,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                     new ConnectivityEvents.NetworkCallbackEventBase(
                         mId,
-                        getNetworkCallbackEventString(EVENT_PRECHECK)));
+                        getNetworkCallbackEventString(EVENT_PRECHECK), mCreateTimestamp));
             }
         }
 
@@ -223,7 +225,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                     new ConnectivityEvents.NetworkCallbackEventBase(
                         mId,
-                        getNetworkCallbackEventString(EVENT_AVAILABLE)));
+                        getNetworkCallbackEventString(EVENT_AVAILABLE), mCreateTimestamp));
             }
         }
 
@@ -235,7 +237,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                     new ConnectivityEvents.NetworkCallbackEventOnLosing(
                         mId,
-                        getNetworkCallbackEventString(EVENT_LOSING),
+                        getNetworkCallbackEventString(EVENT_LOSING), mCreateTimestamp,
                         maxMsToLive));
             }
         }
@@ -248,7 +250,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                     new ConnectivityEvents.NetworkCallbackEventBase(
                         mId,
-                        getNetworkCallbackEventString(EVENT_LOST)));
+                        getNetworkCallbackEventString(EVENT_LOST), mCreateTimestamp));
             }
         }
 
@@ -260,7 +262,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                     new ConnectivityEvents.NetworkCallbackEventBase(
                         mId,
-                        getNetworkCallbackEventString(EVENT_UNAVAILABLE)));
+                        getNetworkCallbackEventString(EVENT_UNAVAILABLE), mCreateTimestamp));
             }
         }
 
@@ -274,7 +276,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                     new ConnectivityEvents.NetworkCallbackEventOnCapabilitiesChanged(
                         mId,
-                        getNetworkCallbackEventString(EVENT_CAPABILITIES_CHANGED),
+                        getNetworkCallbackEventString(EVENT_CAPABILITIES_CHANGED), mCreateTimestamp,
                         networkCapabilities.getSignalStrength()));
             }
         }
@@ -287,7 +289,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                     new ConnectivityEvents.NetworkCallbackEventBase(
                         mId,
-                        getNetworkCallbackEventString(EVENT_SUSPENDED)));
+                        getNetworkCallbackEventString(EVENT_SUSPENDED), mCreateTimestamp));
             }
         }
 
@@ -300,6 +302,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                         new ConnectivityEvents.NetworkCallbackEventOnLinkPropertiesChanged(mId,
                                 getNetworkCallbackEventString(EVENT_LINK_PROPERTIES_CHANGED),
+                                mCreateTimestamp,
                                 linkProperties.getInterfaceName()));
             }
         }
@@ -312,7 +315,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                         ConnectivityConstants.EventNetworkCallback,
                     new ConnectivityEvents.NetworkCallbackEventBase(
                         mId,
-                        getNetworkCallbackEventString(EVENT_RESUMED)));
+                        getNetworkCallbackEventString(EVENT_RESUMED), mCreateTimestamp));
             }
         }
     }
