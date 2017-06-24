@@ -48,8 +48,6 @@ import android.util.SparseArray;
 
 import com.android.internal.annotations.GuardedBy;
 
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import libcore.util.HexEncoding;
 
 import com.googlecode.android_scripting.facade.EventFacade;
@@ -63,6 +61,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -170,33 +170,6 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                 passphrase, Process.myUid());
     }
 
-    private static TlvBufferUtils.TlvConstructor getFilterData(JSONObject j) throws JSONException {
-        if (j == null) {
-            return null;
-        }
-
-        TlvBufferUtils.TlvConstructor constructor = new TlvBufferUtils.TlvConstructor(0, 1);
-        constructor.allocate(255);
-
-        if (j.has("int0")) {
-            constructor.putShort(0, (short) j.getInt("int0"));
-        }
-
-        if (j.has("int1")) {
-            constructor.putShort(0, (short) j.getInt("int1"));
-        }
-
-        if (j.has("data0")) {
-            constructor.putString(0, j.getString("data0"));
-        }
-
-        if (j.has("data1")) {
-            constructor.putString(0, j.getString("data1"));
-        }
-
-        return constructor;
-    }
-
     private static String getStringOrNull(JSONObject j, String name) throws JSONException {
         if (j.isNull(name)) {
             return null;
@@ -269,10 +242,11 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         if (j.has("MatchFilter")) {
-            TlvBufferUtils.TlvConstructor constructor = getFilterData(
-                    j.getJSONObject("MatchFilter"));
-            builder.setMatchFilter(
-                    new TlvBufferUtils.TlvIterable(0, 1, constructor.getArray()).toList());
+            byte[] bytes = Base64.decode(
+                    j.getString("MatchFilter").getBytes(StandardCharsets.UTF_8), Base64.DEFAULT);
+            List<byte[]> mf = new TlvBufferUtils.TlvIterable(0, 1, bytes).toList();
+            builder.setMatchFilter(mf);
+
         }
 
         if (!j.isNull("MatchFilterList")) {
@@ -311,10 +285,10 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
 
         if (j.has("MatchFilter")) {
-            TlvBufferUtils.TlvConstructor constructor = getFilterData(
-                    j.getJSONObject("MatchFilter"));
-            builder.setMatchFilter(
-                    new TlvBufferUtils.TlvIterable(0, 1, constructor.getArray()).toList());
+            byte[] bytes = Base64.decode(
+                    j.getString("MatchFilter").getBytes(StandardCharsets.UTF_8), Base64.DEFAULT);
+            List<byte[]> mf = new TlvBufferUtils.TlvIterable(0, 1, bytes).toList();
+            builder.setMatchFilter(mf);
         }
 
         if (!j.isNull("MatchFilterList")) {
