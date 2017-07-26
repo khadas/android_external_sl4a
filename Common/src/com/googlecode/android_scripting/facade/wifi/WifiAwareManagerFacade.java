@@ -21,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.NetworkSpecifier;
 import android.net.wifi.RttManager;
 import android.net.wifi.RttManager.RttResult;
@@ -325,6 +326,11 @@ public class WifiAwareManagerFacade extends RpcReceiver {
     public void shutdown() {
         wifiAwareDestroyAll();
         mService.unregisterReceiver(mStateChangedReceiver);
+    }
+
+    @Rpc(description = "Does the device support the Wi-Fi Aware feature?")
+    public Boolean doesDeviceSupportWifiAwareFeature() {
+        return mService.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE);
     }
 
     @Rpc(description = "Is Aware Usage Enabled?")
