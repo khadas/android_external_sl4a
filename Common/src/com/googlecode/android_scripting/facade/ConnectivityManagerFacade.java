@@ -918,6 +918,15 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         return bucket.getTxBytes() + bucket.getRxBytes();
     }
 
+    @Rpc(description = "Get network stats - received bytes for device")
+    public long connectivityGetRxBytesForDevice(
+          String subscriberId, Long startTime, Long endTime)
+          throws SecurityException, RemoteException {
+        Bucket bucket = mNetStatsManager.querySummaryForDevice(
+              ConnectivityManager.TYPE_MOBILE, subscriberId, startTime, endTime);
+        return bucket.getRxBytes();
+    }
+
     @Rpc(description = "Returns all interfaces on the android deivce")
     public List<NetworkInterface> connectivityGetNetworkInterfaces() {
         List<NetworkInterface> interfaces = null;
