@@ -18,6 +18,7 @@ package com.googlecode.android_scripting.facade.wifi;
 
 import android.app.Service;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.RangingResultCallback;
@@ -66,6 +67,11 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     @Override
     public void shutdown() {
         // empty
+    }
+
+    @Rpc(description = "Does the device support the Wi-Fi RTT feature?")
+    public Boolean doesDeviceSupportWifiRttFeature() {
+        return mService.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_RTT);
     }
 
     /**
