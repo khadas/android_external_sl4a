@@ -19,6 +19,7 @@ package com.googlecode.android_scripting.facade.wifi;
 import android.app.Service;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.RangingResultCallback;
@@ -111,6 +112,33 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         }
     }
 
+    @Rpc(description = "Start ranging to an Aware peer.", returns = "Id of the listener "
+            + "associated with the started ranging.")
+    public Integer wifiRttStartRangingToAwarePeerMac(
+            @RpcParameter(name = "peerMac") String peerMac) {
+        synchronized (mLock) {
+            int id = mNextRangingResultCallbackId++;
+            RangingResultCallback callback = new RangingResultCallbackFacade(id);
+            mMgr.startRanging(new RangingRequest.Builder().addWifiAwarePeer(
+                    HexEncoding.decode(peerMac.toCharArray(), false)).build(), callback, null);
+            return id;
+        }
+    }
+
+    @Rpc(description = "Start ranging to an Aware peer.", returns = "Id of the listener "
+            + "associated with the started ranging.")
+    public Integer wifiRttStartRangingToAwarePeerId(
+            @RpcParameter(name = "peer ID") Integer peerId) {
+        synchronized (mLock) {
+            int id = mNextRangingResultCallbackId++;
+            RangingResultCallback callback = new RangingResultCallbackFacade(id);
+            mMgr.startRanging(
+                    new RangingRequest.Builder().addWifiAwarePeer(new PeerHandle(peerId)).build(),
+                    callback, null);
+            return id;
+        }
+    }
+
     private class RangingResultCallbackFacade extends RangingResultCallback {
         private int mCallbackId;
 
@@ -143,8 +171,14 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         bundle.putInt("distanceStdDevCm", result.getDistanceStdDevCm());
         bundle.putInt("rssi", result.getRssi());
         bundle.putLong("timestamp", result.getRangingTimestamp());
-        bundle.putByteArray("mac", result.getMacAddress());
-        bundle.putString("macAsString", macAddressFromByteArray(result.getMacAddress()));
+        if (result.getPeerHandle() != null) {
+            bundle.putInt("peerId", result.getPeerHandle().peerId);
+        }
+        if (result.getMacAddress() != null) {
+            bundle.putByteArray("mac", result.getMacAddress());
+            bundle.putString("macAsStringBSSID", macAddressFromByteArray(result.getMacAddress()));
+            bundle.putString("macAsString", new String(HexEncoding.encode(result.getMacAddress())));
+        }
         return bundle;
     }
 }
