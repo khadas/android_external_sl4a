@@ -607,12 +607,12 @@ public class JsonBuilder {
             for (ScanResult.InformationElement ie : scanResult.informationElements) {
                 JSONObject infoEle = new JSONObject();
                 infoEle.put("id", ie.id);
-                infoEle.put("bytes", Base64Codec.encodeBase64(ie.bytes).toString());
+                infoEle.put("bytes", Base64Codec.encodeBase64String(ie.bytes));
                 infoEles.put(infoEle);
             }
-            result.put("InfomationElements", infoEles);
+            result.put("InformationElements", infoEles);
         } else {
-            result.put("InfomationElements", null);
+            result.put("InformationElements", null);
         }
         return result;
     }
