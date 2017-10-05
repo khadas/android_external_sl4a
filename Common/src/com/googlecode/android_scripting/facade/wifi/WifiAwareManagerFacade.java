@@ -546,27 +546,6 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         session.sendMessage(new PeerHandle(peerId), messageId, bytes, retryCount);
     }
 
-    @Rpc(description = "Start peer-to-peer Aware ranging")
-    public void wifiAwareStartRanging(
-            @RpcParameter(name = "callbackId") Integer callbackId,
-            @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe") Integer sessionId,
-            @RpcParameter(name = "rttParams", description = "RTT session parameters.") JSONArray rttParams) throws RemoteException, JSONException {
-        DiscoverySession session;
-        synchronized (mLock) {
-            session = mDiscoverySessions.get(sessionId);
-        }
-        if (session == null) {
-            throw new IllegalStateException(
-                    "Calling WifiAwareStartRanging before session (session ID "
-                            + sessionId + " is ready");
-        }
-        RttManager.RttParams[] rParams = new RttManager.RttParams[rttParams.length()];
-        for (int i = 0; i < rttParams.length(); i++) {
-            rParams[i] = WifiRttManagerFacade.parseRttParam(rttParams.getJSONObject(i));
-        }
-        session.startRanging(rParams, new WifiAwareRangingListener(callbackId, sessionId));
-    }
-
     @Rpc(description = "Create a network specifier to be used when specifying a Aware network request")
     public String wifiAwareCreateNetworkSpecifier(
             @RpcParameter(name = "sessionId", description = "The session ID returned when session was created using publish or subscribe")
