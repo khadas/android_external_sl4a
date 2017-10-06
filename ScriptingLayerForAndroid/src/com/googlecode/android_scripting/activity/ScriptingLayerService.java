@@ -101,7 +101,9 @@ public class ScriptingLayerService extends ForegroundService {
     mTerminalManager = new TerminalManager(this);
     mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     mHide = mPreferences.getBoolean(Constants.HIDE_NOTIFY, false);
+  }
 
+  private void createNotificationChannel() {
     CharSequence name = getString(R.string.notification_channel_name);
     String description = getString(R.string.notification_channel_description);
     int importance = NotificationManager.IMPORTANCE_DEFAULT;
@@ -118,6 +120,7 @@ public class ScriptingLayerService extends ForegroundService {
     notificationIntent.setAction(Constants.ACTION_SHOW_RUNNING_SCRIPTS);
     mNotificationPendingIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
 
+    createNotificationChannel();
     Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
     builder.setSmallIcon(R.drawable.sl4a_notification_logo)
            .setTicker(null)
@@ -146,7 +149,7 @@ public class ScriptingLayerService extends ForegroundService {
     builder.setContentTitle("SL4A Service")
            .setContentText(msg)
            .setContentIntent(mNotificationPendingIntent)
-           .setSmallIcon(mNotification.icon, mProcessMap.size())
+           .setSmallIcon(R.drawable.sl4a_notification_logo, mProcessMap.size())
            .setWhen(mNotification.when)
            .setTicker(tickerText);
 
