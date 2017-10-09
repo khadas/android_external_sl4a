@@ -94,19 +94,19 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     }
 
     /**
-     * Start Wi-Fi RTT ranging to an AP using the given scan results. Returns the id associated with
-     * the listener used for ranging. The ranging result event will be decorated with the listener
-     * id.
+     * Start Wi-Fi RTT ranging to an Acccess Point using the given scan results. Returns the id
+     * associated with the listener used for ranging. The ranging result event will be decorated
+     * with the listener id.
      */
-    @Rpc(description = "Start ranging to an AP.", returns = "Id of the listener associated with "
-            + "the started ranging.")
-    public Integer wifiRttStartRangingToAp(
+    @Rpc(description = "Start ranging to an Access Points.", returns = "Id of the listener "
+            + "associated with the started ranging.")
+    public Integer wifiRttStartRangingToAccessPoints(
             @RpcParameter(name = "scanResults") JSONArray scanResults) throws JSONException {
 
         synchronized (mLock) {
             int id = mNextRangingResultCallbackId++;
             RangingResultCallback callback = new RangingResultCallbackFacade(id);
-            mMgr.startRanging(new RangingRequest.Builder().addAps(
+            mMgr.startRanging(new RangingRequest.Builder().addAccessPoints(
                     WifiJsonParser.getScanResults(scanResults)).build(), callback, null);
             return id;
         }
@@ -170,7 +170,7 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         bundle.putInt("distanceCm", result.getDistanceCm());
         bundle.putInt("distanceStdDevCm", result.getDistanceStdDevCm());
         bundle.putInt("rssi", result.getRssi());
-        bundle.putLong("timestamp", result.getRangingTimestamp());
+        bundle.putLong("timestamp", result.getRangingTimestampUs());
         if (result.getPeerHandle() != null) {
             bundle.putInt("peerId", result.getPeerHandle().peerId);
         }
