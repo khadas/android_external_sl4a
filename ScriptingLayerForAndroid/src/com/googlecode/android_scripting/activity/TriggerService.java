@@ -105,8 +105,7 @@ public class TriggerService extends ForegroundService {
   }
 
   protected void createNotificationChannel() {
-    NotificationManager mNotificationManager =
-        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    NotificationManager notificationManager = getNotificationManager();
     CharSequence name = getString(R.string.notification_channel_name);
     String description = getString(R.string.notification_channel_description);
     int importance = NotificationManager.IMPORTANCE_DEFAULT;
@@ -114,7 +113,7 @@ public class TriggerService extends ForegroundService {
     channel.setDescription(description);
     channel.enableLights(false);
     channel.enableVibration(false);
-    mNotificationManager.createNotificationChannel(channel);
+    notificationManager.createNotificationChannel(channel);
   }
 
   /** Returns the notification to display whenever the service is running. */
