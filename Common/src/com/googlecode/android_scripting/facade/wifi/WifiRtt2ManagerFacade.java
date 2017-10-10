@@ -147,8 +147,10 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onRangingFailure() {
-            mEventFacade.postEvent("WifiRttRangingFailure_" + mCallbackId, null);
+        public void onRangingFailure(int status) {
+            Bundle msg = new Bundle();
+            msg.putInt("status", status);
+            mEventFacade.postEvent("WifiRttRangingFailure_" + mCallbackId, msg);
         }
 
         @Override
@@ -167,10 +169,12 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     private static Bundle packRttResult(RangingResult result) {
         Bundle bundle = new Bundle();
         bundle.putInt("status", result.getStatus());
-        bundle.putInt("distanceMm", result.getDistanceMm());
-        bundle.putInt("distanceStdDevMm", result.getDistanceStdDevMm());
-        bundle.putInt("rssi", result.getRssi());
-        bundle.putLong("timestamp", result.getRangingTimestampUs());
+        if (result.getStatus() == RangingResult.STATUS_SUCCESS) { // only valid on SUCCESS
+            bundle.putInt("distanceMm", result.getDistanceMm());
+            bundle.putInt("distanceStdDevMm", result.getDistanceStdDevMm());
+            bundle.putInt("rssi", result.getRssi());
+            bundle.putLong("timestamp", result.getRangingTimestampUs());
+        }
         if (result.getPeerHandle() != null) {
             bundle.putInt("peerId", result.getPeerHandle().peerId);
         }
