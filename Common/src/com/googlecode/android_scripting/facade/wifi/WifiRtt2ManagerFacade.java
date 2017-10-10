@@ -167,8 +167,8 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     private static Bundle packRttResult(RangingResult result) {
         Bundle bundle = new Bundle();
         bundle.putInt("status", result.getStatus());
-        bundle.putInt("distanceCm", result.getDistanceCm());
-        bundle.putInt("distanceStdDevCm", result.getDistanceStdDevCm());
+        bundle.putInt("distanceMm", result.getDistanceMm());
+        bundle.putInt("distanceStdDevMm", result.getDistanceStdDevMm());
         bundle.putInt("rssi", result.getRssi());
         bundle.putLong("timestamp", result.getRangingTimestampUs());
         if (result.getPeerHandle() != null) {
