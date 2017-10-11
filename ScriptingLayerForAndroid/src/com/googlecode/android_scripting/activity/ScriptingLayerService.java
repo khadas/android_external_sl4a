@@ -135,7 +135,7 @@ public class ScriptingLayerService extends ForegroundService {
     builder.setContentTitle("SL4A Service")
            .setContentText(msg)
            .setContentIntent(mNotificationPendingIntent)
-           .setSmallIcon(mNotification.icon, mProcessMap.size())
+           .setSmallIcon(R.drawable.sl4a_notification_logo, mProcessMap.size())
            .setWhen(mNotification.when)
            .setTicker(tickerText);
 
