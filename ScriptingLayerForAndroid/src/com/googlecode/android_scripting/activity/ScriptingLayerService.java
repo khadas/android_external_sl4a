@@ -17,6 +17,7 @@
 package com.googlecode.android_scripting.activity;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -59,6 +60,7 @@ public class ScriptingLayerService extends ForegroundService {
 
   private final IBinder mBinder;
   private final Map<Integer, InterpreterProcess> mProcessMap;
+  private static final String CHANNEL_ID = "scripting_layer_service_channel";
   private final String LOG_TAG = "sl4a";
   private volatile int mModCount = 0;
   private NotificationManager mNotificationManager;
@@ -99,6 +101,15 @@ public class ScriptingLayerService extends ForegroundService {
     mTerminalManager = new TerminalManager(this);
     mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     mHide = mPreferences.getBoolean(Constants.HIDE_NOTIFY, false);
+
+    CharSequence name = getString(R.string.notification_channel_name);
+    String description = getString(R.string.notification_channel_description);
+    int importance = NotificationManager.IMPORTANCE_DEFAULT;
+    NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+    channel.setDescription(description);
+    channel.enableLights(false);
+    channel.enableVibration(false);
+    mNotificationManager.createNotificationChannel(channel);
   }
 
   @Override
@@ -107,7 +118,7 @@ public class ScriptingLayerService extends ForegroundService {
     notificationIntent.setAction(Constants.ACTION_SHOW_RUNNING_SCRIPTS);
     mNotificationPendingIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
 
-    Notification.Builder builder = new Notification.Builder(this);
+    Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
     builder.setSmallIcon(R.drawable.sl4a_notification_logo)
            .setTicker(null)
            .setWhen(System.currentTimeMillis())
@@ -131,7 +142,7 @@ public class ScriptingLayerService extends ForegroundService {
     } else {
       msg = "Tap to view " + Integer.toString(mProcessMap.size()) + " running scripts";
     }
-    Notification.Builder builder = new Notification.Builder(this);
+    Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
     builder.setContentTitle("SL4A Service")
            .setContentText(msg)
            .setContentIntent(mNotificationPendingIntent)
