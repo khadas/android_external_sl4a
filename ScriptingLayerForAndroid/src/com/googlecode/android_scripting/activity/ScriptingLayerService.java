@@ -63,7 +63,6 @@ public class ScriptingLayerService extends ForegroundService {
   private static final String CHANNEL_ID = "scripting_layer_service_channel";
   private final String LOG_TAG = "sl4a";
   private volatile int mModCount = 0;
-  private NotificationManager mNotificationManager;
   private Notification mNotification;
   private PendingIntent mNotificationPendingIntent;
   private InterpreterConfiguration mInterpreterConfiguration;
@@ -96,12 +95,14 @@ public class ScriptingLayerService extends ForegroundService {
   public void onCreate() {
     super.onCreate();
     mInterpreterConfiguration = ((BaseApplication) getApplication()).getInterpreterConfiguration();
-    mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     mRecentlyKilledProcess = new WeakReference<InterpreterProcess>(null);
     mTerminalManager = new TerminalManager(this);
     mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     mHide = mPreferences.getBoolean(Constants.HIDE_NOTIFY, false);
+  }
 
+  private void createNotificationChannel() {
+    NotificationManager notificationManager = getNotificationManager();
     CharSequence name = getString(R.string.notification_channel_name);
     String description = getString(R.string.notification_channel_description);
     int importance = NotificationManager.IMPORTANCE_DEFAULT;
@@ -109,7 +110,7 @@ public class ScriptingLayerService extends ForegroundService {
     channel.setDescription(description);
     channel.enableLights(false);
     channel.enableVibration(false);
-    mNotificationManager.createNotificationChannel(channel);
+    notificationManager.createNotificationChannel(channel);
   }
 
   @Override
@@ -118,6 +119,7 @@ public class ScriptingLayerService extends ForegroundService {
     notificationIntent.setAction(Constants.ACTION_SHOW_RUNNING_SCRIPTS);
     mNotificationPendingIntent = PendingIntent.getService(this, 0, notificationIntent, 0);
 
+    createNotificationChannel();
     Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
     builder.setSmallIcon(R.drawable.sl4a_notification_logo)
            .setTicker(null)
@@ -151,7 +153,7 @@ public class ScriptingLayerService extends ForegroundService {
            .setTicker(tickerText);
 
     mNotification = builder.build();
-    mNotificationManager.notify(NOTIFICATION_ID, mNotification);
+    getNotificationManager().notify(NOTIFICATION_ID, mNotification);
   }
 
   private void startAction(Intent intent, int flags, int startId) {
