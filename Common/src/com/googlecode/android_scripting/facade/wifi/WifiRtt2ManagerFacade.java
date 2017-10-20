@@ -19,6 +19,7 @@ package com.googlecode.android_scripting.facade.wifi;
 import android.app.Service;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.RangingResultCallback;
@@ -93,20 +94,47 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     }
 
     /**
-     * Start Wi-Fi RTT ranging to an AP using the given scan results. Returns the id associated with
-     * the listener used for ranging. The ranging result event will be decorated with the listener
-     * id.
+     * Start Wi-Fi RTT ranging to an Acccess Point using the given scan results. Returns the id
+     * associated with the listener used for ranging. The ranging result event will be decorated
+     * with the listener id.
      */
-    @Rpc(description = "Start ranging to an AP.", returns = "Id of the listener associated with "
-            + "the started ranging.")
-    public Integer wifiRttStartRangingToAp(
+    @Rpc(description = "Start ranging to an Access Points.", returns = "Id of the listener "
+            + "associated with the started ranging.")
+    public Integer wifiRttStartRangingToAccessPoints(
             @RpcParameter(name = "scanResults") JSONArray scanResults) throws JSONException {
 
         synchronized (mLock) {
             int id = mNextRangingResultCallbackId++;
             RangingResultCallback callback = new RangingResultCallbackFacade(id);
-            mMgr.startRanging(new RangingRequest.Builder().addAps(
+            mMgr.startRanging(new RangingRequest.Builder().addAccessPoints(
                     WifiJsonParser.getScanResults(scanResults)).build(), callback, null);
+            return id;
+        }
+    }
+
+    @Rpc(description = "Start ranging to an Aware peer.", returns = "Id of the listener "
+            + "associated with the started ranging.")
+    public Integer wifiRttStartRangingToAwarePeerMac(
+            @RpcParameter(name = "peerMac") String peerMac) {
+        synchronized (mLock) {
+            int id = mNextRangingResultCallbackId++;
+            RangingResultCallback callback = new RangingResultCallbackFacade(id);
+            mMgr.startRanging(new RangingRequest.Builder().addWifiAwarePeer(
+                    HexEncoding.decode(peerMac.toCharArray(), false)).build(), callback, null);
+            return id;
+        }
+    }
+
+    @Rpc(description = "Start ranging to an Aware peer.", returns = "Id of the listener "
+            + "associated with the started ranging.")
+    public Integer wifiRttStartRangingToAwarePeerId(
+            @RpcParameter(name = "peer ID") Integer peerId) {
+        synchronized (mLock) {
+            int id = mNextRangingResultCallbackId++;
+            RangingResultCallback callback = new RangingResultCallbackFacade(id);
+            mMgr.startRanging(
+                    new RangingRequest.Builder().addWifiAwarePeer(new PeerHandle(peerId)).build(),
+                    callback, null);
             return id;
         }
     }
@@ -119,8 +147,10 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         }
 
         @Override
-        public void onRangingFailure() {
-            mEventFacade.postEvent("WifiRttRangingFailure_" + mCallbackId, null);
+        public void onRangingFailure(int status) {
+            Bundle msg = new Bundle();
+            msg.putInt("status", status);
+            mEventFacade.postEvent("WifiRttRangingFailure_" + mCallbackId, msg);
         }
 
         @Override
@@ -139,12 +169,20 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     private static Bundle packRttResult(RangingResult result) {
         Bundle bundle = new Bundle();
         bundle.putInt("status", result.getStatus());
-        bundle.putInt("distanceCm", result.getDistanceCm());
-        bundle.putInt("distanceStdDevCm", result.getDistanceStdDevCm());
-        bundle.putInt("rssi", result.getRssi());
-        bundle.putLong("timestamp", result.getRangingTimestamp());
-        bundle.putByteArray("mac", result.getMacAddress());
-        bundle.putString("macAsString", macAddressFromByteArray(result.getMacAddress()));
+        if (result.getStatus() == RangingResult.STATUS_SUCCESS) { // only valid on SUCCESS
+            bundle.putInt("distanceMm", result.getDistanceMm());
+            bundle.putInt("distanceStdDevMm", result.getDistanceStdDevMm());
+            bundle.putInt("rssi", result.getRssi());
+            bundle.putLong("timestamp", result.getRangingTimestampUs());
+        }
+        if (result.getPeerHandle() != null) {
+            bundle.putInt("peerId", result.getPeerHandle().peerId);
+        }
+        if (result.getMacAddress() != null) {
+            bundle.putByteArray("mac", result.getMacAddress());
+            bundle.putString("macAsStringBSSID", macAddressFromByteArray(result.getMacAddress()));
+            bundle.putString("macAsString", new String(HexEncoding.encode(result.getMacAddress())));
+        }
         return bundle;
     }
 }
