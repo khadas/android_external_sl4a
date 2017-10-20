@@ -83,7 +83,6 @@ public class TriggerService extends ForegroundService {
   @Override
   public void onCreate() {
     super.onCreate();
-    createNotificationChannel();
 
     mFacadeManager =
         new FacadeManager(FacadeConfiguration.getSdkLevel(), this, null,
@@ -119,6 +118,7 @@ public class TriggerService extends ForegroundService {
   /** Returns the notification to display whenever the service is running. */
   @Override
   protected Notification createNotification() {
+    createNotificationChannel();
     Intent notificationIntent = new Intent(this, TriggerManager.class);
     Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID);
     builder.setSmallIcon(R.drawable.sl4a_logo_48)
