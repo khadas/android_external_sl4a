@@ -31,7 +31,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothHeadset;
 import android.bluetooth.BluetoothHeadsetClient;
-import android.bluetooth.BluetoothInputDevice;
+import android.bluetooth.BluetoothHidHost;
 import android.bluetooth.BluetoothMap;
 import android.bluetooth.BluetoothMapClient;
 import android.bluetooth.BluetoothPbapClient;
@@ -134,7 +134,7 @@ public class BluetoothConnectionFacade extends RpcReceiver {
         mA2dpSinkStateChangeFilter =
             new IntentFilter(BluetoothA2dpSink.ACTION_CONNECTION_STATE_CHANGED);
         mHidStateChangeFilter =
-            new IntentFilter(BluetoothInputDevice.ACTION_CONNECTION_STATE_CHANGED);
+            new IntentFilter(BluetoothHidHost.ACTION_CONNECTION_STATE_CHANGED);
         mHspStateChangeFilter = new IntentFilter(BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
         mHfpClientStateChangeFilter =
             new IntentFilter(BluetoothHeadsetClient.ACTION_CONNECTION_STATE_CHANGED);
@@ -304,8 +304,8 @@ public class BluetoothConnectionFacade extends RpcReceiver {
                 case BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED:
                     profile = BluetoothProfile.A2DP;
                     break;
-                case BluetoothInputDevice.ACTION_CONNECTION_STATE_CHANGED:
-                    profile = BluetoothProfile.INPUT_DEVICE;
+                case BluetoothHidHost.ACTION_CONNECTION_STATE_CHANGED:
+                    profile = BluetoothProfile.HID_HOST;
                     break;
                 case BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED:
                     profile = BluetoothProfile.HEADSET;
@@ -458,7 +458,7 @@ public class BluetoothConnectionFacade extends RpcReceiver {
                 case BluetoothProfile.A2DP:
                     mA2dpProfile.a2dpDisconnect(device);
                     break;
-                case BluetoothProfile.INPUT_DEVICE:
+                case BluetoothProfile.HID_HOST:
                     mHidProfile.hidDisconnect(device);
                     break;
                 case BluetoothProfile.HEADSET:
