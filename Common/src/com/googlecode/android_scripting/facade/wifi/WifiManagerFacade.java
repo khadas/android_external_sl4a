@@ -27,8 +27,6 @@ import android.net.DhcpInfo;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.NetworkInfo.DetailedState;
-import android.net.wifi.hotspot2.ConfigParser;
-import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiActivityEnergyInfo;
 import android.net.wifi.WifiConfiguration;
@@ -39,18 +37,18 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WpsInfo;
+import android.net.wifi.hotspot2.ConfigParser;
+import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.os.Bundle;
 import android.provider.Settings.Global;
 import android.provider.Settings.SettingNotFoundException;
 import android.util.Base64;
-import java.util.Arrays;
 
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
-import com.googlecode.android_scripting.rpc.RpcDeprecated;
 import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
@@ -871,19 +869,6 @@ public class WifiManagerFacade extends RpcReceiver {
             @RpcParameter(name = "configJson") JSONObject configJson) throws JSONException {
         WifiConfiguration config = createSoftApWifiConfiguration(configJson);
         return mWifi.setWifiApConfiguration(config);
-    }
-
-    @Rpc(description = "Start/stop wifi soft AP.")
-    public Boolean wifiSetApEnabled(
-            @RpcParameter(name = "enable") Boolean enable,
-            @RpcParameter(name = "configJson") JSONObject configJson) throws JSONException {
-        int wifiState = mWifi.getWifiState();
-        if (enable) {
-            WifiConfiguration config = createSoftApWifiConfiguration(configJson);
-            return mWifi.setWifiApEnabled(config, enable);
-        } else {
-            return mWifi.setWifiApEnabled(null, false);
-        }
     }
 
     @Rpc(description = "Set the country code used by WiFi.")
