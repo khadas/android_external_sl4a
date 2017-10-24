@@ -19,7 +19,7 @@ package com.googlecode.android_scripting.facade.bluetooth;
 import java.util.List;
 
 import android.app.Service;
-import android.bluetooth.BluetoothInputDevice;
+import android.bluetooth.BluetoothHidHost;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProfile;
@@ -45,7 +45,7 @@ public class BluetoothHidFacade extends RpcReceiver {
   private final BluetoothAdapter mBluetoothAdapter;
 
   private static boolean sIsHidReady = false;
-  private static BluetoothInputDevice sHidProfile = null;
+  private static BluetoothHidHost sHidProfile = null;
 
   private final EventFacade mEventFacade;
 
@@ -54,14 +54,14 @@ public class BluetoothHidFacade extends RpcReceiver {
     mService = manager.getService();
     mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     mBluetoothAdapter.getProfileProxy(mService, new HidServiceListener(),
-        BluetoothProfile.INPUT_DEVICE);
+        BluetoothProfile.HID_HOST);
     IntentFilter pkgFilter = new IntentFilter();
-    pkgFilter.addAction(BluetoothInputDevice.ACTION_CONNECTION_STATE_CHANGED);
-    pkgFilter.addAction(BluetoothInputDevice.ACTION_PROTOCOL_MODE_CHANGED);
-    pkgFilter.addAction(BluetoothInputDevice.ACTION_HANDSHAKE);
-    pkgFilter.addAction(BluetoothInputDevice.ACTION_REPORT);
-    pkgFilter.addAction(BluetoothInputDevice.ACTION_VIRTUAL_UNPLUG_STATUS);
-    pkgFilter.addAction(BluetoothInputDevice.ACTION_IDLE_TIME_CHANGED);
+    pkgFilter.addAction(BluetoothHidHost.ACTION_CONNECTION_STATE_CHANGED);
+    pkgFilter.addAction(BluetoothHidHost.ACTION_PROTOCOL_MODE_CHANGED);
+    pkgFilter.addAction(BluetoothHidHost.ACTION_HANDSHAKE);
+    pkgFilter.addAction(BluetoothHidHost.ACTION_REPORT);
+    pkgFilter.addAction(BluetoothHidHost.ACTION_VIRTUAL_UNPLUG_STATUS);
+    pkgFilter.addAction(BluetoothHidHost.ACTION_IDLE_TIME_CHANGED);
     mService.registerReceiver(mHidServiceBroadcastReceiver, pkgFilter);
     Log.d(HidServiceBroadcastReceiver.TAG + " registered");
     mEventFacade = manager.getReceiver(EventFacade.class);
@@ -70,7 +70,7 @@ public class BluetoothHidFacade extends RpcReceiver {
   class HidServiceListener implements BluetoothProfile.ServiceListener {
     @Override
     public void onServiceConnected(int profile, BluetoothProfile proxy) {
-      sHidProfile = (BluetoothInputDevice) proxy;
+      sHidProfile = (BluetoothHidHost) proxy;
       sIsHidReady = true;
     }
 
@@ -89,35 +89,35 @@ public class BluetoothHidFacade extends RpcReceiver {
           Log.d(TAG + " action=" + action);
 
           switch (action) {
-              case BluetoothInputDevice.ACTION_CONNECTION_STATE_CHANGED: {
+              case BluetoothHidHost.ACTION_CONNECTION_STATE_CHANGED: {
                   int previousState = intent.getIntExtra(BluetoothProfile.EXTRA_PREVIOUS_STATE, -1);
                   int state = intent.getIntExtra(BluetoothProfile.EXTRA_STATE, -1);
                   Log.d("Connection state changed: " + previousState + " -> " + state);
               }
               break;
-              case BluetoothInputDevice.ACTION_PROTOCOL_MODE_CHANGED: {
-                  int status = intent.getIntExtra(BluetoothInputDevice.EXTRA_STATUS, -1);
+              case BluetoothHidHost.ACTION_PROTOCOL_MODE_CHANGED: {
+                  int status = intent.getIntExtra(BluetoothHidHost.EXTRA_STATUS, -1);
                   Log.d("Protocol mode changed: " + status);
               }
               break;
-              case BluetoothInputDevice.ACTION_HANDSHAKE: {
-                  int status = intent.getIntExtra(BluetoothInputDevice.EXTRA_STATUS, -1);
+              case BluetoothHidHost.ACTION_HANDSHAKE: {
+                  int status = intent.getIntExtra(BluetoothHidHost.EXTRA_STATUS, -1);
                   Log.d("Handshake received: " + status);
               }
               break;
-              case BluetoothInputDevice.ACTION_REPORT: {
-                  char[] report = intent.getCharArrayExtra(BluetoothInputDevice.EXTRA_REPORT);
+              case BluetoothHidHost.ACTION_REPORT: {
+                  char[] report = intent.getCharArrayExtra(BluetoothHidHost.EXTRA_REPORT);
                   Log.d("Received report: " + String.valueOf(report));
               }
               break;
-              case BluetoothInputDevice.ACTION_VIRTUAL_UNPLUG_STATUS: {
+              case BluetoothHidHost.ACTION_VIRTUAL_UNPLUG_STATUS: {
                   int status = intent.getIntExtra(
-                          BluetoothInputDevice.EXTRA_VIRTUAL_UNPLUG_STATUS, -1);
+                          BluetoothHidHost.EXTRA_VIRTUAL_UNPLUG_STATUS, -1);
                   Log.d("Virtual unplug status: " + status);
               }
               break;
-              case BluetoothInputDevice.ACTION_IDLE_TIME_CHANGED: {
-                  int idleTime = intent.getIntExtra(BluetoothInputDevice.EXTRA_IDLE_TIME, -1);
+              case BluetoothHidHost.ACTION_IDLE_TIME_CHANGED: {
+                  int idleTime = intent.getIntExtra(BluetoothHidHost.EXTRA_IDLE_TIME, -1);
                   Log.d("Idle time changed: " + idleTime);
               }
               break;
