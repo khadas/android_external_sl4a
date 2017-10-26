@@ -327,10 +327,14 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
 
     /**
      * Get all the devices connected through HID Device Service.
-     * @return a list of all the devices connected through HID Device Service
+     * @return a list of all the devices connected through HID Device Service,
+     * or null if the HID device profile is not ready.
      */
     @Rpc(description = "Get all the devices connected through HID Device Service.")
     public List<BluetoothDevice> bluetoothHidDeviceGetConnectedDevices() {
+        if (sHidDeviceProfile == null) {
+            return null;
+        }
         return sHidDeviceProfile.getConnectedDevices();
     }
 
@@ -364,7 +368,8 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
      */
     @Rpc(description = "Register app for the HID Device service using default settings.")
     public Boolean bluetoothHidDeviceRegisterApp() throws Exception {
-        return sHidDeviceProfile.registerApp(sSdpSettings, null, sQos, mCallback);
+        return sHidDeviceProfile != null
+                && sHidDeviceProfile.registerApp(sSdpSettings, null, sQos, mCallback);
     }
 
     /**
@@ -380,6 +385,10 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             @RpcParameter(name = "useCorrectConfig",
                     description = "Specify if calling the unregister with correct configuration.")
                     Boolean useCorrectConfig) throws Exception {
+        if (sHidDeviceProfile == null) {
+            return false;
+        }
+
         if (useCorrectConfig) {
             return sHidDeviceProfile.unregisterApp(sAppConfig);
         } else {
@@ -407,6 +416,10 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
                     Integer id,
             @RpcParameter(name = "report")
                     String report) throws Exception {
+        if (sHidDeviceProfile == null) {
+            return false;
+        }
+
         BluetoothDevice device = BluetoothFacade.getDevice(sHidDeviceProfile.getConnectedDevices(),
                 deviceID);
         byte[] reportByteArray = report.getBytes();
@@ -435,6 +448,10 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
                     Integer id,
             @RpcParameter(name = "report")
                     String report) throws Exception {
+        if (sHidDeviceProfile == null) {
+            return false;
+        }
+
         BluetoothDevice device = BluetoothFacade.getDevice(sHidDeviceProfile.getConnectedDevices(),
                 deviceID);
         byte[] reportByteArray = report.getBytes();
@@ -457,6 +474,10 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             @RpcParameter(name = "error",
                     description = "Error byte")
                     Integer error) throws Exception {
+        if (sHidDeviceProfile == null) {
+            return false;
+        }
+
         BluetoothDevice device = BluetoothFacade.getDevice(sHidDeviceProfile.getConnectedDevices(),
                 deviceID);
         return sHidDeviceProfile.reportError(device, (byte) (int) error);
@@ -473,6 +494,10 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             @RpcParameter(name = "deviceID",
                     description = "Name or MAC address of a bluetooth device.")
                     String deviceID) throws Exception {
+        if (sHidDeviceProfile == null) {
+            return false;
+        }
+
         BluetoothDevice device = BluetoothFacade.getDevice(sHidDeviceProfile.getConnectedDevices(),
                 deviceID);
         return sHidDeviceProfile.unplug(device);
