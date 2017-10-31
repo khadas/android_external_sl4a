@@ -30,6 +30,7 @@ import android.net.wifi.rtt.WifiRttManager;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.os.RemoteException;
+import android.os.WorkSource;
 
 import com.android.internal.annotations.GuardedBy;
 
@@ -39,6 +40,7 @@ import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
+import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
 import org.json.JSONArray;
@@ -91,6 +93,11 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         }
     }
 
+    @Rpc(description = "The maximum number of peers permitted in a single RTT request")
+    public Integer wifiRttMaxPeersInRequest() {
+      return RangingRequest.getMaxPeers();
+    }
+
     /**
      * Converts an array of 6 bytes to a HexEncoded String with format: "XX:XX:XX:XX:XX:XX", where X
      * is any hexadecimal digit.
@@ -117,13 +124,16 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     @Rpc(description = "Start ranging to an Access Points.", returns = "Id of the listener "
             + "associated with the started ranging.")
     public Integer wifiRttStartRangingToAccessPoints(
-            @RpcParameter(name = "scanResults") JSONArray scanResults) throws JSONException {
-
+            @RpcParameter(name = "scanResults") JSONArray scanResults,
+            @RpcParameter(name = "uidsOverride", description = "Overrides for the UID")
+                @RpcOptional JSONArray uidsOverride) throws JSONException {
         synchronized (mLock) {
             int id = mNextRangingResultCallbackId++;
             RangingResultCallback callback = new RangingResultCallbackFacade(id);
-            mMgr.startRanging(new RangingRequest.Builder().addAccessPoints(
-                    WifiJsonParser.getScanResults(scanResults)).build(), callback, null);
+            mMgr.startRanging(getWorkSource(uidsOverride),
+                    new RangingRequest.Builder().addAccessPoints(
+                            WifiJsonParser.getScanResults(scanResults)).build(), callback,
+                        null);
             return id;
         }
     }
@@ -131,12 +141,16 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     @Rpc(description = "Start ranging to an Aware peer.", returns = "Id of the listener "
             + "associated with the started ranging.")
     public Integer wifiRttStartRangingToAwarePeerMac(
-            @RpcParameter(name = "peerMac") String peerMac) {
+            @RpcParameter(name = "peerMac") String peerMac,
+            @RpcParameter(name = "uidsOverride", description = "Overrides for the UID")
+            @RpcOptional JSONArray uidsOverride) throws JSONException {
         synchronized (mLock) {
             int id = mNextRangingResultCallbackId++;
             RangingResultCallback callback = new RangingResultCallbackFacade(id);
-            mMgr.startRanging(new RangingRequest.Builder().addWifiAwarePeer(
-                    HexEncoding.decode(peerMac.toCharArray(), false)).build(), callback, null);
+            mMgr.startRanging(getWorkSource(uidsOverride),
+                    new RangingRequest.Builder().addWifiAwarePeer(
+                            HexEncoding.decode(peerMac.toCharArray(), false)).build(), callback,
+                        null);
             return id;
         }
     }
@@ -144,14 +158,24 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     @Rpc(description = "Start ranging to an Aware peer.", returns = "Id of the listener "
             + "associated with the started ranging.")
     public Integer wifiRttStartRangingToAwarePeerId(
-            @RpcParameter(name = "peer ID") Integer peerId) {
+            @RpcParameter(name = "peer ID") Integer peerId,
+            @RpcParameter(name = "uidsOverride", description = "Overrides for the UID")
+            @RpcOptional JSONArray uidsOverride) throws JSONException {
         synchronized (mLock) {
             int id = mNextRangingResultCallbackId++;
             RangingResultCallback callback = new RangingResultCallbackFacade(id);
-            mMgr.startRanging(
-                    new RangingRequest.Builder().addWifiAwarePeer(new PeerHandle(peerId)).build(),
-                    callback, null);
+            mMgr.startRanging(getWorkSource(uidsOverride),
+                    new RangingRequest.Builder().addWifiAwarePeer(
+                            new PeerHandle(peerId)).build(), callback, null);
             return id;
+        }
+    }
+
+    @Rpc(description = "Cancel ranging requests for the specified UIDs")
+    public void wifiRttCancelRanging(@RpcParameter(name = "uids", description = "List of UIDs")
+        @RpcOptional JSONArray uids) throws JSONException {
+        synchronized (mLock) {
+            mMgr.cancelRanging(getWorkSource(uids));
         }
     }
 
@@ -200,6 +224,17 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
             bundle.putString("macAsString", new String(HexEncoding.encode(result.getMacAddress())));
         }
         return bundle;
+    }
+
+    private static WorkSource getWorkSource(JSONArray uids) throws JSONException {
+        if (uids == null) {
+            return null;
+        }
+        WorkSource ws = new WorkSource();
+        for (int i = 0; i < uids.length(); ++i) {
+            ws.add(uids.getInt(i));
+        }
+        return ws;
     }
 
     class StateChangedReceiver extends BroadcastReceiver {
