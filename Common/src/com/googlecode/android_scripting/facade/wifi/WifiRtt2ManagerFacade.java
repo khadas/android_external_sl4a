@@ -17,7 +17,10 @@
 package com.googlecode.android_scripting.facade.wifi;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.rtt.RangingRequest;
@@ -26,6 +29,7 @@ import android.net.wifi.rtt.RangingResultCallback;
 import android.net.wifi.rtt.WifiRttManager;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.os.RemoteException;
 
 import com.android.internal.annotations.GuardedBy;
 
@@ -48,6 +52,7 @@ import java.util.List;
 public class WifiRtt2ManagerFacade extends RpcReceiver {
     private final Service mService;
     private final EventFacade mEventFacade;
+    private final StateChangedReceiver mStateChangedReceiver;
 
     private final Object mLock = new Object(); // lock access to the following vars
 
@@ -63,6 +68,10 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         mEventFacade = manager.getReceiver(EventFacade.class);
 
         mMgr = (WifiRttManager) mService.getSystemService(Context.WIFI_RTT2_SERVICE);
+
+        mStateChangedReceiver = new StateChangedReceiver();
+        IntentFilter filter = new IntentFilter(WifiRttManager.ACTION_WIFI_RTT_STATE_CHANGED);
+        mService.registerReceiver(mStateChangedReceiver, filter);
     }
 
     @Override
@@ -73,6 +82,13 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     @Rpc(description = "Does the device support the Wi-Fi RTT feature?")
     public Boolean doesDeviceSupportWifiRttFeature() {
         return mService.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_RTT);
+    }
+
+    @Rpc(description = "Is Wi-Fi RTT Usage Enabled?")
+    public Boolean wifiIsRttAvailable() throws RemoteException {
+        synchronized (mLock) {
+            return mMgr.isAvailable();
+        }
     }
 
     /**
@@ -184,5 +200,14 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
             bundle.putString("macAsString", new String(HexEncoding.encode(result.getMacAddress())));
         }
         return bundle;
+    }
+
+    class StateChangedReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context c, Intent intent) {
+            boolean isAvailable = mMgr.isAvailable();
+            mEventFacade.postEvent(isAvailable ? "WifiRttAvailable" : "WifiRttNotAvailable",
+                    new Bundle());
+        }
     }
 }
