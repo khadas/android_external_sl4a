@@ -32,6 +32,7 @@ import com.googlecode.android_scripting.AndroidProxy;
 import com.googlecode.android_scripting.BaseApplication;
 import com.googlecode.android_scripting.Constants;
 import com.googlecode.android_scripting.ForegroundService;
+import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.NotificationIdFactory;
 import com.googlecode.android_scripting.R;
 import com.googlecode.android_scripting.ScriptLauncher;
@@ -209,26 +210,25 @@ public class ScriptingLayerService extends ForegroundService {
     }
   }
 
-  @Override
-  public int onStartCommand(Intent intent, int flags, int startId) {
-    super.onStartCommand(intent, flags, startId);
-
-    //TODO: b/26538940 We need to go back to a strict policy and fix the problems
-    StrictMode.ThreadPolicy sl4aPolicy = new StrictMode.ThreadPolicy.Builder()
-        .detectAll()
-        .penaltyLog()
-        .build();
-    StrictMode.setThreadPolicy(sl4aPolicy);
-
-    Thread launchThread = new Thread(new Runnable() {
-        public void run() {
-            startAction(intent, flags, startId);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        super.onStartCommand(intent, flags, startId);
+        StrictMode.ThreadPolicy sl4aPolicy = new StrictMode.ThreadPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .build();
+        StrictMode.setThreadPolicy(sl4aPolicy);
+        if ((flags & START_FLAG_REDELIVERY) > 0) {
+            Log.w("Intent for action " + intent.getAction() + " has been redelivered.");
         }
-    });
-    launchThread.start();
+        // Do the heavy lifting off of the main thread. Prevents jank.
+        new Thread(() -> startAction(intent, flags, startId)).start();
 
-    return START_REDELIVER_INTENT;
-  }
+        return START_REDELIVER_INTENT;
+    }
 
   private boolean tryPort(AndroidProxy androidProxy, boolean usePublicIp, int usePort) {
     if (usePublicIp) {
