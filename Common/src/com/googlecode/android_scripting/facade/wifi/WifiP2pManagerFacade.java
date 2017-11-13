@@ -458,7 +458,9 @@ public class WifiP2pManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Close the current wifi p2p connection created with initialize.")
     public void wifiP2pClose() {
-        mP2p.close(mChannel);
+        if (mChannel != null) {
+            mChannel.close();
+        }
     }
 
     @Rpc(description = "Returns true if wifi p2p is enabled, false otherwise.")
