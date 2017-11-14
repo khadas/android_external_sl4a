@@ -263,6 +263,10 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         if (j.has("TerminateNotificationEnabled")) {
             builder.setTerminateNotificationEnabled(j.getBoolean("TerminateNotificationEnabled"));
         }
+        if (j.has("RangingEnabled")) {
+            builder.setRangingEnabled(j.getBoolean("RangingEnabled"));
+        }
+
 
         return builder.build();
     }
@@ -304,6 +308,12 @@ public class WifiAwareManagerFacade extends RpcReceiver {
         }
         if (j.has("TerminateNotificationEnabled")) {
             builder.setTerminateNotificationEnabled(j.getBoolean("TerminateNotificationEnabled"));
+        }
+        if (j.has("MinDistanceMm")) {
+            builder.setMinDistanceMm(j.getInt("MinDistanceMm"));
+        }
+        if (j.has("MaxDistanceMm")) {
+            builder.setMaxDistanceMm(j.getInt("MaxDistanceMm"));
         }
 
         return builder.build();
@@ -761,8 +771,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             postEvent("WifiAwareSessionOnSessionTerminated", mResults);
         }
 
-        @Override
-        public void onServiceDiscovered(PeerHandle peerHandle,
+        private Bundle createServiceDiscoveredBaseBundle(PeerHandle peerHandle,
                 byte[] serviceSpecificInfo, List<byte[]> matchFilter) {
             Bundle mResults = new Bundle();
             mResults.putInt("discoverySessionId", mDiscoverySessionId);
@@ -776,7 +785,25 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             }
             mResults.putStringArrayList("matchFilterList", matchFilterStrings);
             mResults.putLong("timestampMs", System.currentTimeMillis());
+            return mResults;
+        }
+
+        @Override
+        public void onServiceDiscovered(PeerHandle peerHandle,
+                byte[] serviceSpecificInfo, List<byte[]> matchFilter) {
+            Bundle mResults = createServiceDiscoveredBaseBundle(peerHandle, serviceSpecificInfo,
+                    matchFilter);
             postEvent("WifiAwareSessionOnServiceDiscovered", mResults);
+        }
+
+        @Override
+        public void onServiceDiscoveredWithinRange(PeerHandle peerHandle,
+                byte[] serviceSpecificInfo,
+                List<byte[]> matchFilter, int distanceMm) {
+            Bundle mResults = createServiceDiscoveredBaseBundle(peerHandle, serviceSpecificInfo,
+                    matchFilter);
+            mResults.putInt("distanceMm", distanceMm);
+            postEvent("WifiAwareSessionOnServiceDiscoveredWithinRange", mResults);
         }
 
         @Override
