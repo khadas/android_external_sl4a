@@ -873,9 +873,8 @@ public class WifiManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Set the country code used by WiFi.")
     public void wifiSetCountryCode(
-            @RpcParameter(name = "country") String country,
-            @RpcParameter(name = "persist") Boolean persist) {
-        mWifi.setCountryCode(country, persist);
+            @RpcParameter(name = "country") String country) {
+        mWifi.setCountryCode(country);
     }
 
     @Rpc(description = "Enable/disable tdls with a mac address.")
