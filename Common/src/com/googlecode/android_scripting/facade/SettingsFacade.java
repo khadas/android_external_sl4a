@@ -252,7 +252,10 @@ public class SettingsFacade extends RpcReceiver {
                 DevicePolicyManager.PASSWORD_QUALITY_NUMERIC, UserHandle.myUserId());
     }
 
-    @Rpc(description = "Disable screen lock password on the device.")
+    @Rpc(description = "Disable screen lock password on the device. Note that disabling the " +
+            "screen lock while the screen is locked will still require the screen to be " +
+            "unlocked via pressing the back button and swiping up. To get around this, make sure " +
+            "the screen is on/unlocked when calling this method.")
     public void disableDevicePassword() {
         mLockPatternUtils.clearEncryptionPassword();
         // mLockPatternUtils.setLockPatternEnabled(false, UserHandle.myUserId());
