@@ -1148,12 +1148,14 @@ public class TelephonyManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Returns a given UID Rx Bytes.")
-    public long getUidRxBytes(int uid) {
+    public long getUidRxBytes(
+            @RpcParameter(name = "uid") Integer uid) {
         return TrafficStats.getUidRxBytes(uid);
     }
 
     @Rpc(description = "Returns a given UID Rx Packets.")
-    public long getUidRxPackets(int uid) {
+    public long getUidRxPackets(
+            @RpcParameter(name = "uid") Integer uid) {
         return TrafficStats.getUidRxPackets(uid);
     }
 
