@@ -31,6 +31,7 @@ import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
+import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -1191,18 +1192,17 @@ public class TelephonyManagerFacade extends RpcReceiver {
         return mTelephonyManager.isWifiCallingAvailable();
     }
 
-    @Rpc(description = "Returns the service state for default subscription ID")
+    @Rpc(description = "Returns the service state string for default subscription ID")
     public String telephonyGetServiceState() {
-        //TODO: b/26273807 need to have framework API to get service state.
         return telephonyGetServiceStateForSubscription(
                                  SubscriptionManager.getDefaultSubscriptionId());
     }
 
-    @Rpc(description = "Returns the service state for specified subscription ID")
+    @Rpc(description = "Returns the service state string for specified subscription ID")
     public String telephonyGetServiceStateForSubscription(
                   @RpcParameter(name = "subId") Integer subId) {
-        //TODO: b/26273807 need to have framework API to get service state.
-        return null;
+        ServiceState ss = mTelephonyManager.getServiceStateForSubscriber(subId);
+        return ServiceState.rilServiceStateToString(ss.getState());
     }
 
     @Rpc(description = "Returns the call state for default subscription ID")
