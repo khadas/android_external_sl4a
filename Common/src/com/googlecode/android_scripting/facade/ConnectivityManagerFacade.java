@@ -920,10 +920,15 @@ public class ConnectivityManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Get network stats - received bytes for device")
     public long connectivityGetRxBytesForDevice(
-          String subscriberId, Long startTime, Long endTime)
-          throws SecurityException, RemoteException {
+        @RpcParameter(name = "subscriberId") String subscriberId,
+        @RpcParameter(name = "startTime") Long startTime,
+        @RpcParameter(name = "endTime") Long endTime,
+        @RpcParameter(name = "connType") @RpcOptional Integer connType)
+        throws SecurityException, RemoteException {
+        if(connType == null)
+            connType = ConnectivityManager.TYPE_MOBILE;
         Bucket bucket = mNetStatsManager.querySummaryForDevice(
-              ConnectivityManager.TYPE_MOBILE, subscriberId, startTime, endTime);
+              connType, subscriberId, startTime, endTime);
         return bucket.getRxBytes();
     }
 
