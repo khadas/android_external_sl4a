@@ -20,7 +20,6 @@ import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHidDevice;
-import android.bluetooth.BluetoothHidDeviceAppConfiguration;
 import android.bluetooth.BluetoothHidDeviceAppQosSettings;
 import android.bluetooth.BluetoothHidDeviceAppSdpSettings;
 import android.bluetooth.BluetoothHidDeviceCallback;
@@ -159,16 +158,12 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
     private final BluetoothAdapter mBluetoothAdapter;
     private final EventFacade mEventFacade;
 
-    private static BluetoothHidDeviceAppConfiguration sAppConfig = null;
-
     private static boolean sIsHidDeviceReady = false;
     private static BluetoothHidDevice sHidDeviceProfile = null;
 
     private BluetoothHidDeviceCallback mCallback = new BluetoothHidDeviceCallback() {
         @Override
-        public void onAppStatusChanged(BluetoothDevice pluggedDevice,
-                BluetoothHidDeviceAppConfiguration config, boolean registered) {
-            sAppConfig = config;
+        public void onAppStatusChanged(BluetoothDevice pluggedDevice, boolean registered) {
             Log.d("onAppStatusChanged: pluggedDevice=" + pluggedDevice + " registered="
                     + registered);
             Bundle result = new Bundle();
@@ -373,28 +368,14 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
     }
 
     /**
-     * Try to unregister app for the HID Device service, with either the correct configuration, or
-     * the incorrect configuration (null). The unregistration will fail if not using the correct
-     * configuration.
-     * @param useCorrectConfig whether to use the correct configuration or not
+     * Unregister app for the HID Device service.
+     *
      * @return true if successfully unregistered the app; otherwise false
      * @throws Exception error from Bluetooth HidDevService
      */
     @Rpc(description = "Unregister app.")
-    public Boolean bluetoothHidDeviceUnregisterApp(
-            @RpcParameter(name = "useCorrectConfig",
-                    description = "Specify if calling the unregister with correct configuration.")
-                    Boolean useCorrectConfig) throws Exception {
-        if (sHidDeviceProfile == null) {
-            return false;
-        }
-
-        if (useCorrectConfig) {
-            return sHidDeviceProfile.unregisterApp(sAppConfig);
-        } else {
-            // Currently only supports check against config == null;
-            return sHidDeviceProfile.unregisterApp(null);
-        }
+    public Boolean bluetoothHidDeviceUnregisterApp() throws Exception {
+        return sHidDeviceProfile != null && sHidDeviceProfile.unregisterApp();
     }
 
     /**
