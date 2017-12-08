@@ -16,34 +16,7 @@
 
 package com.googlecode.android_scripting.jsonrpc;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.security.PrivateKey;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.apache.commons.codec.binary.Base64Codec;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.android.internal.net.LegacyVpnInfo;
-import com.googlecode.android_scripting.ConvertUtils;
-import com.googlecode.android_scripting.Log;
-import com.googlecode.android_scripting.event.Event;
-//FIXME: Refactor classes, constants and conversions out of here
-import com.googlecode.android_scripting.facade.telephony.InCallServiceImpl;
-import com.googlecode.android_scripting.facade.telephony.TelephonyConstants;
-import com.googlecode.android_scripting.facade.telephony.TelephonyUtils;
+import static com.googlecode.android_scripting.ConvertUtils.toNonNullString;
 
 import android.annotation.NonNull;
 import android.bluetooth.BluetoothDevice;
@@ -103,7 +76,34 @@ import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
 
-import static com.googlecode.android_scripting.ConvertUtils.toNonNullString;
+import com.android.internal.net.LegacyVpnInfo;
+
+import com.googlecode.android_scripting.ConvertUtils;
+import com.googlecode.android_scripting.Log;
+import com.googlecode.android_scripting.event.Event;
+import com.googlecode.android_scripting.facade.telephony.InCallServiceImpl;
+import com.googlecode.android_scripting.facade.telephony.TelephonyConstants;
+import com.googlecode.android_scripting.facade.telephony.TelephonyUtils;
+
+import org.apache.commons.codec.binary.Base64Codec;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.security.PrivateKey;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class JsonBuilder {
 
