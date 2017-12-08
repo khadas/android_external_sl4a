@@ -30,8 +30,12 @@ import android.graphics.Point;
 import android.location.Address;
 import android.location.Location;
 import android.net.DhcpInfo;
+import android.net.IpPrefix;
+import android.net.LinkAddress;
+import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.RouteInfo;
 import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
 import android.net.wifi.ScanResult;
@@ -268,6 +272,18 @@ public class JsonBuilder {
         }
         if (data instanceof WifiP2pGroup) {
             return buildWifiP2pGroup((WifiP2pGroup) data);
+        }
+        if (data instanceof LinkProperties) {
+            return buildLinkProperties((LinkProperties) data);
+        }
+        if (data instanceof LinkAddress) {
+            return buildLinkAddress((LinkAddress) data);
+        }
+        if (data instanceof RouteInfo) {
+            return buildRouteInfo((RouteInfo) data);
+        }
+        if (data instanceof IpPrefix) {
+            return buildIpPrefix((IpPrefix) data);
         }
         if (data instanceof byte[]) {
             JSONArray result = new JSONArray();
@@ -1000,6 +1016,42 @@ public class JsonBuilder {
         info.put("groupFormed", data.groupFormed);
         info.put("isGroupOwner", data.isGroupOwner);
         info.put("groupOwnerAddress", data.groupOwnerAddress);
+        return info;
+    }
+
+    private static JSONObject buildLinkProperties(LinkProperties data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("InterfaceName", data.getInterfaceName());
+        info.put("LinkAddresses", build(data.getLinkAddresses()));
+        info.put("DnsServers", build(data.getDnsServers()));
+        info.put("Domains", data.getDomains());
+        info.put("Mtu", data.getMtu());
+        info.put("Routes", build(data.getRoutes()));
+        return info;
+    }
+
+    private static JSONObject buildLinkAddress(LinkAddress data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("Address", build(data.getAddress()));
+        info.put("PrefixLength", data.getPrefixLength());
+        info.put("Scope", data.getScope());
+        info.put("Flags", data.getFlags());
+        return info;
+    }
+
+    private static JSONObject buildRouteInfo(RouteInfo data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("Destination", build(data.getDestination()));
+        info.put("Gateway", build(data.getGateway()));
+        info.put("Interface", data.getInterface());
+        info.put("IsDefaultRoute", data.isDefaultRoute());
+        return info;
+    }
+
+    private static JSONObject buildIpPrefix(IpPrefix data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("Address", data.getAddress());
+        info.put("PrefixLength", data.getPrefixLength());
         return info;
     }
 
