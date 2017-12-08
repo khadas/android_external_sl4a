@@ -70,7 +70,7 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         mService = manager.getService();
         mEventFacade = manager.getReceiver(EventFacade.class);
 
-        mMgr = (WifiRttManager) mService.getSystemService(Context.WIFI_RTT2_SERVICE);
+        mMgr = (WifiRttManager) mService.getSystemService(Context.WIFI_RTT_RANGING_SERVICE);
 
         mStateChangedReceiver = new StateChangedReceiver();
         IntentFilter filter = new IntentFilter(WifiRttManager.ACTION_WIFI_RTT_STATE_CHANGED);
