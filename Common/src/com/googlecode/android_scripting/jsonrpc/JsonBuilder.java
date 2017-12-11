@@ -16,34 +16,7 @@
 
 package com.googlecode.android_scripting.jsonrpc;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.security.PrivateKey;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.apache.commons.codec.binary.Base64Codec;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.android.internal.net.LegacyVpnInfo;
-import com.googlecode.android_scripting.ConvertUtils;
-import com.googlecode.android_scripting.Log;
-import com.googlecode.android_scripting.event.Event;
-//FIXME: Refactor classes, constants and conversions out of here
-import com.googlecode.android_scripting.facade.telephony.InCallServiceImpl;
-import com.googlecode.android_scripting.facade.telephony.TelephonyConstants;
-import com.googlecode.android_scripting.facade.telephony.TelephonyUtils;
+import static com.googlecode.android_scripting.ConvertUtils.toNonNullString;
 
 import android.annotation.NonNull;
 import android.bluetooth.BluetoothDevice;
@@ -57,8 +30,12 @@ import android.graphics.Point;
 import android.location.Address;
 import android.location.Location;
 import android.net.DhcpInfo;
+import android.net.IpPrefix;
+import android.net.LinkAddress;
+import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.RouteInfo;
 import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
 import android.net.wifi.ScanResult;
@@ -103,7 +80,34 @@ import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.SparseArray;
 
-import static com.googlecode.android_scripting.ConvertUtils.toNonNullString;
+import com.android.internal.net.LegacyVpnInfo;
+
+import com.googlecode.android_scripting.ConvertUtils;
+import com.googlecode.android_scripting.Log;
+import com.googlecode.android_scripting.event.Event;
+import com.googlecode.android_scripting.facade.telephony.InCallServiceImpl;
+import com.googlecode.android_scripting.facade.telephony.TelephonyConstants;
+import com.googlecode.android_scripting.facade.telephony.TelephonyUtils;
+
+import org.apache.commons.codec.binary.Base64Codec;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.security.PrivateKey;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class JsonBuilder {
 
@@ -268,6 +272,18 @@ public class JsonBuilder {
         }
         if (data instanceof WifiP2pGroup) {
             return buildWifiP2pGroup((WifiP2pGroup) data);
+        }
+        if (data instanceof LinkProperties) {
+            return buildLinkProperties((LinkProperties) data);
+        }
+        if (data instanceof LinkAddress) {
+            return buildLinkAddress((LinkAddress) data);
+        }
+        if (data instanceof RouteInfo) {
+            return buildRouteInfo((RouteInfo) data);
+        }
+        if (data instanceof IpPrefix) {
+            return buildIpPrefix((IpPrefix) data);
         }
         if (data instanceof byte[]) {
             JSONArray result = new JSONArray();
@@ -1000,6 +1016,42 @@ public class JsonBuilder {
         info.put("groupFormed", data.groupFormed);
         info.put("isGroupOwner", data.isGroupOwner);
         info.put("groupOwnerAddress", data.groupOwnerAddress);
+        return info;
+    }
+
+    private static JSONObject buildLinkProperties(LinkProperties data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("InterfaceName", data.getInterfaceName());
+        info.put("LinkAddresses", build(data.getLinkAddresses()));
+        info.put("DnsServers", build(data.getDnsServers()));
+        info.put("Domains", data.getDomains());
+        info.put("Mtu", data.getMtu());
+        info.put("Routes", build(data.getRoutes()));
+        return info;
+    }
+
+    private static JSONObject buildLinkAddress(LinkAddress data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("Address", build(data.getAddress()));
+        info.put("PrefixLength", data.getPrefixLength());
+        info.put("Scope", data.getScope());
+        info.put("Flags", data.getFlags());
+        return info;
+    }
+
+    private static JSONObject buildRouteInfo(RouteInfo data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("Destination", build(data.getDestination()));
+        info.put("Gateway", build(data.getGateway()));
+        info.put("Interface", data.getInterface());
+        info.put("IsDefaultRoute", data.isDefaultRoute());
+        return info;
+    }
+
+    private static JSONObject buildIpPrefix(IpPrefix data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("Address", data.getAddress());
+        info.put("PrefixLength", data.getPrefixLength());
         return info;
     }
 

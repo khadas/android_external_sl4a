@@ -22,6 +22,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.MacAddress;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
@@ -69,7 +70,7 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         mService = manager.getService();
         mEventFacade = manager.getReceiver(EventFacade.class);
 
-        mMgr = (WifiRttManager) mService.getSystemService(Context.WIFI_RTT2_SERVICE);
+        mMgr = (WifiRttManager) mService.getSystemService(Context.WIFI_RTT_RANGING_SERVICE);
 
         mStateChangedReceiver = new StateChangedReceiver();
         IntentFilter filter = new IntentFilter(WifiRttManager.ACTION_WIFI_RTT_STATE_CHANGED);
@@ -96,24 +97,6 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
     @Rpc(description = "The maximum number of peers permitted in a single RTT request")
     public Integer wifiRttMaxPeersInRequest() {
       return RangingRequest.getMaxPeers();
-    }
-
-    /**
-     * Converts an array of 6 bytes to a HexEncoded String with format: "XX:XX:XX:XX:XX:XX", where X
-     * is any hexadecimal digit.
-     *
-     * @param macArray byte array of mac values, must have length 6
-     */
-    public static String macAddressFromByteArray(byte[] macArray) {
-        if (macArray == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder(macArray.length * 3 - 1);
-        for (int i = 0; i < macArray.length; i++) {
-            if (i != 0) sb.append(":");
-            sb.append(new String(HexEncoding.encode(macArray, i, 1)));
-        }
-        return sb.toString().toLowerCase();
     }
 
     /**
@@ -147,10 +130,10 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
         synchronized (mLock) {
             int id = mNextRangingResultCallbackId++;
             RangingResultCallback callback = new RangingResultCallbackFacade(id);
+            byte[] peerMacBytes = HexEncoding.decode(peerMac); // since Aware returns string w/o ":"
             mMgr.startRanging(getWorkSource(uidsOverride),
                     new RangingRequest.Builder().addWifiAwarePeer(
-                            HexEncoding.decode(peerMac.toCharArray(), false)).build(), callback,
-                        null);
+                            MacAddress.fromBytes(peerMacBytes)).build(), callback, null);
             return id;
         }
     }
@@ -219,9 +202,8 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
             bundle.putInt("peerId", result.getPeerHandle().peerId);
         }
         if (result.getMacAddress() != null) {
-            bundle.putByteArray("mac", result.getMacAddress());
-            bundle.putString("macAsStringBSSID", macAddressFromByteArray(result.getMacAddress()));
-            bundle.putString("macAsString", new String(HexEncoding.encode(result.getMacAddress())));
+            bundle.putByteArray("mac", result.getMacAddress().toByteArray());
+            bundle.putString("macAsString", result.getMacAddress().toString());
         }
         return bundle;
     }
