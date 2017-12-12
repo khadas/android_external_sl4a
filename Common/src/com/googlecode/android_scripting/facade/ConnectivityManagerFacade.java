@@ -887,6 +887,18 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         return mManager.getActiveLinkProperties();
     }
 
+    @Rpc(description = "Returns all IP addresses of the active link")
+    public List<InetAddress> connectivityGetAllAddressesOfActiveLink() {
+        LinkProperties linkProp = mManager.getActiveLinkProperties();
+        return linkProp.getAllAddresses();
+    }
+
+    @Rpc(description = "Check if active link has default IPv6 route")
+    public boolean connectivityHasIPv6DefaultRoute() {
+        LinkProperties linkProp = mManager.getActiveLinkProperties();
+        return linkProp.hasIPv6DefaultRoute();
+    }
+
     @Rpc(description = "Factory reset of network policies")
     public void connectivityFactoryResetNetworkPolicies(String subscriberId) {
         mNetPolicyManager.factoryReset(subscriberId);
