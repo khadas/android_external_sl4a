@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.googlecode.android_scripting.activity;
+package com.googlecode.android_scripting.service;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -32,6 +32,7 @@ import com.googlecode.android_scripting.ForegroundService;
 import com.googlecode.android_scripting.IntentBuilders;
 import com.googlecode.android_scripting.NotificationIdFactory;
 import com.googlecode.android_scripting.R;
+import com.googlecode.android_scripting.activity.TriggerManager;
 import com.googlecode.android_scripting.event.Event;
 import com.googlecode.android_scripting.event.EventObserver;
 import com.googlecode.android_scripting.facade.EventFacade;
