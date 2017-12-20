@@ -54,7 +54,6 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
     private AcceptThread mAcceptThread;
     private byte mTxPktIndex = 0;
 
-    private static final int L2CAP_MASK_LE_COC_CHANNEL = 0x20000;
     private static final String DEFAULT_PSM = "161";  //=0x00A1
 
     // UUID for SL4A.
@@ -147,15 +146,16 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
     public void bluetoothSocketConnBeginConnectThreadPsm(
             @RpcParameter(name = "address",
             description = "The mac address of the device to connect to.") String address,
-            @RpcParameter(name = "isBle", description = "Is transport BLE?") @RpcDefault("0")
+            @RpcParameter(name = "isBle", description = "Is transport BLE?") @RpcDefault("false")
             Boolean isBle,
-            @RpcParameter(name = "psmValue") @RpcDefault(DEFAULT_PSM) Integer psmValue)
+            @RpcParameter(name = "psmValue") @RpcDefault(DEFAULT_PSM) Integer psmValue,
+            @RpcParameter(name = "securedConn") @RpcDefault("false") Boolean securedConn)
             throws IOException {
         BluetoothDevice mDevice;
         mDevice = mBluetoothAdapter.getRemoteDevice(address);
         Log.d("bluetoothSocketConnBeginConnectThreadPsm: Coc connecting to " + address + ", isBle="
-                + isBle + ", psmValue=" + psmValue);
-        ConnectThread connectThread = new ConnectThread(mDevice, psmValue, isBle);
+                + isBle + ", psmValue=" + psmValue + ", securedConn=" + securedConn);
+        ConnectThread connectThread = new ConnectThread(mDevice, psmValue, isBle, securedConn);
         connectThread.start();
         mConnectThread = connectThread;
     }
@@ -262,7 +262,6 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
             @RpcDefault("0") Integer timeout)
             throws IOException {
         Log.d("bluetoothSocketConnBeginAcceptThreadUuid: uuid=" + uuid);
-        BluetoothServerSocket mServerSocket;
         AcceptThread acceptThread = new AcceptThread(uuid, timeout.intValue());
         acceptThread.start();
         mAcceptThread = acceptThread;
@@ -284,14 +283,28 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
             @RpcDefault("0") Integer timeout,
             @RpcParameter(name = "isBle",
                       description = "Is transport BLE?")
-            @RpcDefault("0") Boolean isBle)
+            @RpcDefault("false") Boolean isBle,
+            @RpcParameter(name = "securedConn",
+                      description = "Using secured connection?")
+            @RpcDefault("false") Boolean securedConn)
             throws IOException {
         Log.d("bluetoothSocketConnBeginAcceptThreadPsm: PSM value=" + psmValue);
-        BluetoothServerSocket mServerSocket;
         AcceptThread acceptThread = new AcceptThread(psmValue.intValue(), timeout.intValue(),
-                                                     isBle);
+                                                     isBle, securedConn);
         acceptThread.start();
         mAcceptThread = acceptThread;
+    }
+
+    /**
+     * Get the current BluetoothServerSocket PSM value
+     * @return Integer the assigned PSM value
+     * @throws Exception
+     */
+    @Rpc(description = "Returns the PSM value")
+    public Integer bluetoothSocketConnGetPsm() throws IOException  {
+        Integer psm = new Integer(mAcceptThread.getPsm());
+        Log.d("bluetoothSocketConnGetPsm: PSM value=" + psm);
+        return psm;
     }
 
     /**
@@ -638,13 +651,27 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
 
         ConnectThread(BluetoothDevice device,
                              @RpcParameter(name = "psmValue")
-                             @RpcDefault(DEFAULT_PSM) Integer psmValue, boolean isBle) {
+                             @RpcDefault(DEFAULT_PSM) Integer psmValue,
+                             @RpcParameter(name = "isBle") @RpcDefault("false") boolean isBle,
+                             @RpcParameter(name = "securedConn")
+                             @RpcDefault("false") boolean securedConn) {
             BluetoothSocket tmp = null;
+            Log.d("ConnectThread: psmValue=" + psmValue + ", isBle=" + isBle
+                        + ", securedConn=" + securedConn);
             try {
                 if (isBle) {
-                    tmp = device.createInsecureL2capSocket(psmValue | L2CAP_MASK_LE_COC_CHANNEL);
+                    if (securedConn) {
+                        tmp = device.createL2capCocSocket(BluetoothDevice.TRANSPORT_LE, psmValue);
+                    } else {
+                        tmp = device.createInsecureL2capCocSocket(BluetoothDevice.TRANSPORT_LE,
+                                                                  psmValue);
+                    }
                 } else {
-                    tmp = device.createInsecureL2capSocket(psmValue);
+                    if (securedConn) {
+                        tmp = device.createL2capSocket(psmValue);
+                    } else {
+                        tmp = device.createInsecureL2capSocket(psmValue);
+                    }
                 }
                 // Secured version: tmp = device.createL2capSocket(0x1011);
                 // tmp = device.createRfcommSocketToServiceRecord(UUID.fromString(uuid));
@@ -710,29 +737,33 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
             Log.d("AcceptThread: uuid=" + uuid);
         }
 
-        AcceptThread(int psmValue, int timeout, boolean isBle) {
+        AcceptThread(int psmValue, int timeout, boolean isBle, boolean securedConn) {
             BluetoothServerSocket tmp = null;
             mTimeout = timeout;
             try {
-                if (psmValue != ((psmValue & 0xFEFF) | 0x0001)) {
-                    psmValue = ((psmValue & 0xFEFF) | 0x0001);
-                    Log.e("PSM must be this format xxxx xxx0 xxxx xxx1, changing psmValue="
-                            + Integer.toHexString(psmValue));
-                }
-
                 // Secured version: mBluetoothAdapter.listenUsingL2capOn(0x1011, false, false);
                 if (isBle) {
-                    psmValue |= L2CAP_MASK_LE_COC_CHANNEL;
-
-                    tmp = mBluetoothAdapter.listenUsingInsecureL2capOn(psmValue);
+                    /* Assigned a dynamic LE_PSM Value */
+                    if (securedConn) {
+                        tmp = mBluetoothAdapter.listenUsingL2capCoc(
+                            BluetoothDevice.TRANSPORT_LE);
+                    } else {
+                        tmp = mBluetoothAdapter.listenUsingInsecureL2capCoc(
+                            BluetoothDevice.TRANSPORT_LE);
+                    }
                 } else {
-                    tmp = mBluetoothAdapter.listenUsingInsecureL2capOn(psmValue);
+                    if (securedConn) {
+                        tmp = mBluetoothAdapter.listenUsingL2capOn(psmValue);
+                    } else {
+                        tmp = mBluetoothAdapter.listenUsingInsecureL2capOn(psmValue);
+                    }
                 }
             } catch (IOException createSocketException) {
                 Log.e("Failed to create Coc socket: " + createSocketException.toString());
             }
             mServerSocket = tmp;
-            Log.d("AcceptThread: PSM value=" + psmValue);
+            Log.d("AcceptThread: securedConn=" + securedConn + ", Old PSM value=" + psmValue
+                        + ", new PSM=" + getPsm());
         }
 
         public void run() {
@@ -771,6 +802,10 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
 
         public BluetoothSocket getSocket() {
             return mSocket;
+        }
+
+        public int getPsm() {
+            return mServerSocket.getPsm();
         }
 
         public String getConnUuid() {
