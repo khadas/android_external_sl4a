@@ -204,12 +204,12 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             mEventFacade.postEvent("onSetProtocol", result);
         }
 
-        public void onIntrData(BluetoothDevice device, byte reportId, byte[] data) {
-            Log.d("onIntrData: device=" + device + " reportId=" + reportId);
+        public void onInterruptData(BluetoothDevice device, byte reportId, byte[] data) {
+            Log.d("onInterruptData: device=" + device + " reportId=" + reportId);
             Bundle result = new Bundle();
             result.putByte("registered", reportId);
             result.putByteArray("data", data);
-            mEventFacade.postEvent("onIntrData", result);
+            mEventFacade.postEvent("onInterruptData", result);
         }
 
         public void onVirtualCableUnplug(BluetoothDevice device) {
