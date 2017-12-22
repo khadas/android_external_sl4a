@@ -22,8 +22,8 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.net.Uri;
 import android.net.TrafficStats;
+import android.net.Uri;
 import android.os.RemoteException;
 import android.os.SystemProperties;
 import android.provider.Telephony;
@@ -158,7 +158,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
     @Rpc(description = "Set network selection mode to automatic for subscriber.")
     public void telephonySetNetworkSelectionModeAutomaticForSubscription(
             @RpcParameter(name = "subId") Integer subId) {
-        mTelephonyManager.setNetworkSelectionModeAutomatic(subId);
+        mTelephonyManager.setNetworkSelectionModeAutomatic();
     }
 
     @Rpc(description = "Get network preference.")
