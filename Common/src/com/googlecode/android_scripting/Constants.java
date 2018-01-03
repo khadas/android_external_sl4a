@@ -87,7 +87,7 @@ public interface Constants {
 
     ComponentName SL4A_SERVICE_COMPONENT_NAME = new ComponentName(
             "com.googlecode.android_scripting",
-            "com.googlecode.android_scripting.activity.ScriptingLayerService");
+            "com.googlecode.android_scripting.service.ScriptingLayerService");
     ComponentName SL4A_SERVICE_LAUNCHER_COMPONENT_NAME = new ComponentName(
             "com.googlecode.android_scripting",
             "com.googlecode.android_scripting.activity.ScriptingLayerServiceLauncher");
