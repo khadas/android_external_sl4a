@@ -185,8 +185,8 @@
         <activity android:name=".activity.FutureActivity" android:configChanges="keyboardHidden|orientation" android:theme="@android:style/Theme.DeviceDefault.NoActionBar.TranslucentDecor" />
         <activity android:name="org.connectbot.HelpActivity" android:configChanges="keyboardHidden|orientation" />
         <activity android:name="org.connectbot.HelpTopicActivity" android:configChanges="keyboardHidden|orientation" />
-        <service android:name=".activity.ScriptingLayerService" />
-        <service android:name=".activity.TriggerService" />
+        <service android:name=".service.ScriptingLayerService" />
+        <service android:name=".service.TriggerService" />
         <service android:name="com.googlecode.android_scripting.facade.telephony.InCallServiceImpl"
                  android:permission="android.permission.BIND_INCALL_SERVICE" >
             <intent-filter>
