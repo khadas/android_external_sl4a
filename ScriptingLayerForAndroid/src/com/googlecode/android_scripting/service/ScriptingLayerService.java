@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.googlecode.android_scripting.activity;
+package com.googlecode.android_scripting.service;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Binder;
@@ -37,6 +36,7 @@ import com.googlecode.android_scripting.NotificationIdFactory;
 import com.googlecode.android_scripting.R;
 import com.googlecode.android_scripting.ScriptLauncher;
 import com.googlecode.android_scripting.ScriptProcess;
+import com.googlecode.android_scripting.activity.ScriptProcessMonitor;
 import com.googlecode.android_scripting.interpreter.InterpreterConfiguration;
 import com.googlecode.android_scripting.interpreter.InterpreterProcess;
 import com.googlecode.android_scripting.interpreter.shell.ShellInterpreter;
