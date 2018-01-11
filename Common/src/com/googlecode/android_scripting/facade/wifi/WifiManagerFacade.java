@@ -216,12 +216,11 @@ public class WifiManagerFacade extends RpcReceiver {
             if (action.equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
                 Log.d("Wifi network state changed.");
                 NetworkInfo nInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-                WifiInfo wInfo = intent.getParcelableExtra(WifiManager.EXTRA_WIFI_INFO);
                 Log.d("NetworkInfo " + nInfo);
-                Log.d("WifiInfo " + wInfo);
                 // If network info is of type wifi, send wifi events.
                 if (nInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                    if (wInfo != null && nInfo.getDetailedState().equals(DetailedState.CONNECTED)) {
+                    if (nInfo.getDetailedState().equals(DetailedState.CONNECTED)) {
+                        WifiInfo wInfo = mWifi.getConnectionInfo();
                         String bssid = wInfo.getBSSID();
                         if (bssid != null && !mCachedWifiInfo.equals(wInfo.toString())) {
                             Log.d("WifiNetworkConnected");
