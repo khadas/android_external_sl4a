@@ -17,6 +17,7 @@
 package com.googlecode.android_scripting.facade;
 
 import android.app.Service;
+import android.app.usage.NetworkStats;
 import android.app.usage.NetworkStats.Bucket;
 import android.app.usage.NetworkStatsManager;
 import android.content.BroadcastReceiver;
@@ -922,26 +923,51 @@ public class ConnectivityManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Get network stats for device")
-    public long connectivityQuerySummaryForDevice(
-          String subscriberId, Long startTime, Long endTime)
-          throws SecurityException, RemoteException {
+    public long connectivityQuerySummaryForDevice(Integer connType,
+            String subscriberId, Long startTime, Long endTime)
+            throws SecurityException, RemoteException {
         Bucket bucket = mNetStatsManager.querySummaryForDevice(
-              ConnectivityManager.TYPE_MOBILE, subscriberId, startTime, endTime);
+              connType, subscriberId, startTime, endTime);
         return bucket.getTxBytes() + bucket.getRxBytes();
     }
 
-    @Rpc(description = "Get network stats - received bytes for device")
-    public long connectivityGetRxBytesForDevice(
-        @RpcParameter(name = "subscriberId") String subscriberId,
-        @RpcParameter(name = "startTime") Long startTime,
-        @RpcParameter(name = "endTime") Long endTime,
-        @RpcParameter(name = "connType") @RpcOptional Integer connType)
-        throws SecurityException, RemoteException {
-        if(connType == null)
-            connType = ConnectivityManager.TYPE_MOBILE;
+    @Rpc(description = "Get network stats for device - Rx bytes")
+    public long connectivityQuerySummaryForDeviceRxBytes(Integer connType,
+            String subscriberId, Long startTime, Long endTime)
+            throws SecurityException, RemoteException {
         Bucket bucket = mNetStatsManager.querySummaryForDevice(
               connType, subscriberId, startTime, endTime);
         return bucket.getRxBytes();
+    }
+
+    @Rpc(description = "Get network stats for UID")
+    public long connectivityQueryDetailsForUid(Integer connType,
+            String subscriberId, Long startTime, Long endTime, Integer uid)
+            throws SecurityException, RemoteException {
+        long totalData = 0;
+        NetworkStats netStats = mNetStatsManager.queryDetailsForUid(
+                connType, subscriberId, startTime, endTime, uid);
+        Bucket bucket = new Bucket();
+        while(netStats.hasNextBucket() && netStats.getNextBucket(bucket)) {
+            totalData += bucket.getTxBytes() + bucket.getRxBytes();
+        }
+        netStats.close();
+        return totalData;
+    }
+
+    @Rpc(description = "Get network stats for UID - Rx bytes")
+    public long connectivityQueryDetailsForUidRxBytes(Integer connType,
+            String subscriberId, Long startTime, Long endTime, Integer uid)
+            throws SecurityException, RemoteException {
+        long rxBytes = 0;
+        NetworkStats netStats = mNetStatsManager.queryDetailsForUid(
+                connType, subscriberId, startTime, endTime, uid);
+        Bucket bucket = new Bucket();
+        while(netStats.hasNextBucket() && netStats.getNextBucket(bucket)) {
+            rxBytes += bucket.getRxBytes();
+        }
+        netStats.close();
+        return rxBytes;
     }
 
     @Rpc(description = "Returns all interfaces on the android deivce")
