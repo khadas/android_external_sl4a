@@ -582,6 +582,24 @@ public class TelephonyManagerFacade extends RpcReceiver {
         return mTelephonyManager.getCellLocation();
     }
 
+    /**
+     *  Returns carrier id of the current subscription.
+     * @return Carrier id of the current subscription.
+     */
+    @Rpc(description = "Returns the numeric CarrierId for currention subscription")
+    public int telephonyGetSubscriptionCarrierId() {
+        return mTelephonyManager.getSubscriptionCarrierId();
+    }
+
+    /**
+     *  Returns carrier name of the current subscription.
+     * @return Carrier name of the current subscription
+     */
+    @Rpc(description = "Returns Carrier Name for currention subscription")
+    public String telephonyGetSubscriptionCarrierName() {
+        return mTelephonyManager.getSubscriptionCarrierName();
+    }
+
     @Rpc(description = "Returns the numeric name (MCC+MNC) of registered operator." +
                        "for default subscription ID")
     public String telephonyGetNetworkOperator() {
