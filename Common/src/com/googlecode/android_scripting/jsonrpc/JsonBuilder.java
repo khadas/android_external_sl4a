@@ -606,16 +606,13 @@ public class JsonBuilder {
         result.put("level", scanResult.level);
         result.put("capabilities", scanResult.capabilities);
         result.put("timestamp", scanResult.timestamp);
-        result.put("blackListTimestamp", scanResult.blackListTimestamp);
         result.put("centerFreq0", scanResult.centerFreq0);
         result.put("centerFreq1", scanResult.centerFreq1);
         result.put("channelWidth", scanResult.channelWidth);
         result.put("distanceCm", scanResult.distanceCm);
         result.put("distanceSdCm", scanResult.distanceSdCm);
         result.put("is80211McRTTResponder", scanResult.is80211mcResponder());
-        result.put("numConnection", scanResult.numConnection);
         result.put("passpointNetwork", scanResult.isPasspointNetwork());
-        result.put("numIpConfigFailures", scanResult.numIpConfigFailures);
         result.put("numUsage", scanResult.numUsage);
         result.put("seen", scanResult.seen);
         result.put("untrusted", scanResult.untrusted);

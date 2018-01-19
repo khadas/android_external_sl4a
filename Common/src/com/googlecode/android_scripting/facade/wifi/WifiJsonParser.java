@@ -69,9 +69,6 @@ public class WifiJsonParser {
         if (j.has("timestamp")) {
             scanResult.timestamp = j.getLong("timestamp");
         }
-        if (j.has("blackListTimestamp")) {
-            scanResult.blackListTimestamp = j.getLong("blackListTimestamp");
-        }
         if (j.has("centerFreq0")) {
             scanResult.centerFreq0 = j.getInt("centerFreq0");
         }
@@ -90,14 +87,8 @@ public class WifiJsonParser {
         if (j.has("is80211McRTTResponder") && j.getBoolean("is80211McRTTResponder")) {
             scanResult.setFlag(FLAG_80211mc_RESPONDER);
         }
-        if (j.has("numConnection")) {
-            scanResult.numConnection = j.getInt("numConnection");
-        }
         if (j.has("passpointNetwork") && j.getBoolean("passpointNetwork")) {
             scanResult.setFlag(FLAG_PASSPOINT_NETWORK);
-        }
-        if (j.has("numIpConfigFailures")) {
-            scanResult.numIpConfigFailures = j.getInt("numIpConfigFailures");
         }
         if (j.has("numUsage")) {
             scanResult.numUsage = j.getInt("numUsage");
