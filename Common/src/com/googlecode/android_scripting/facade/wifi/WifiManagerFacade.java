@@ -174,10 +174,15 @@ public class WifiManagerFacade extends RpcReceiver {
         public void onReceive(Context c, Intent intent) {
             String action = intent.getAction();
             if (action.equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
-                Bundle mResults = new Bundle();
-                Log.d("Wifi connection scan finished, results available.");
-                mResults.putLong("Timestamp", System.currentTimeMillis() / 1000);
-                mEventFacade.postEvent(mEventType + "ScanResultsAvailable", mResults);
+                if (!intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)) {
+                    Log.w("Wifi connection scan failed, ignoring.");
+                    mEventFacade.postEvent(mEventType + "ScanFailure", null);
+                } else {
+                    Bundle mResults = new Bundle();
+                    Log.d("Wifi connection scan finished, results available.");
+                    mResults.putLong("Timestamp", System.currentTimeMillis() / 1000);
+                    mEventFacade.postEvent(mEventType + "ScanResultsAvailable", mResults);
+                }
                 mService.unregisterReceiver(mScanResultsAvailableReceiver);
             }
         }
