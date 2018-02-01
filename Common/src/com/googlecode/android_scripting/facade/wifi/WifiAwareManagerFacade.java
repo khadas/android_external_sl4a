@@ -578,21 +578,30 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     "Calling wifiAwareCreateNetworkSpecifier before session (session ID "
                             + sessionId + " is ready");
         }
-        NetworkSpecifier ns = null;
         PeerHandle peerHandle = null;
         if (peerId != null) {
             peerHandle = new PeerHandle(peerId);
         }
-        if (TextUtils.isEmpty(passphrase) && TextUtils.isEmpty(pmk)) {
-            ns = session.createNetworkSpecifierOpen(peerHandle);
-        } else if (TextUtils.isEmpty(pmk)){
-            ns = session.createNetworkSpecifierPassphrase(peerHandle, passphrase);
-        } else {
-            byte[] pmkDecoded = Base64.decode(pmk, Base64.DEFAULT);
-            ns = session.createNetworkSpecifierPmk(peerHandle, pmkDecoded);
+        byte[] pmkDecoded = null;
+        if (!TextUtils.isEmpty(pmk)) {
+            pmkDecoded = Base64.decode(pmk, Base64.DEFAULT);
         }
 
-        return getJsonString((WifiAwareNetworkSpecifier) ns);
+        WifiAwareNetworkSpecifier ns = new WifiAwareNetworkSpecifier(
+                (peerHandle == null) ? WifiAwareNetworkSpecifier.NETWORK_SPECIFIER_TYPE_IB_ANY_PEER
+                        : WifiAwareNetworkSpecifier.NETWORK_SPECIFIER_TYPE_IB,
+                session instanceof SubscribeDiscoverySession
+                        ? WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_INITIATOR
+                        : WifiAwareManager.WIFI_AWARE_DATA_PATH_ROLE_RESPONDER,
+                session.getClientId(),
+                session.getSessionId(),
+                peerHandle != null ? peerHandle.peerId : 0, // 0 is an invalid peer ID
+                null, // peerMac (not used in this method)
+                pmkDecoded,
+                passphrase,
+                Process.myUid());
+
+        return getJsonString(ns);
     }
 
     @Rpc(description = "Create a network specifier to be used when specifying an OOB Aware network request")
@@ -620,21 +629,29 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                     "Calling wifiAwareCreateNetworkSpecifierOob before session (client ID "
                             + clientId + " is ready");
         }
-        NetworkSpecifier ns = null;
         byte[] peerMacBytes = null;
         if (peerMac != null) {
             peerMacBytes = HexEncoding.decode(peerMac.toCharArray(), false);
         }
-        if (TextUtils.isEmpty(passphrase) && TextUtils.isEmpty(pmk)) {
-            ns = session.createNetworkSpecifierOpen(role, peerMacBytes);
-        } else if (TextUtils.isEmpty(pmk)){
-            ns = session.createNetworkSpecifierPassphrase(role, peerMacBytes, passphrase);
-        } else {
-            byte[] pmkDecoded = Base64.decode(pmk, Base64.DEFAULT);
-            ns = session.createNetworkSpecifierPmk(role, peerMacBytes, pmkDecoded);
+        byte[] pmkDecoded = null;
+        if (!TextUtils.isEmpty(pmk)) {
+            pmkDecoded = Base64.decode(pmk, Base64.DEFAULT);
         }
 
-        return getJsonString((WifiAwareNetworkSpecifier) ns);
+        WifiAwareNetworkSpecifier ns = new WifiAwareNetworkSpecifier(
+                (peerMacBytes == null) ?
+                        WifiAwareNetworkSpecifier.NETWORK_SPECIFIER_TYPE_OOB_ANY_PEER
+                        : WifiAwareNetworkSpecifier.NETWORK_SPECIFIER_TYPE_OOB,
+                role,
+                session.getClientId(),
+                0, // 0 is an invalid session ID
+                0, // 0 is an invalid peer ID
+                peerMacBytes,
+                pmkDecoded,
+                passphrase,
+                Process.myUid());
+
+        return getJsonString(ns);
     }
 
     private class AwareAttachCallbackPostsEvents extends AttachCallback {
