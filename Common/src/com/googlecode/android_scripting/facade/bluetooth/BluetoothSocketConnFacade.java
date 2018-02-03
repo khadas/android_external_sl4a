@@ -277,7 +277,6 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
      */
     @Rpc(description = "Begins a thread to accept an Coc connection over Bluetooth. ")
     public void bluetoothSocketConnBeginAcceptThreadPsm(
-            @RpcParameter(name = "psmValue") @RpcDefault(DEFAULT_PSM) Integer psmValue,
             @RpcParameter(name = "timeout",
                       description = "How long to wait for a new connection, 0 is wait for ever")
             @RpcDefault("0") Integer timeout,
@@ -286,7 +285,8 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
             @RpcDefault("false") Boolean isBle,
             @RpcParameter(name = "securedConn",
                       description = "Using secured connection?")
-            @RpcDefault("false") Boolean securedConn)
+            @RpcDefault("false") Boolean securedConn,
+            @RpcParameter(name = "psmValue") @RpcDefault(DEFAULT_PSM) Integer psmValue)
             throws IOException {
         Log.d("bluetoothSocketConnBeginAcceptThreadPsm: PSM value=" + psmValue);
         AcceptThread acceptThread = new AcceptThread(psmValue.intValue(), timeout.intValue(),
