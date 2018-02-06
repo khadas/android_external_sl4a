@@ -60,6 +60,8 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
     protected static final String DEFAULT_UUID = "457807c0-4897-11df-9879-0800200c9a66";
     protected static final String SDP_NAME = "SL4A";
 
+    protected static final String DEFAULT_LE_DATA_LENGTH = "23";
+
     public BluetoothSocketConnFacade(FacadeManager manager) {
         super(manager);
         mEventFacade = manager.getReceiver(EventFacade.class);
@@ -305,6 +307,31 @@ public class BluetoothSocketConnFacade extends RpcReceiver {
         Integer psm = new Integer(mAcceptThread.getPsm());
         Log.d("bluetoothSocketConnGetPsm: PSM value=" + psm);
         return psm;
+    }
+
+    /**
+     * Set the current BluetoothSocket LE Data Length value to the maximum supported by this BT
+     * controller. This command suggests to the BT controller to set its maximum transmission packet
+     * size.
+     * @throws Exception
+     */
+    @Rpc(description = "Request Maximum Tx Data Length")
+    public void bluetoothSocketRequestMaximumTxDataLength()
+            throws IOException  {
+        Log.d("bluetoothSocketRequestMaximumTxDataLength");
+
+        if (mConnectThread == null) {
+            String connUuid = mConnectThread.getConnUuid();
+            throw new IOException("bluetoothSocketRequestMaximumTxDataLength: no active connect"
+                                  + " thread");
+        }
+
+        BluetoothSocket socket = mConnectThread.getSocket();
+        if (socket == null) {
+            throw new IOException("bluetoothSocketRequestMaximumTxDataLength: no active connect"
+                                  + " socket");
+        }
+        socket.requestMaximumTxDataLength();
     }
 
     /**
