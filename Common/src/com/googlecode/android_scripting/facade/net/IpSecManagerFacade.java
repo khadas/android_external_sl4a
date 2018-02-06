@@ -19,17 +19,16 @@ package com.googlecode.android_scripting.facade;
 import android.app.Service;
 import android.content.Context;
 import android.net.IpSecAlgorithm;
-import android.net.IpSecConfig;
 import android.net.IpSecManager;
+import android.net.IpSecManager.ResourceUnavailableException;
 import android.net.IpSecManager.SecurityParameterIndex;
 import android.net.IpSecManager.SpiUnavailableException;
-import android.net.IpSecManager.ResourceUnavailableException;
 import android.net.IpSecManager.UdpEncapsulationSocket;
 import android.net.IpSecTransform;
 import android.net.IpSecTransform.Builder;
 import android.net.NetworkUtils;
-import android.system.Os;
 import android.system.ErrnoException;
+import android.system.Os;
 
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
@@ -38,16 +37,12 @@ import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
 import java.io.FileDescriptor;
-import java.io.InterruptedIOException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.Arrays;
 import java.util.HashMap;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /*
  * Access IpSecManager functions.
@@ -57,34 +52,37 @@ public class IpSecManagerFacade extends RpcReceiver {
     private final IpSecManager mIpSecManager;
     private final Service mService;
     private final Context mContext;
-    private static HashMap<String, SecurityParameterIndex> mSpiHashMap =
+    private static HashMap<String, SecurityParameterIndex> sSpiHashMap =
             new HashMap<String, SecurityParameterIndex>();
-    private static HashMap<String, IpSecTransform> mTransformHashMap =
+    private static HashMap<String, IpSecTransform> sTransformHashMap =
             new HashMap<String, IpSecTransform>();
-    private static HashMap<String, UdpEncapsulationSocket> mUdpEncapMap =
+    private static HashMap<String, UdpEncapsulationSocket> sUdpEncapHashMap =
             new HashMap<String, UdpEncapsulationSocket>();
 
     public IpSecManagerFacade(FacadeManager manager) {
         super(manager);
         mService = manager.getService();
         mContext = mService.getBaseContext();
-        mIpSecManager = (IpSecManager)
-                mService.getSystemService(Context.IPSEC_SERVICE);
+        mIpSecManager = (IpSecManager) mService.getSystemService(Context.IPSEC_SERVICE);
     }
 
-    private IpSecTransform createTransportModeTransform(String encAlgo,
-            byte[] cryptKey, String authAlgo, byte[] authKey, Integer truncBits,
-            SecurityParameterIndex spi, InetAddress addr) {
+    private IpSecTransform createTransportModeTransform(
+            String encAlgo,
+            byte[] cryptKey,
+            String authAlgo,
+            byte[] authKey,
+            Integer truncBits,
+            SecurityParameterIndex spi,
+            InetAddress addr) {
         Builder builder = new Builder(mContext);
         builder = builder.setEncryption(new IpSecAlgorithm(encAlgo, cryptKey));
-        builder = builder.setAuthentication(
-                new IpSecAlgorithm(authAlgo, authKey, truncBits.intValue()));
+        builder =
+                builder.setAuthentication(
+                        new IpSecAlgorithm(authAlgo, authKey, truncBits.intValue()));
         try {
             return builder.buildTransportModeTransform(addr, spi);
-        } catch (SpiUnavailableException | IOException |
-                ResourceUnavailableException e) {
-            Log.e("IpSec: Cannot create Transport mode transform"
-                    + e.toString());
+        } catch (SpiUnavailableException | IOException | ResourceUnavailableException e) {
+            Log.e("IpSec: Cannot create Transport mode transform" + e.toString());
         }
         return null;
     }
@@ -98,8 +96,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private SecurityParameterIndex ipSecAllocateSpi(InetAddress inetAddr,
-            int requestedSpi) {
+    private SecurityParameterIndex ipSecAllocateSpi(InetAddress inetAddr, int requestedSpi) {
         try {
             return mIpSecManager.allocateSecurityParameterIndex(inetAddr, requestedSpi);
         } catch (SpiUnavailableException | ResourceUnavailableException e) {
@@ -143,8 +140,8 @@ public class IpSecManagerFacade extends RpcReceiver {
     public Boolean ipSecApplyTransformToSocket(Integer socketFd, Integer direction, String id) {
         FileDescriptor fd = new FileDescriptor();
         fd.setInt$(socketFd.intValue());
-        IpSecTransform transform = mTransformHashMap.get(id);
-        if(transform == null) {
+        IpSecTransform transform = sTransformHashMap.get(id);
+        if (transform == null) {
             Log.e("IpSec: Transform does not exist for the requested id");
             return false;
         }
@@ -171,30 +168,36 @@ public class IpSecManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Create a transform mode transform", returns = "Hash of transform object")
-    public String ipSecCreateTransportModeTransform(String encAlgo,
-            String cryptKeyString, String authAlgo, String authKeyString,
-            Integer truncBits, String spiId, String addr) {
+    public String ipSecCreateTransportModeTransform(
+            String encAlgo,
+            String cryptKeyString,
+            String authAlgo,
+            String authKeyString,
+            Integer truncBits,
+            String spiId,
+            String addr) {
         IpSecTransform transform = null;
         InetAddress inetAddr = NetworkUtils.numericToInetAddress(addr);
-        SecurityParameterIndex spi = mSpiHashMap.get(spiId);
-        if(spi == null) {
+        SecurityParameterIndex spi = sSpiHashMap.get(spiId);
+        if (spi == null) {
             Log.e("IpSec: SPI does not exist for the requested spiId");
             return null;
         }
         byte[] cryptKey = cryptKeyString.getBytes();
         byte[] authKey = authKeyString.getBytes();
-        transform = createTransportModeTransform(encAlgo, cryptKey, authAlgo,
-                authKey, truncBits, spi, inetAddr);
-        if(transform == null) return null;
+        transform =
+                createTransportModeTransform(
+                        encAlgo, cryptKey, authAlgo, authKey, truncBits, spi, inetAddr);
+        if (transform == null) return null;
         String id = getTransformId(transform);
-        mTransformHashMap.put(id, transform);
+        sTransformHashMap.put(id, transform);
         return id;
     }
 
     @Rpc(description = "Get transform status", returns = "True if transform exists")
     public Boolean ipSecGetTransformStatus(String id) {
-        IpSecTransform transform = mTransformHashMap.get(id);
-        if(transform == null) {
+        IpSecTransform transform = sTransformHashMap.get(id);
+        if (transform == null) {
             Log.e("IpSec: Transform does not exist for the requested id");
             return false;
         }
@@ -203,38 +206,38 @@ public class IpSecManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Destroy transport mode transform")
     public void ipSecDestroyTransportModeTransform(String id) {
-        IpSecTransform transform = mTransformHashMap.get(id);
-        if(transform == null) {
+        IpSecTransform transform = sTransformHashMap.get(id);
+        if (transform == null) {
             Log.e("IpSec: Transform does not exist for the requested id");
             return;
         }
         transform.close();
-        mTransformHashMap.remove(id);
+        sTransformHashMap.remove(id);
     }
 
     @Rpc(description = "Open UDP encap socket", returns = "Hash of UDP encap socket object")
     public String ipSecOpenUdpEncapsulationSocket(
             @RpcParameter(name = "port") @RpcOptional Integer port) {
         UdpEncapsulationSocket udpEncapSocket = null;
-        if(port == null) {
+        if (port == null) {
             udpEncapSocket = ipSecOpenUdpEncapSocket();
         } else {
             udpEncapSocket = ipSecOpenUdpEncapSocket(port.intValue());
         }
-        if(udpEncapSocket == null) return null;
+        if (udpEncapSocket == null) return null;
         String id = getUdpEncapSockId(udpEncapSocket);
-        mUdpEncapMap.put(id, udpEncapSocket);
+        sUdpEncapHashMap.put(id, udpEncapSocket);
         return id;
     }
 
     @Rpc(description = "Close UDP encapsulation socket", returns = "True if socket is closed")
     public Boolean ipSecCloseUdpEncapsulationSocket(String id) {
         try {
-            UdpEncapsulationSocket udpEncapSocket = mUdpEncapMap.get(id);
+            UdpEncapsulationSocket udpEncapSocket = sUdpEncapHashMap.get(id);
             udpEncapSocket.close();
-            mUdpEncapMap.remove(id);
+            sUdpEncapHashMap.remove(id);
             return true;
-        } catch (IOException e)  {
+        } catch (IOException e) {
             Log.e("IpSec: Failed to close udp encap socket " + e.toString());
         }
         return false;
@@ -243,25 +246,24 @@ public class IpSecManagerFacade extends RpcReceiver {
     @Rpc(description = "Allocate a Security Parameter Index", returns = "Hash of SPI object")
     public String ipSecAllocateSecurityParameterIndex(
             @RpcParameter(name = "addr") String addr,
-            @RpcParameter(name = "requestedSpi")
-            @RpcOptional Integer requestedSpi) {
+            @RpcParameter(name = "requestedSpi") @RpcOptional Integer requestedSpi) {
         InetAddress inetAddr = NetworkUtils.numericToInetAddress(addr);
         SecurityParameterIndex spi = null;
-        if(requestedSpi == null) {
+        if (requestedSpi == null) {
             spi = ipSecAllocateSpi(inetAddr);
         } else {
             spi = ipSecAllocateSpi(inetAddr, requestedSpi.intValue());
         }
-        if(spi == null) return null;
+        if (spi == null) return null;
         String id = getSpiId(spi);
-        mSpiHashMap.put(id, spi);
+        sSpiHashMap.put(id, spi);
         return id;
     }
 
     @Rpc(description = "Get Security Parameter Index", returns = "Returns SPI value")
     public Integer ipSecGetSecurityParameterIndex(String id) {
-        SecurityParameterIndex spi = mSpiHashMap.get(id);
-        if(spi == null) {
+        SecurityParameterIndex spi = sSpiHashMap.get(id);
+        if (spi == null) {
             Log.d("IpSec: SPI does not exist for the requested id");
             return 0;
         }
@@ -270,18 +272,17 @@ public class IpSecManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Release a Security Parameter Index")
     public void ipSecReleaseSecurityParameterIndex(String id) {
-        SecurityParameterIndex spi = mSpiHashMap.get(id);
-        if(spi == null) {
+        SecurityParameterIndex spi = sSpiHashMap.get(id);
+        if (spi == null) {
             Log.d("IpSec: SPI does not exist for the requested id");
             return;
         }
         spi.close();
-        mSpiHashMap.remove(id);
+        sSpiHashMap.remove(id);
     }
 
     @Rpc(description = "Open socket", returns = "File descriptor of the socket")
-    public Integer ipSecOpenSocket(Integer domain, Integer type,
-            String addr, Integer port) {
+    public Integer ipSecOpenSocket(Integer domain, Integer type, String addr, Integer port) {
         try {
             FileDescriptor fd = Os.socket(domain, type, 0);
             InetAddress localAddr = NetworkUtils.numericToInetAddress(addr);
@@ -307,8 +308,8 @@ public class IpSecManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Send data to remote server", returns = "True if sending data successful")
-    public Boolean sendDataOverSocket(String remoteAddr, Integer remotePort,
-            String message, Integer socketFd) {
+    public Boolean sendDataOverSocket(
+            String remoteAddr, Integer remotePort, String message, Integer socketFd) {
         byte[] data = null;
         FileDescriptor socket = new FileDescriptor();
         socket.setInt$(socketFd.intValue());
@@ -316,12 +317,10 @@ public class IpSecManagerFacade extends RpcReceiver {
         InetAddress remote = NetworkUtils.numericToInetAddress(remoteAddr);
         try {
             data = new String(message).getBytes("UTF-8");
-            int bytes = Os.sendto(socket, data, 0, data.length, 0, remote,
-                    remotePort.intValue());
+            int bytes = Os.sendto(socket, data, 0, data.length, 0, remote, remotePort.intValue());
             Log.d("IpSec: Sent " + String.valueOf(bytes) + " bytes");
             return true;
-        } catch (UnsupportedEncodingException | ErrnoException |
-                SocketException e) {
+        } catch (UnsupportedEncodingException | ErrnoException | SocketException e) {
             Log.e("IpSec: Sending data over socket failed " + e.toString());
         }
         return false;
@@ -337,14 +336,12 @@ public class IpSecManagerFacade extends RpcReceiver {
         try {
             Os.read(socket, data, 0, data.length);
             returnData = new String(data, "UTF-8");
-        } catch (UnsupportedEncodingException | ErrnoException |
-                InterruptedIOException e) {
+        } catch (UnsupportedEncodingException | ErrnoException | InterruptedIOException e) {
             Log.e("IpSec: Receiving data over socket failed " + e.toString());
         }
         return returnData;
     }
 
     @Override
-    public void shutdown() {
-    }
+    public void shutdown() {}
 }
