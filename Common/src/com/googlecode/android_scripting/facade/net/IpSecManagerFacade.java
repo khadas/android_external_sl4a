@@ -87,7 +87,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private SecurityParameterIndex ipSecAllocateSpi(InetAddress inetAddr) {
+    private SecurityParameterIndex allocateSpi(InetAddress inetAddr) {
         try {
             return mIpSecManager.allocateSecurityParameterIndex(inetAddr);
         } catch (ResourceUnavailableException e) {
@@ -96,7 +96,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private SecurityParameterIndex ipSecAllocateSpi(InetAddress inetAddr, int requestedSpi) {
+    private SecurityParameterIndex allocateSpi(InetAddress inetAddr, int requestedSpi) {
         try {
             return mIpSecManager.allocateSecurityParameterIndex(inetAddr, requestedSpi);
         } catch (SpiUnavailableException | ResourceUnavailableException e) {
@@ -105,7 +105,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private UdpEncapsulationSocket ipSecOpenUdpEncapSocket() {
+    private UdpEncapsulationSocket openUdpEncapSocket() {
         UdpEncapsulationSocket udpEncapSocket = null;
         try {
             return mIpSecManager.openUdpEncapsulationSocket();
@@ -115,7 +115,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private UdpEncapsulationSocket ipSecOpenUdpEncapSocket(int port) {
+    private UdpEncapsulationSocket openUdpEncapSocket(int port) {
         try {
             return mIpSecManager.openUdpEncapsulationSocket(port);
         } catch (ResourceUnavailableException | IOException e) {
@@ -220,9 +220,9 @@ public class IpSecManagerFacade extends RpcReceiver {
             @RpcParameter(name = "port") @RpcOptional Integer port) {
         UdpEncapsulationSocket udpEncapSocket = null;
         if (port == null) {
-            udpEncapSocket = ipSecOpenUdpEncapSocket();
+            udpEncapSocket = openUdpEncapSocket();
         } else {
-            udpEncapSocket = ipSecOpenUdpEncapSocket(port.intValue());
+            udpEncapSocket = openUdpEncapSocket(port.intValue());
         }
         if (udpEncapSocket == null) return null;
         String id = getUdpEncapSockId(udpEncapSocket);
@@ -250,9 +250,9 @@ public class IpSecManagerFacade extends RpcReceiver {
         InetAddress inetAddr = NetworkUtils.numericToInetAddress(addr);
         SecurityParameterIndex spi = null;
         if (requestedSpi == null) {
-            spi = ipSecAllocateSpi(inetAddr);
+            spi = allocateSpi(inetAddr);
         } else {
-            spi = ipSecAllocateSpi(inetAddr, requestedSpi.intValue());
+            spi = allocateSpi(inetAddr, requestedSpi.intValue());
         }
         if (spi == null) return null;
         String id = getSpiId(spi);
