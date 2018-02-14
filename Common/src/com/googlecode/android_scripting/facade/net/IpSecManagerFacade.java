@@ -30,6 +30,7 @@ import android.net.NetworkUtils;
 import android.system.ErrnoException;
 import android.system.Os;
 
+import com.google.common.io.BaseEncoding;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
@@ -39,9 +40,9 @@ import com.googlecode.android_scripting.rpc.RpcParameter;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 /*
@@ -87,7 +88,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private SecurityParameterIndex ipSecAllocateSpi(InetAddress inetAddr) {
+    private SecurityParameterIndex allocateSpi(InetAddress inetAddr) {
         try {
             return mIpSecManager.allocateSecurityParameterIndex(inetAddr);
         } catch (ResourceUnavailableException e) {
@@ -96,7 +97,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private SecurityParameterIndex ipSecAllocateSpi(InetAddress inetAddr, int requestedSpi) {
+    private SecurityParameterIndex allocateSpi(InetAddress inetAddr, int requestedSpi) {
         try {
             return mIpSecManager.allocateSecurityParameterIndex(inetAddr, requestedSpi);
         } catch (SpiUnavailableException | ResourceUnavailableException e) {
@@ -105,7 +106,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private UdpEncapsulationSocket ipSecOpenUdpEncapSocket() {
+    private UdpEncapsulationSocket openUdpEncapSocket() {
         UdpEncapsulationSocket udpEncapSocket = null;
         try {
             return mIpSecManager.openUdpEncapsulationSocket();
@@ -115,7 +116,7 @@ public class IpSecManagerFacade extends RpcReceiver {
         return null;
     }
 
-    private UdpEncapsulationSocket ipSecOpenUdpEncapSocket(int port) {
+    private UdpEncapsulationSocket openUdpEncapSocket(int port) {
         try {
             return mIpSecManager.openUdpEncapsulationSocket(port);
         } catch (ResourceUnavailableException | IOException e) {
@@ -170,9 +171,9 @@ public class IpSecManagerFacade extends RpcReceiver {
     @Rpc(description = "Create a transform mode transform", returns = "Hash of transform object")
     public String ipSecCreateTransportModeTransform(
             String encAlgo,
-            String cryptKeyString,
+            String cryptKeyHex,
             String authAlgo,
-            String authKeyString,
+            String authKeyHex,
             Integer truncBits,
             String spiId,
             String addr) {
@@ -183,8 +184,8 @@ public class IpSecManagerFacade extends RpcReceiver {
             Log.e("IpSec: SPI does not exist for the requested spiId");
             return null;
         }
-        byte[] cryptKey = cryptKeyString.getBytes();
-        byte[] authKey = authKeyString.getBytes();
+        byte[] cryptKey = BaseEncoding.base16().decode(cryptKeyHex.toUpperCase());
+        byte[] authKey = BaseEncoding.base16().decode(authKeyHex.toUpperCase());
         transform =
                 createTransportModeTransform(
                         encAlgo, cryptKey, authAlgo, authKey, truncBits, spi, inetAddr);
@@ -220,9 +221,9 @@ public class IpSecManagerFacade extends RpcReceiver {
             @RpcParameter(name = "port") @RpcOptional Integer port) {
         UdpEncapsulationSocket udpEncapSocket = null;
         if (port == null) {
-            udpEncapSocket = ipSecOpenUdpEncapSocket();
+            udpEncapSocket = openUdpEncapSocket();
         } else {
-            udpEncapSocket = ipSecOpenUdpEncapSocket(port.intValue());
+            udpEncapSocket = openUdpEncapSocket(port.intValue());
         }
         if (udpEncapSocket == null) return null;
         String id = getUdpEncapSockId(udpEncapSocket);
@@ -250,9 +251,9 @@ public class IpSecManagerFacade extends RpcReceiver {
         InetAddress inetAddr = NetworkUtils.numericToInetAddress(addr);
         SecurityParameterIndex spi = null;
         if (requestedSpi == null) {
-            spi = ipSecAllocateSpi(inetAddr);
+            spi = allocateSpi(inetAddr);
         } else {
-            spi = ipSecAllocateSpi(inetAddr, requestedSpi.intValue());
+            spi = allocateSpi(inetAddr, requestedSpi.intValue());
         }
         if (spi == null) return null;
         String id = getSpiId(spi);
@@ -316,11 +317,11 @@ public class IpSecManagerFacade extends RpcReceiver {
 
         InetAddress remote = NetworkUtils.numericToInetAddress(remoteAddr);
         try {
-            data = new String(message).getBytes("UTF-8");
+            data = new String(message).getBytes(StandardCharsets.UTF_8);
             int bytes = Os.sendto(socket, data, 0, data.length, 0, remote, remotePort.intValue());
             Log.d("IpSec: Sent " + String.valueOf(bytes) + " bytes");
             return true;
-        } catch (UnsupportedEncodingException | ErrnoException | SocketException e) {
+        } catch (ErrnoException | SocketException e) {
             Log.e("IpSec: Sending data over socket failed " + e.toString());
         }
         return false;
@@ -335,8 +336,8 @@ public class IpSecManagerFacade extends RpcReceiver {
 
         try {
             Os.read(socket, data, 0, data.length);
-            returnData = new String(data, "UTF-8");
-        } catch (UnsupportedEncodingException | ErrnoException | InterruptedIOException e) {
+            returnData = new String(data, StandardCharsets.UTF_8);
+        } catch (ErrnoException | InterruptedIOException e) {
             Log.e("IpSec: Receiving data over socket failed " + e.toString());
         }
         return returnData;
