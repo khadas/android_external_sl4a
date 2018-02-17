@@ -115,8 +115,8 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
             RangingResultCallback callback = new RangingResultCallbackFacade(id);
             mMgr.startRanging(getWorkSource(uidsOverride),
                     new RangingRequest.Builder().addAccessPoints(
-                            WifiJsonParser.getScanResults(scanResults)).build(), callback,
-                        null);
+                            WifiJsonParser.getScanResults(scanResults)).build(),
+                    mService.getMainExecutor(), callback);
             return id;
         }
     }
@@ -133,7 +133,8 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
             byte[] peerMacBytes = HexEncoding.decode(peerMac); // since Aware returns string w/o ":"
             mMgr.startRanging(getWorkSource(uidsOverride),
                     new RangingRequest.Builder().addWifiAwarePeer(
-                            MacAddress.fromBytes(peerMacBytes)).build(), callback, null);
+                            MacAddress.fromBytes(peerMacBytes)).build(), mService.getMainExecutor(),
+                    callback);
             return id;
         }
     }
@@ -149,7 +150,7 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
             RangingResultCallback callback = new RangingResultCallbackFacade(id);
             mMgr.startRanging(getWorkSource(uidsOverride),
                     new RangingRequest.Builder().addWifiAwarePeer(
-                            new PeerHandle(peerId)).build(), callback, null);
+                            new PeerHandle(peerId)).build(), mService.getMainExecutor(), callback);
             return id;
         }
     }
