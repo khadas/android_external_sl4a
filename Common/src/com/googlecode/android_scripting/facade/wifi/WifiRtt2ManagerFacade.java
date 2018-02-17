@@ -198,7 +198,7 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
             bundle.putInt("rssi", result.getRssi());
             bundle.putByteArray("lci", result.getLci());
             bundle.putByteArray("lcr", result.getLcr());
-            bundle.putLong("timestamp", result.getRangingTimestampUs());
+            bundle.putLong("timestamp", result.getRangingTimestampMillis());
         }
         if (result.getPeerHandle() != null) {
             bundle.putInt("peerId", result.getPeerHandle().peerId);
