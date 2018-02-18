@@ -257,7 +257,7 @@ public class SmsFacade extends RpcReceiver {
         mmsReceived.addAction(Intents.WAP_PUSH_RECEIVED_ACTION);
         mmsReceived.addAction(Intents.DATA_SMS_RECEIVED_ACTION);
         mService.registerReceiver(mMmsIncomingListener, mmsReceived);
-        mListeningIncomingSms = true;
+        mListeningIncomingMms = true;
     }
 
     @Rpc(description = "Stops tracking incoming MMS.")
