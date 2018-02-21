@@ -294,6 +294,32 @@ public class SettingsFacade extends RpcReceiver {
         }
     }
 
+    @Rpc(description = "Set private DNS mode")
+    public void setPrivateDnsMode(@RpcParameter(name = "useTls") Boolean useTls,
+            @RpcParameter(name = "hostname") @RpcOptional String hostname) {
+        String dnsMode = ConnectivityConstants.PrivateDnsModeOpportunistic;
+        if(useTls == false) dnsMode = ConnectivityConstants.PrivateDnsModeOff;
+        if(hostname != null) dnsMode = ConnectivityConstants.PrivateDnsModeStrict;
+        android.provider.Settings.Global.putString(mService.getContentResolver(),
+                android.provider.Settings.Global.PRIVATE_DNS_MODE, dnsMode);
+        if(hostname != null)
+            android.provider.Settings.Global.putString(mService.getContentResolver(),
+                    android.provider.Settings.Global.PRIVATE_DNS_SPECIFIER, hostname);
+    }
+
+    @Rpc(description = "Get private DNS mode", returns = "Private DNS mode setting")
+    public String getPrivateDnsMode() {
+        return android.provider.Settings.Global.getString(mService.getContentResolver(),
+                android.provider.Settings.Global.PRIVATE_DNS_MODE);
+    }
+
+    @Rpc(description = "Get private DNS specifier", returns = "DNS hostname set in strict mode")
+    public String getPrivateDnsSpecifier() {
+        if(!getPrivateDnsMode().equals(ConnectivityConstants.PrivateDnsModeStrict)) return null;
+        return android.provider.Settings.Global.getString(mService.getContentResolver(),
+                android.provider.Settings.Global.PRIVATE_DNS_SPECIFIER);
+    }
+
     @Override
     public void shutdown() {
         // Nothing to do yet.
