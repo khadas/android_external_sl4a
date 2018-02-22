@@ -820,7 +820,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             Bundle mResults = createServiceDiscoveredBaseBundle(peerHandle, serviceSpecificInfo,
                     matchFilter);
             mResults.putInt("distanceMm", distanceMm);
-            postEvent("WifiAwareSessionOnServiceDiscoveredWithinRange", mResults);
+            postEvent("WifiAwareSessionOnServiceDiscovered", mResults);
         }
 
         @Override
