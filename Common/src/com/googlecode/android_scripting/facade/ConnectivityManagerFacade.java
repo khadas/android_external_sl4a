@@ -38,8 +38,6 @@ import android.net.StringNetworkSpecifier;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.provider.Settings;
-
-import com.googlecode.android_scripting.FileUtils;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.wifi.WifiAwareManagerFacade;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
@@ -51,22 +49,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -81,8 +69,6 @@ public class ConnectivityManagerFacade extends RpcReceiver {
     public static int AIRPLANE_MODE_OFF = 0;
     public static int AIRPLANE_MODE_ON = 1;
     public static int DATA_ROAMING_ON = 1;
-
-    private static HashMap<Integer, Network> mNetworkHashMap = new HashMap<Integer, Network>();
 
     class ConnectivityReceiver extends BroadcastReceiver {
 
@@ -995,69 +981,6 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         };
 
         return interfaces;
-    }
-
-    private int getNetworkId(Network network) {
-        return network.hashCode();
-    }
-
-    @Rpc(description = "Return Multipath preference for a given network")
-    public Integer connectivityGetMultipathPreference(Integer networkId) {
-        Network network = mNetworkHashMap.get(networkId.intValue());
-        return mManager.getMultipathPreference(network);
-    }
-
-    @Rpc(description = "Return key to active network stored in a hash map")
-    public int connectivityGetActiveNetwork() {
-        Network network = mManager.getActiveNetwork();
-        int id = getNetworkId(network);
-        mNetworkHashMap.put(id, network);
-        return id;
-    }
-
-    @Rpc(description = "Return Multipath preference for active network")
-    public Integer connectivityGetMultipathPreference() {
-        Network network = mManager.getActiveNetwork();
-        return mManager.getMultipathPreference(network);
-    }
-
-    private void inputStreamToOutputStream(InputStream in, OutputStream out) throws IOException {
-        if (in == null || out == null) {
-            Log.e("InputStream or OutputStream is null.");
-            return;
-        }
-        try {
-            int read = 0;
-            byte[] bytes = new byte[1024];
-            while ((read = in.read(bytes)) != -1) {
-                out.write(bytes, 0, read);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            in.close();
-            out.close();
-        }
-
-    }
-
-    @Rpc(description = "Download file on a given network with Network#openConnection")
-    public void connectivityNetworkOpenConnection(Integer networkId, String urlString) {
-        Network network = mNetworkHashMap.get(networkId.intValue());
-        try {
-            URL url = new URL(urlString);
-            URLConnection urlConnection = network.openConnection(url);
-            File outFile = FileUtils.getExternalDownload();
-            int lastIdx = urlString.lastIndexOf('/');
-            String filename = urlString.substring(lastIdx + 1);
-            Log.d("Using name from url: " + filename);
-            outFile = new File(outFile, filename);
-            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-            OutputStream output = new FileOutputStream(outFile);
-            inputStreamToOutputStream(in, output);
-        } catch (IOException e) {
-            Log.e("Failed to download file: " + e.toString());
-        }
     }
 
     @Override
