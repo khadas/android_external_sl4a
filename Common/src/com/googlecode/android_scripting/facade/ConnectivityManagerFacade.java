@@ -38,6 +38,9 @@ import android.net.StringNetworkSpecifier;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.provider.Settings;
+
+import com.google.common.io.ByteStreams;
+import com.googlecode.android_scripting.FileUtils;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.wifi.WifiAwareManagerFacade;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
@@ -49,11 +52,19 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +80,8 @@ public class ConnectivityManagerFacade extends RpcReceiver {
     public static int AIRPLANE_MODE_OFF = 0;
     public static int AIRPLANE_MODE_ON = 1;
     public static int DATA_ROAMING_ON = 1;
+
+    private static HashMap<Long, Network> sNetworkHashMap = new HashMap<Long, Network>();
 
     class ConnectivityReceiver extends BroadcastReceiver {
 
@@ -981,6 +994,63 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         };
 
         return interfaces;
+    }
+
+    /**
+    * Get multipath preference for a given network.
+    * @param networkId : network id of wifi or cell network
+    * @return Integer value of multipath preference
+    */
+    @Rpc(description = "Return Multipath preference for a given network")
+    public Integer connectivityGetMultipathPreferenceForNetwork(Long networkId) {
+        Network network = sNetworkHashMap.get(networkId.longValue());
+        return mManager.getMultipathPreference(network);
+    }
+
+    /**
+    * Return HashMap key for Network object.
+    * @return long value of Network object key
+    */
+    @Rpc(description = "Return key to active network stored in a hash map")
+    public long connectivityGetActiveNetwork() {
+        Network network = mManager.getActiveNetwork();
+        long id = network.getNetworkHandle();
+        sNetworkHashMap.put(id, network);
+        return id;
+    }
+
+    /**
+    * Get mutlipath preference for active network.
+    * @return Integer value of multipath preference
+    */
+    @Rpc(description = "Return Multipath preference for active network")
+    public Integer connectivityGetMultipathPreference() {
+        Network network = mManager.getActiveNetwork();
+        return mManager.getMultipathPreference(network);
+    }
+
+    /**
+    * Download file of a given url using Network#openConnection call.
+    * @param networkId : network id of wifi or cell network
+    * @param urlString : url in String format
+    */
+    @Rpc(description = "Download file on a given network with Network#openConnection")
+    public void connectivityNetworkOpenConnection(Long networkId, String urlString) {
+        Network network = sNetworkHashMap.get(networkId.longValue());
+        try {
+            URL url = new URL(urlString);
+            URLConnection urlConnection = network.openConnection(url);
+            File outFile = FileUtils.getExternalDownload();
+            int lastIdx = urlString.lastIndexOf('/');
+            String filename = urlString.substring(lastIdx + 1);
+            Log.d("Using name from url: " + filename);
+            outFile = new File(outFile, filename);
+            InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+            OutputStream output = new FileOutputStream(outFile);
+            ByteStreams.copy(in, output);
+        } catch (IOException e) {
+            Log.e("Failed to download file: " + e.toString());
+        }
     }
 
     @Override
