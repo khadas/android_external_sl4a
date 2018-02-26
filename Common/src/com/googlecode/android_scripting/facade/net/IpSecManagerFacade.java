@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.googlecode.android_scripting.facade;
+package com.googlecode.android_scripting.facade.net;
 
 import android.app.Service;
 import android.content.Context;
@@ -32,6 +32,7 @@ import android.system.Os;
 
 import com.google.common.io.BaseEncoding;
 import com.googlecode.android_scripting.Log;
+import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcOptional;
