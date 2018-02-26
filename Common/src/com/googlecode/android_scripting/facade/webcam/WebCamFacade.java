@@ -178,6 +178,15 @@ public class WebCamFacade extends RpcReceiver {
         return mJpegCompressionBuffer.toByteArray();
     }
 
+    /**
+     * Starts an MJPEG stream and returns a Tuple of address and port for the stream.
+     * @param resolutionLevel increasing this number provides higher resolution
+     * @param jpegQuality a number from 0-100
+     * @param port If port is specified, the webcam service will bind to port, otherwise it will
+     *             pick any available port.
+     * @return a Tuple of address and port for the stream
+     * @throws Exception upon failure to open the webcam or start the server
+     */
     @Rpc(description = "Starts an MJPEG stream and returns a Tuple of address and port "
             + "for the stream.")
     public InetSocketAddress webcamStart(
@@ -240,6 +249,12 @@ public class WebCamFacade extends RpcReceiver {
         }
     }
 
+    /**
+     * Adjusts the quality of the webcam stream while it is running.
+     * @param resolutionLevel increasing this number provides higher resolution
+     * @param jpegQuality a number from 0-100
+     * @throws Exception if the webcam is not streaming or the camera is unable to open
+     */
     @Rpc(description = "Adjusts the quality of the webcam stream while it is running.")
     public void webcamAdjustQuality(
             @RpcParameter(name = "resolutionLevel",
@@ -307,6 +322,7 @@ public class WebCamFacade extends RpcReceiver {
         mParameters = null;
     }
 
+    /** Stops the webcam stream. */
     @Rpc(description = "Stops the webcam stream.")
     public void webcamStop() {
         stopServer();
@@ -351,6 +367,14 @@ public class WebCamFacade extends RpcReceiver {
         return task;
     }
 
+    /**
+     * Start Preview Mode. Throws 'preview' events.
+     * @param resolutionLevel increasing this number provides higher resolution
+     * @param jpegQuality a number from 0-100
+     * @param filepath the path to store jpeg files
+     * @return a Tuple of address and port for the stream
+     * @throws InterruptedException if interrupted while trying to open the camera
+     */
     @Rpc(description = "Start Preview Mode. Throws 'preview' events.",
             returns = "True if successful")
     public boolean cameraStartPreview(
@@ -384,6 +408,7 @@ public class WebCamFacade extends RpcReceiver {
         return true;
     }
 
+    /** Stops the preview mode. */
     @Rpc(description = "Stop the preview mode.")
     public void cameraStopPreview() {
         stopPreview();
