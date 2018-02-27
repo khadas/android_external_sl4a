@@ -77,6 +77,7 @@ import com.googlecode.android_scripting.rpc.RpcMinSdk;
 import com.googlecode.android_scripting.rpc.RpcStartEvent;
 import com.googlecode.android_scripting.rpc.RpcStopEvent;
 import com.googlecode.android_scripting.webcam.WebCamFacade;
+import com.googlecode.android_scripting.facade.net.IpSecManagerFacade;
 
 /**
  * Encapsulates the list of supported facades and their construction.
