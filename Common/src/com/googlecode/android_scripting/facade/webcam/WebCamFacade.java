@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.googlecode.android_scripting.webcam;
+package com.googlecode.android_scripting.facade.webcam;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
