@@ -27,7 +27,6 @@ import android.content.IntentFilter;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Telephony.Sms.Intents;
-import android.provider.Telephony.Mms;
 import android.telephony.SmsCbCmasInfo;
 import android.telephony.SmsCbEtwsInfo;
 import android.telephony.SmsCbMessage;
@@ -582,7 +581,7 @@ public class SmsFacade extends RpcReceiver {
                 event.putString("Type", "NewWapPushReceived");
                 mEventFacade.postEvent(TelephonyConstants.EventWapPushReceived, event);
             }
-            if (Intents.DATA_SMS_RECEIVED_ACTION.equals(action)) {
+            else if (Intents.DATA_SMS_RECEIVED_ACTION.equals(action)) {
                 Log.d("New Data SMS Received");
                 Bundle event = new Bundle();
                 event.putString("Type", "NewDataSMSReceived");
