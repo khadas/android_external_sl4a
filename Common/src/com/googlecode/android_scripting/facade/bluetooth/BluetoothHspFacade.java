@@ -100,7 +100,8 @@ public class BluetoothHspFacade extends RpcReceiver {
       throws Exception {
     if (sHspProfile == null)
       return false;
-    BluetoothDevice mDevice = BluetoothFacade.getDevice(BluetoothFacade.DiscoveredDevices, device);
+    BluetoothDevice mDevice =
+        BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), device);
     Log.d("Connecting to device " + mDevice.getAliasName());
     return hspConnect(mDevice);
   }
@@ -244,7 +245,71 @@ public class BluetoothHspFacade extends RpcReceiver {
     return sHspProfile.isAudioConnected(device);
   }
 
+  /**
+   * Start voice recognition. Send BVRA command.
+   *
+   * @param deviceAddress the Bluetooth MAC address of remote device
+   * @return True if started successfully, False otherwise.
+   */
+  @Rpc(description = "Start Voice Recognition.")
+  public Boolean bluetoothHspStartVoiceRecognition(
+        @RpcParameter(name = "deviceAddress", description = "MAC address of a bluetooth device.")
+                  String deviceAddress) throws Exception {
+    BluetoothDevice device = BluetoothFacade.getDevice(sHspProfile.getConnectedDevices(), deviceAddress);
+    return sHspProfile.startVoiceRecognition(device);
+  }
+
+  /**
+   * Stop voice recognition. Send BVRA command.
+   *
+   * @param deviceAddress the Bluetooth MAC address of remote device
+   * @return True if stopped successfully, False otherwise.
+   */
+  @Rpc(description = "Stop Voice Recognition.")
+  public Boolean bluetoothHspStopVoiceRecognition(
+        @RpcParameter(name = "deviceAddress", description = "MAC address of a bluetooth device.")
+                  String deviceAddress) throws Exception {
+    BluetoothDevice device = BluetoothFacade.getDevice(sHspProfile.getConnectedDevices(), deviceAddress);
+    return sHspProfile.stopVoiceRecognition(device);
+  }
+
+  /**
+   * Determine whether in-band ringtone is enabled or not.
+   *
+   * @return True if enabled, False otherwise.
+   */
+  @Rpc(description = "In-band ringtone enabled check.")
+  public Boolean bluetoothHspIsInbandRingingEnabled() {
+    return sHspProfile.isInbandRingingEnabled();
+  }
+
+  /**
+   * Send a CLCC response from Sl4a (experimental).
+   *
+   * @param index the index of the call
+   * @param direction the direction of the call
+   * @param status the status of the call
+   * @param mode the mode
+   * @param mpty the mpty value
+   * @param number the phone number
+   * @param type the type
+   * @return True if stopped successfully, False otherwise.
+   */
+  @Rpc(description = "Send generic clcc response.")
+  public void bluetoothHspClccResponse(
+        @RpcParameter(name = "index", description = "") Integer index,
+        @RpcParameter(name = "direction", description = "") Integer direction,
+        @RpcParameter(name = "status", description = "") Integer status,
+        @RpcParameter(name = "mode", description = "") Integer mode,
+        @RpcParameter(name = "mpty", description = "") Boolean mpty,
+        @RpcParameter(name = "number", description = "") String number,
+        @RpcParameter(name = "type", description = "") Integer type
+                  ) {
+    sHspProfile.clccResponse(index, direction, status, mode, mpty, number, type);
+  }
+
   @Override
   public void shutdown() {
   }
 }
+
