@@ -140,8 +140,8 @@ public class BluetoothA2dpFacade extends RpcReceiver {
         if (sA2dpProfile == null) {
             return false;
         }
-        BluetoothDevice mDevice = BluetoothFacade.getDevice(
-                BluetoothFacade.DiscoveredDevices, deviceID);
+        BluetoothDevice mDevice =
+                BluetoothFacade.getDevice(mBluetoothAdapter.getBondedDevices(), deviceID);
         Log.d("Connecting to device " + mDevice.getAliasName());
         return a2dpConnect(mDevice);
     }
