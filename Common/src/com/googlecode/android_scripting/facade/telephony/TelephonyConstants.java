@@ -420,6 +420,9 @@ public class TelephonyConstants {
         public static final String SYSTEM_ID = "systemId";
         public static final String SUBSCRIPTION_ID = "subscriptionId";
         public static final String SERVICE_STATE = "serviceState";
+        public static final String CHANNEL_NUMBER = "channelNumber";
+        public static final String CELL_BANDWIDTHS = "cellBandwidths";
+        public static final String DUPLEX_MODE = "duplexMode";
     }
 
     public static class MessageWaitingIndicatorContainer {
