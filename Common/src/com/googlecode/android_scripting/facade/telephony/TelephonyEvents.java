@@ -16,12 +16,15 @@
 
 package com.googlecode.android_scripting.facade.telephony;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import android.telephony.DataConnectionRealTimeInfo;
 import android.telephony.PreciseCallState;
 import android.telephony.ServiceState;
+
 import com.googlecode.android_scripting.jsonrpc.JsonSerializable;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class TelephonyEvents {
 
@@ -273,6 +276,17 @@ public class TelephonyEvents {
             serviceState.put(
                     TelephonyConstants.ServiceStateContainer.SERVICE_STATE,
                     mServiceStateString);
+            serviceState.put(
+                    TelephonyConstants.ServiceStateContainer.CHANNEL_NUMBER,
+                    mServiceState.getChannelNumber());
+            serviceState.put(
+                    TelephonyConstants.ServiceStateContainer.CELL_BANDWIDTHS,
+                    mServiceState.getCellBandwidths() != null
+                            ? new JSONArray(mServiceState.getCellBandwidths())
+                            : JSONObject.NULL);
+            serviceState.put(
+                    TelephonyConstants.ServiceStateContainer.DUPLEX_MODE,
+                    mServiceState.getDuplexMode());
 
             return serviceState;
         }
