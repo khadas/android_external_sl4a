@@ -118,6 +118,19 @@ public class WifiJsonParser {
                 }
             }
         }
+        if (j.has("radioChainInfos")) {
+            JSONArray jRinfos = j.getJSONArray("radioChainInfos");
+            if (jRinfos.length() > 0) {
+                scanResult.radioChainInfos = new ScanResult.RadioChainInfo[jRinfos.length()];
+                for (int i = 0; i < jRinfos.length(); i++) {
+                    ScanResult.RadioChainInfo item = new ScanResult.RadioChainInfo();
+                    JSONObject jRinfo = jRinfos.getJSONObject(i);
+                    item.id = jRinfo.getInt("id");
+                    item.level = jRinfo.getInt("level");
+                    scanResult.radioChainInfos[i] = item;
+                }
+            }
+        }
 
         return scanResult;
     }
