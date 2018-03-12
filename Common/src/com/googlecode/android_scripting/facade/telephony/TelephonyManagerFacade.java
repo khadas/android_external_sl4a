@@ -587,17 +587,17 @@ public class TelephonyManagerFacade extends RpcReceiver {
      * @return Carrier id of the current subscription.
      */
     @Rpc(description = "Returns the numeric CarrierId for current subscription")
-    public int telephonyGetSubscriptionCarrierId() {
-        return mTelephonyManager.getAndroidCarrierIdForSubscription();
+    public int telephonyGetSimCarrierId() {
+        return mTelephonyManager.getSimCarrierId();
     }
 
     /**
-     *  Returns carrier name of the current subscription.
-     * @return Carrier name of the current subscription
+     *  Returns carrier id name of the current subscription.
+     * @return Carrier id name of the current subscription
      */
     @Rpc(description = "Returns Carrier Name for current subscription")
-    public CharSequence telephonyGetSubscriptionCarrierName() {
-        return mTelephonyManager.getAndroidCarrierNameForSubscription();
+    public CharSequence telephonyGetSimCarrierIdName() {
+        return mTelephonyManager.getSimCarrierIdName();
     }
 
     @Rpc(description = "Returns the numeric name (MCC+MNC) of registered operator." +
