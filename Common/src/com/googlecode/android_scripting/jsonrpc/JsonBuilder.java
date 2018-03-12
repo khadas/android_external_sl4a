@@ -40,7 +40,6 @@ import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiActivityEnergyInfo;
-import android.net.wifi.WifiChannel;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
@@ -257,9 +256,6 @@ public class JsonBuilder {
         }
         if (data instanceof WifiActivityEnergyInfo) {
             return buildWifiActivityEnergyInfo((WifiActivityEnergyInfo) data);
-        }
-        if (data instanceof WifiChannel) {
-            return buildWifiChannel((WifiChannel) data);
         }
         if (data instanceof WifiConfiguration) {
             return buildWifiConfiguration((WifiConfiguration) data);
@@ -922,15 +918,6 @@ public class JsonBuilder {
         result.put("StackState", data.getStackState());
         result.put("TimeStamp", data.getTimeStamp());
         return result;
-    }
-
-    private static Object buildWifiChannel(WifiChannel data) throws JSONException {
-        JSONObject channel = new JSONObject();
-        channel.put("channelNum", data.channelNum);
-        channel.put("freqMHz", data.freqMHz);
-        channel.put("isDFS", data.isDFS);
-        channel.put("isValid", data.isValid());
-        return channel;
     }
 
     private static Object buildWifiConfiguration(WifiConfiguration data)
