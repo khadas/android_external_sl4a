@@ -630,6 +630,18 @@ public class JsonBuilder {
         } else {
             result.put("InformationElements", null);
         }
+        if (scanResult.radioChainInfos != null) {
+            JSONArray radioChainEles = new JSONArray();
+            for (ScanResult.RadioChainInfo item : scanResult.radioChainInfos) {
+                JSONObject radioChainEle = new JSONObject();
+                radioChainEle.put("id", item.id);
+                radioChainEle.put("level", item.level);
+                radioChainEles.put(radioChainEle);
+            }
+            result.put("radioChainInfos", radioChainEles);
+        } else {
+            result.put("radioChainInfos", null);
+        }
         return result;
     }
 
