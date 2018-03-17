@@ -120,8 +120,12 @@
     <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
     <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
     <uses-permission android:name="android.permission.RECEIVE_EMERGENCY_BROADCAST"/>
-    <application android:icon="@drawable/sl4a_logo_48" android:label="@string/application_title" android:name=".Sl4aApplication"
-        android:theme="@android:style/Theme.DeviceDefault">
+    <application
+        android:icon="@drawable/sl4a_logo_48"
+        android:label="@string/application_title"
+        android:name=".Sl4aApplication"
+        android:theme="@android:style/Theme.DeviceDefault"
+        android:usesCleartextTraffic="true">
         <activity android:name=".activity.ScriptManager" android:configChanges="keyboardHidden|orientation" android:windowSoftInputMode="adjustResize" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
