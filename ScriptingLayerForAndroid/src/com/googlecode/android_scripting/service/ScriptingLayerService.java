@@ -74,6 +74,9 @@ public class ScriptingLayerService extends ForegroundService {
     private SharedPreferences mPreferences = null;
     private boolean mHide;
 
+    /**
+     * A binder object that contains a reference to the ScriptingLayerService.
+     */
     public class LocalBinder extends Binder {
         public ScriptingLayerService getService() {
             return ScriptingLayerService.this;
@@ -348,12 +351,21 @@ public class ScriptingLayerService extends ForegroundService {
         }
     }
 
+    /**
+     * Returns the list of all running InterpreterProcesses. This list includes RPC servers.
+     * @return a list of all running interpreter processes
+     */
     public List<InterpreterProcess> getScriptProcessesList() {
         ArrayList<InterpreterProcess> result = new ArrayList<InterpreterProcess>();
         result.addAll(mProcessMap.values());
         return result;
     }
 
+    /**
+     * Returns the process running on the given port, if any.
+     * @param port the integer value corresponding to the port to find a process on
+     * @return the InterpreterProcess running on that port, or null
+     */
     public InterpreterProcess getProcess(int port) {
         InterpreterProcess p = mProcessMap.get(port);
         if (p == null) {
