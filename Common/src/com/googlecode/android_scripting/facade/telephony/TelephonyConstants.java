@@ -347,6 +347,7 @@ public class TelephonyConstants {
     public static final String EventSignalStrengthChanged = "SignalStrengthChanged";
     public static final String EventVolteServiceStateChanged = "VolteServiceStateChanged";
     public static final String EventMessageWaitingIndicatorChanged = "MessageWaitingIndicatorChanged";
+    public static final String EventPhysicalChannelConfigChanged = "PhysicalChannelConfigChanged";
 
     /**
      * Constants for OnStartTetheringCallback
@@ -431,5 +432,11 @@ public class TelephonyConstants {
 
     public static class VoLteServiceStateContainer {
         public static final String SRVCC_STATE = "srvccState";
+    }
+
+    public static class PhysicalChannelConfigContainer {
+        public static final String CONFIGS = "configs";
+        public static final String CELL_BANDWIDTH_DOWNLINK = "cellBandwidthDownlink";
+        public static final String CONNECTION_STATUS  = "cellConnectionStatus";
     }
 }
