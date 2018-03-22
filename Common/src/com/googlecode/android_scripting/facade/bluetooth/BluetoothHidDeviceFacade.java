@@ -22,7 +22,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothHidDevice;
 import android.bluetooth.BluetoothHidDeviceAppQosSettings;
 import android.bluetooth.BluetoothHidDeviceAppSdpSettings;
-import android.bluetooth.BluetoothHidDeviceCallback;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothUuid;
 import android.os.Bundle;
@@ -161,7 +160,7 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
     private static boolean sIsHidDeviceReady = false;
     private static BluetoothHidDevice sHidDeviceProfile = null;
 
-    private BluetoothHidDeviceCallback mCallback = new BluetoothHidDeviceCallback() {
+    private BluetoothHidDevice.Callback mCallback = new BluetoothHidDevice.Callback() {
         @Override
         public void onAppStatusChanged(BluetoothDevice pluggedDevice, boolean registered) {
             Log.d("onAppStatusChanged: pluggedDevice=" + pluggedDevice + " registered="
@@ -171,6 +170,7 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             mEventFacade.postEvent("onAppStatusChanged", result);
         }
 
+        @Override
         public void onConnectionStateChanged(BluetoothDevice device, int state) {
             Log.d("onConnectionStateChanged: device=" + device + " state=" + state);
             Bundle result = new Bundle();
@@ -178,6 +178,7 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             mEventFacade.postEvent("onConnectionStateChanged", result);
         }
 
+        @Override
         public void onGetReport(BluetoothDevice device, byte type, byte id, int bufferSize) {
             Log.d("onGetReport: device=" + device + " type=" + type + " id=" + id + " bufferSize="
                     + bufferSize);
@@ -188,6 +189,7 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             mEventFacade.postEvent("onGetReport", result);
         }
 
+        @Override
         public void onSetReport(BluetoothDevice device, byte type, byte id, byte[] data) {
             Log.d("onSetReport: device=" + device + " type=" + type + " id=" + id);
             Bundle result = new Bundle();
@@ -197,6 +199,7 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             mEventFacade.postEvent("onSetReport", result);
         }
 
+        @Override
         public void onSetProtocol(BluetoothDevice device, byte protocol) {
             Log.d("onSetProtocol: device=" + device + " protocol=" + protocol);
             Bundle result = new Bundle();
@@ -204,6 +207,7 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             mEventFacade.postEvent("onSetProtocol", result);
         }
 
+        @Override
         public void onInterruptData(BluetoothDevice device, byte reportId, byte[] data) {
             Log.d("onInterruptData: device=" + device + " reportId=" + reportId);
             Bundle result = new Bundle();
@@ -212,6 +216,7 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
             mEventFacade.postEvent("onInterruptData", result);
         }
 
+        @Override
         public void onVirtualCableUnplug(BluetoothDevice device) {
             Log.d("onVirtualCableUnplug: device=" + device);
             Bundle result = new Bundle();
@@ -364,7 +369,8 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
     @Rpc(description = "Register app for the HID Device service using default settings.")
     public Boolean bluetoothHidDeviceRegisterApp() throws Exception {
         return sHidDeviceProfile != null
-                && sHidDeviceProfile.registerApp(sSdpSettings, null, sQos, mCallback);
+                && sHidDeviceProfile.registerApp(
+                        sSdpSettings, null, sQos, command -> command.run(), mCallback);
     }
 
     /**
