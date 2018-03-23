@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class SimpleServer {
     private static int threadIndex = 0;
     private final ConcurrentHashMap<Integer, ConnectionThread> mConnectionThreads =
-            new ConcurrentHashMap<Integer, ConnectionThread>();
+            new ConcurrentHashMap<>();
     private final List<SimpleServerObserver> mObservers = Lists.newArrayList();
     private volatile boolean mStopServer = false;
     private ServerSocket mServer;
@@ -56,9 +56,9 @@ public abstract class SimpleServer {
      */
     public interface SimpleServerObserver {
         /** The function to be called when a ConnectionThread is established.*/
-        public void onConnect();
+        void onConnect();
         /** The function to be called when a ConnectionThread disconnects.*/
-        public void onDisconnect();
+        void onDisconnect();
     }
 
     /** An abstract method for handling non-RPC connections. */
@@ -292,29 +292,26 @@ public abstract class SimpleServer {
     }
 
     private int start() {
-        mServerThread = new Thread() {
-            @Override
-            public void run() {
-                while (!mStopServer) {
-                    try {
-                        Socket sock = mServer.accept();
-                        if (!mStopServer) {
-                            startConnectionThread(sock);
-                        } else {
-                            sock.close();
-                        }
-                    } catch (IOException e) {
-                        if (!mStopServer) {
-                            Log.e("Failed to accept connection.", e);
-                        }
-                    } catch (JSONException e) {
-                        if (!mStopServer) {
-                            Log.e("Failed to parse request.", e);
-                        }
+        mServerThread = new Thread(() -> {
+            while (!mStopServer) {
+                try {
+                    Socket sock = mServer.accept();
+                    if (!mStopServer) {
+                        startConnectionThread(sock);
+                    } else {
+                        sock.close();
+                    }
+                } catch (IOException e) {
+                    if (!mStopServer) {
+                        Log.e("Failed to accept connection.", e);
+                    }
+                } catch (JSONException e) {
+                    if (!mStopServer) {
+                        Log.e("Failed to parse request.", e);
                     }
                 }
             }
-        };
+        });
         mServerThread.start();
         Log.v("Bound to " + mServer.getInetAddress());
         return mServer.getLocalPort();
