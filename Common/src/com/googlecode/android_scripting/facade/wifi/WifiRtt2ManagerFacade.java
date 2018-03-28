@@ -197,6 +197,8 @@ public class WifiRtt2ManagerFacade extends RpcReceiver {
             bundle.putInt("distanceMm", result.getDistanceMm());
             bundle.putInt("distanceStdDevMm", result.getDistanceStdDevMm());
             bundle.putInt("rssi", result.getRssi());
+            bundle.putInt("numAttemptedMeasurements", result.getNumAttemptedMeasurements());
+            bundle.putInt("numSuccessfulMeasurements", result.getNumSuccessfulMeasurements());
             bundle.putByteArray("lci", result.getLci());
             bundle.putByteArray("lcr", result.getLcr());
             bundle.putLong("timestamp", result.getRangingTimestampMillis());
