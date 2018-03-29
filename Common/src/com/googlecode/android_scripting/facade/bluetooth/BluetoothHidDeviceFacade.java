@@ -470,26 +470,6 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
         return sHidDeviceProfile.reportError(device, (byte) (int) error);
     }
 
-    /**
-     * Send virtual_cable_unplug message to the HID host.
-     * @param deviceID name or MAC address or the HID input host
-     * @return true if successfully sent the virtual_cable_unplug message; otherwise false
-     * @throws Exception error from Bluetooth HidDevService
-     */
-    @Rpc(description = "Send virtual unplug to a connected HID host.")
-    public Boolean bluetoothHidDeviceVirtualUnplug(
-            @RpcParameter(name = "deviceID",
-                    description = "Name or MAC address of a bluetooth device.")
-                    String deviceID) throws Exception {
-        if (sHidDeviceProfile == null) {
-            return false;
-        }
-
-        BluetoothDevice device = BluetoothFacade.getDevice(sHidDeviceProfile.getConnectedDevices(),
-                deviceID);
-        return sHidDeviceProfile.unplug(device);
-    }
-
     @Override
     public void shutdown() {
     }
