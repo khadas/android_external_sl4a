@@ -42,13 +42,10 @@ import com.google.android.mms.ContentType;
 import com.google.android.mms.InvalidHeaderValueException;
 import com.google.android.mms.pdu.CharacterSets;
 import com.google.android.mms.pdu.EncodedStringValue;
-import com.google.android.mms.pdu.GenericPdu;
 import com.google.android.mms.pdu.PduBody;
 import com.google.android.mms.pdu.PduComposer;
 import com.google.android.mms.pdu.PduHeaders;
-import com.google.android.mms.pdu.PduParser;
 import com.google.android.mms.pdu.PduPart;
-import com.google.android.mms.pdu.SendConf;
 import com.google.android.mms.pdu.SendReq;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.facade.EventFacade;
@@ -87,8 +84,6 @@ public class SmsFacade extends RpcReceiver {
     private boolean mCdmaEmergencyCBListenerRegistered;
     private boolean mSentReceiversRegistered;
     private Object lock = new Object();
-    private File mMmsSendFile;
-    private String mPackageName;
 
     private BroadcastReceiver mMmsSendListener;
     private BroadcastReceiver mMmsIncomingListener;
@@ -97,15 +92,15 @@ public class SmsFacade extends RpcReceiver {
     TelephonyManager mTelephonyManager;
 
     private static final String SMS_MESSAGE_STATUS_DELIVERED_ACTION =
-            "com.googlecode.android_scripting.facade.telephony.SMS_DELIVERED";
+            "com.googlecode.android_scripting.sms.MESSAGE_STATUS_DELIVERED";
     private static final String SMS_MESSAGE_SENT_ACTION =
-            "com.googlecode.android_scripting.facade.telephony.SMS_SENT";
+            "com.googlecode.android_scripting.sms.MESSAGE_SENT";
 
     private static final String EMERGENCY_CB_MESSAGE_RECEIVED_ACTION =
             "android.provider.Telephony.SMS_EMERGENCY_CB_RECEIVED";
 
     private static final String MMS_MESSAGE_SENT_ACTION =
-            "com.googlecode.android_scripting.facade.telephony.MMS_SENT";
+            "com.googlecode.android_scripting.mms.MESSAGE_SENT";
 
     private final int MAX_MESSAGE_LENGTH = 160;
     private final int INTERNATIONAL_NUMBER_LENGTH = 12;
@@ -147,7 +142,6 @@ public class SmsFacade extends RpcReceiver {
         mContext = mService;
         mSms = SmsManager.getDefault();
         mEventFacade = manager.getReceiver(EventFacade.class);
-        mPackageName = mContext.getPackageName();
         mSmsSendListener = new SmsSendListener();
         mSmsIncomingListener = new SmsIncomingListener();
         mNumExpectedSentEvents = 0;
@@ -202,12 +196,12 @@ public class SmsFacade extends RpcReceiver {
 
     // FIXME: Move to a utility class
     private boolean writeBytesToCacheFile(String fileName, byte[] pdu) {
-        mMmsSendFile = new File(mContext.getCacheDir(), fileName);
+        File mmsFile = new File(mContext.getCacheDir(), fileName);
         Log.d(String.format("filename:%s, directory:%s", fileName,
                 mContext.getCacheDir().toString()));
         FileOutputStream writer = null;
         try {
-            writer = new FileOutputStream(mMmsSendFile);
+            writer = new FileOutputStream(mmsFile);
             writer.write(pdu);
             return true;
         } catch (final IOException e) {
@@ -300,6 +294,14 @@ public class SmsFacade extends RpcReceiver {
             mTelephonyManager.getLine1Number(); //TODO: b/21592513 - multi-sim awareness
         }
 
+        if (DBG) {
+            Log.d(String.format(
+                    "Params:toPhoneNumber(%s),subject(%s),message(%s),fromPhoneNumber(%s),filename(%s)",
+                    toPhoneNumber, subject, message,
+                    (fromPhoneNumber != null) ? fromPhoneNumber : "",
+                            (fileName != null) ? fileName : ""));
+        }
+
         mms.setFromPhoneNumber((fromPhoneNumber != null) ? fromPhoneNumber : DEFAULT_FROM_PHONE_NUMBER);
         mms.setSubject(subject);
         mms.setDate();
@@ -333,12 +335,14 @@ public class SmsFacade extends RpcReceiver {
 
         if (contentUri != null) {
             Log.d(String.format("URI String: %s", contentUri.toString()));
-            mSms.sendMultimediaMessage(mContext, contentUri, null/* locationUrl */,
-                    null/* configOverrides */,
-                    createBroadcastPendingIntent(MMS_MESSAGE_SENT_ACTION));
+            SmsManager.getDefault().sendMultimediaMessage(mContext,
+                    contentUri, null/* locationUrl */, null/* configOverrides */,
+                    PendingIntent.getBroadcast(mService, 0,
+                            new Intent(MMS_MESSAGE_SENT_ACTION), 0)
+                    );
         }
         else {
-            Log.e("smsSendMultimediaMessage():Content URI String is null");
+            Log.d("smsSendMultimediaMessage():Content URI String is null");
         }
     }
 
@@ -350,20 +354,19 @@ public class SmsFacade extends RpcReceiver {
             String message,
                         @RpcParameter(name = "deliveryReportRequired")
             Boolean deliveryReportRequired) {
-        int message_length = message.length();
-        Log.d(String.format("Send SMS message of length %d", message_length));
-        if (message_length > MAX_MESSAGE_LENGTH) {
+
+        if (message.length() > MAX_MESSAGE_LENGTH) {
             ArrayList<String> messagesParts = mSms.divideMessage(message);
             mNumExpectedSentEvents = mNumExpectedDeliveredEvents = messagesParts.size();
-            Log.d(String.format("SMS message of length %d is divided into %d parts",
-                    message_length, mNumExpectedSentEvents));
             ArrayList<PendingIntent> sentIntents = new ArrayList<PendingIntent>();
             ArrayList<PendingIntent> deliveredIntents = new ArrayList<PendingIntent>();
             for (int i = 0; i < messagesParts.size(); i++) {
-                sentIntents.add(createBroadcastPendingIntent(SMS_MESSAGE_SENT_ACTION));
+                sentIntents.add(PendingIntent.getBroadcast(mService, 0,
+                        new Intent(SMS_MESSAGE_SENT_ACTION), 0));
                 if (deliveryReportRequired) {
-                    deliveredIntents.add(createBroadcastPendingIntent(
-                            SMS_MESSAGE_STATUS_DELIVERED_ACTION));
+                    deliveredIntents.add(
+                            PendingIntent.getBroadcast(mService, 0,
+                                    new Intent(SMS_MESSAGE_STATUS_DELIVERED_ACTION), 0));
                 }
             }
             mSms.sendMultipartTextMessage(
@@ -371,9 +374,13 @@ public class SmsFacade extends RpcReceiver {
                     sentIntents, deliveryReportRequired ? deliveredIntents : null);
         } else {
             mNumExpectedSentEvents = mNumExpectedDeliveredEvents = 1;
-            mSms.sendTextMessage(phoneNumber, null, message, createBroadcastPendingIntent(
-                    SMS_MESSAGE_SENT_ACTION), deliveryReportRequired ? createBroadcastPendingIntent(
-                            SMS_MESSAGE_STATUS_DELIVERED_ACTION) : null);
+            PendingIntent sentIntent = PendingIntent.getBroadcast(mService, 0,
+                    new Intent(SMS_MESSAGE_SENT_ACTION), 0);
+            PendingIntent deliveredIntent = PendingIntent.getBroadcast(mService, 0,
+                    new Intent(SMS_MESSAGE_STATUS_DELIVERED_ACTION), 0);
+            mSms.sendTextMessage(
+                    phoneNumber, null, message, sentIntent,
+                    deliveryReportRequired ? deliveredIntent : null);
         }
     }
 
@@ -443,11 +450,10 @@ public class SmsFacade extends RpcReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             Bundle event = new Bundle();
+            event.putString("Type", "SmsDeliverStatus");
             String action = intent.getAction();
             int resultCode = getResultCode();
-            event.putString("ResultCode", Integer.toString(resultCode));
             if (SMS_MESSAGE_STATUS_DELIVERED_ACTION.equals(action)) {
-                event.putString("Type", "SmsDeliverStatus");
                 if (resultCode == Activity.RESULT_OK) {
                     if (mNumExpectedDeliveredEvents == 1) {
                         Log.d("SMS Message delivered successfully");
@@ -472,9 +478,31 @@ public class SmsFacade extends RpcReceiver {
                         mNumExpectedSentEvents--;
                     }
                 } else {
-                    Log.e(String.format("SMS Message send failed with code %s", resultCode));
+                    Log.e("SMS Message send failed");
                     event.putString("Type", "SmsSentFailure");
-                    event.putString("Reason", getSmsFailureReason(resultCode));
+                    switch (resultCode) {
+                        case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                            event.putString("Reason", "GenericFailure");
+                            break;
+                        case SmsManager.RESULT_ERROR_RADIO_OFF:
+                            event.putString("Reason", "RadioOff");
+                            break;
+                        case SmsManager.RESULT_ERROR_NULL_PDU:
+                            event.putString("Reason", "NullPdu");
+                            break;
+                        case SmsManager.RESULT_ERROR_NO_SERVICE:
+                            event.putString("Reason", "NoService");
+                            break;
+                        case SmsManager.RESULT_ERROR_LIMIT_EXCEEDED:
+                            event.putString("Reason", "LimitExceeded");
+                            break;
+                        case SmsManager.RESULT_ERROR_FDN_CHECK_FAILURE:
+                            event.putString("Reason", "FdnCheckFailure");
+                            break;
+                        default:
+                            event.putString("Reason", "Unknown");
+                            break;
+                    }
                     mEventFacade.postEvent(TelephonyConstants.EventSmsSentFailure, event);
                 }
             }
@@ -521,42 +549,14 @@ public class SmsFacade extends RpcReceiver {
             String action = intent.getAction();
             int resultCode = getResultCode();
             event.putString("ResultCode", Integer.toString(resultCode));
-            String eventType = TelephonyConstants.EventMmsSentFailure;
             if (MMS_MESSAGE_SENT_ACTION.equals(action)) {
-                mMmsSendFile.delete();
                 if (resultCode == Activity.RESULT_OK) {
-                    final byte[] response = intent.getByteArrayExtra(SmsManager.EXTRA_MMS_DATA);
-                    if (response != null) {
-                        boolean shouldParse = SmsManager.getDefault().getCarrierConfigValues(
-                            ).getBoolean(
-                                SmsManager.MMS_CONFIG_SUPPORT_MMS_CONTENT_DISPOSITION, true);
-                        final GenericPdu pdu = new PduParser(response, shouldParse).parse();
-                        if (pdu instanceof SendConf) {
-                            final SendConf sendConf = (SendConf) pdu;
-                            if (sendConf.getResponseStatus() == PduHeaders.RESPONSE_STATUS_OK) {
-                                Log.d("MMS Message sent successfully");
-                                eventType = TelephonyConstants.EventMmsSentSuccess;
-                            } else {
-                                String responseStatus = String.format(
-                                        "%d", sendConf.getResponseStatus());
-                                Log.e("MMS sent, error=" + responseStatus);
-                                event.putString("Reason", responseStatus);
-                            }
-                        } else {
-                            Log.e("MMS sent, invalid response");
-                            event.putString("Reason", "InvalidResponse");
-                        }
-                    } else {
-                        Log.e("MMS sent, empty response");
-                        event.putString("Reason", "EmptyResponse");
-                    }
+                    Log.d("MMS Message sent successfully");
+                    mEventFacade.postEvent(TelephonyConstants.EventMmsSentSuccess, event);
                 } else {
-                    Log.e(String.format("MMS Message send failed with code %d", resultCode));
-                    event.putString("Reason", getMmsFailureReason(resultCode));
+                    Log.e(String.format("MMS Message send failed: %d", resultCode));
+                    mEventFacade.postEvent(TelephonyConstants.EventMmsSentFailure, event);
                 }
-                event.putString("Type", eventType);
-                mEventFacade.postEvent(eventType, event);
-                mMmsSendFile = null;
             } else {
                 Log.e("MMS Send Listener Received Invalid Event" + intent.toString());
             }
@@ -665,89 +665,6 @@ public class SmsFacade extends RpcReceiver {
                     Log.d("Received  Emergency CB without extras");
                 }
             }
-        }
-    }
-
-    private PendingIntent createBroadcastPendingIntent(String intentAction) {
-        return PendingIntent.getBroadcast(mService, 0, new Intent(intentAction).setPackage(
-                mPackageName), 0);
-    }
-
-    private static String getSmsFailureReason(int resultCode) {
-        switch (resultCode) {
-            case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-                return "GenericFailure";
-            case SmsManager.RESULT_ERROR_RADIO_OFF:
-                return "RadioOff";
-            case SmsManager.RESULT_ERROR_NULL_PDU:
-                return "NullPdu";
-            case SmsManager.RESULT_ERROR_NO_SERVICE:
-                return "NoService";
-            case SmsManager.RESULT_ERROR_LIMIT_EXCEEDED:
-                return "LimitExceeded";
-            case SmsManager.RESULT_ERROR_FDN_CHECK_FAILURE:
-                return "FdnCheckFailure";
-            case SmsManager.RESULT_ERROR_SHORT_CODE_NOT_ALLOWED:
-                return "ShortCodeNotAllowed";
-            case SmsManager.RESULT_ERROR_SHORT_CODE_NEVER_ALLOWED:
-                return "ShortCodeNeverAllowed";
-            case SmsManager.RESULT_RADIO_NOT_AVAILABLE:
-                return "RadioNotAvailable";
-            case SmsManager.RESULT_NETWORK_REJECT:
-                return "NetworkReject";
-            case SmsManager.RESULT_INVALID_ARGUMENTS:
-                return "InvalidArguments";
-            case SmsManager.RESULT_INVALID_STATE:
-                return "InvalidState";
-            case SmsManager.RESULT_NO_MEMORY:
-                return "NoMemory";
-            case SmsManager.RESULT_INVALID_SMS_FORMAT:
-                return "InvalidSmsFormat";
-            case SmsManager.RESULT_SYSTEM_ERROR:
-                return "SystemError";
-            case SmsManager.RESULT_MODEM_ERROR:
-                return "ModemError";
-            case SmsManager.RESULT_NETWORK_ERROR:
-                return "NetworkError";
-            case SmsManager.RESULT_ENCODING_ERROR:
-                return "EncodingError";
-            case SmsManager.RESULT_INVALID_SMSC_ADDRESS:
-                return "InvalidSmscAddress";
-            case SmsManager.RESULT_OPERATION_NOT_ALLOWED:
-                return "OperationNotAllowed";
-            case SmsManager.RESULT_INTERNAL_ERROR:
-                return "ResultInternalError";
-            case SmsManager.RESULT_NO_RESOURCES:
-                return "NoResources";
-            case SmsManager.RESULT_CANCELLED:
-                return "ResultCancelled";
-            case SmsManager.RESULT_REQUEST_NOT_SUPPORTED:
-                return "RequestNotSupported";
-            default:
-                return String.format("UnknownCode-%s", resultCode);
-        }
-    }
-
-    private static String getMmsFailureReason(int resultCode) {
-        switch (resultCode) {
-            case SmsManager.MMS_ERROR_UNSPECIFIED:
-                return "ErrorUnspecified";
-            case SmsManager.MMS_ERROR_INVALID_APN:
-                return "InvalidApn";
-            case SmsManager.MMS_ERROR_UNABLE_CONNECT_MMS:
-                return "UnableConnectMms";
-            case SmsManager.MMS_ERROR_HTTP_FAILURE:
-                return "HttpFailure";
-            case SmsManager.MMS_ERROR_IO_ERROR:
-                return "IoError";
-            case SmsManager.MMS_ERROR_RETRY:
-                return "Retry";
-            case SmsManager.MMS_ERROR_CONFIGURATION_ERROR:
-                return "ConfigurationError";
-            case SmsManager.MMS_ERROR_NO_DATA_NETWORK:
-                return "NoDataNetwork";
-            default:
-                return String.format("UnknownCode-%s", resultCode);
         }
     }
 
