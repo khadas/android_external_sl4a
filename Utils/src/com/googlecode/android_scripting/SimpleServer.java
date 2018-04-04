@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-//import com.googlecode.android_scripting.jsonrpc.RpcReceiverManager;
 
 /**
  * A simple server.
@@ -52,14 +51,20 @@ public abstract class SimpleServer {
     private ServerSocket mServer;
     private Thread mServerThread;
 
+    /**
+     * An interface for accessing SimpleServer events.
+     */
     public interface SimpleServerObserver {
+        /** The function to be called when a ConnectionThread is established.*/
         public void onConnect();
-
+        /** The function to be called when a ConnectionThread disconnects.*/
         public void onDisconnect();
     }
 
+    /** An abstract method for handling non-RPC connections. */
     protected abstract void handleConnection(Socket socket) throws Exception;
 
+    /** An abstract method for handling RPC connections. */
     protected abstract void handleRPCConnection(Socket socket,
                                                 Integer UID,
                                                 BufferedReader reader,
@@ -79,22 +84,32 @@ public abstract class SimpleServer {
         mObservers.remove(observer);
     }
 
+    /** Notifies all subscribers when a new ConnectionThread has been created.
+     *
+     * This applies to both newly instantiated sessions and continued sessions.
+     */
     private void notifyOnConnect() {
         for (SimpleServerObserver observer : mObservers) {
             observer.onConnect();
         }
     }
 
+    /** Notifies all subscribers when a ConnectionThread has been terminated. */
     private void notifyOnDisconnect() {
         for (SimpleServerObserver observer : mObservers) {
             observer.onDisconnect();
         }
     }
 
+    /** An implementation of a thread that holds data about its server connection status. */
     private final class ConnectionThread extends Thread {
+        /** The socket used for communication. */
         private final Socket mmSocket;
+        /** The BufferedReader providing input to the socket. */
         private final BufferedReader reader;
+        /** The PrintWriter bound to the socket's output. */
         private final PrintWriter writer;
+        /** The SessionID associated with this connection. */
         private final Integer UID;
         private final boolean isRpc;
 
@@ -149,8 +164,13 @@ public abstract class SimpleServer {
         return mConnectionThreads.size();
     }
 
+    /**
+     * Returns the private InetAddress
+     * @return the private InetAddress
+     * @throws UnknownHostException If unable to resolve localhost during fallback.
+     * @throws SocketException if an IOError occurs while querying the network interfaces.
+     */
     public static InetAddress getPrivateInetAddress() throws UnknownHostException, SocketException {
-
         InetAddress candidate = null;
         Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
         for (NetworkInterface netint : Collections.list(nets)) {
@@ -172,11 +192,18 @@ public abstract class SimpleServer {
         return InetAddress.getLocalHost(); // No damn matches. Give up, return local host.
     }
 
+    /**
+     * Returns the public InetAddress
+     * @return the private InetAddress
+     * @throws UnknownHostException If unable to resolve localhost during fallback.
+     * @throws SocketException if an IOError occurs while querying the network interfaces.
+     */
     public static InetAddress getPublicInetAddress() throws UnknownHostException, SocketException {
-
         InetAddress candidate = null;
         Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
         for (NetworkInterface netint : Collections.list(nets)) {
+            // TODO(markdr): The only diff between this and above fn is the ! on the line below.
+            //               Merge these two functions.
             if (netint.isLoopback() || !netint.isUp()) { // Ignore if localhost or not active
                 continue;
             }
@@ -226,7 +253,7 @@ public abstract class SimpleServer {
     }
 
     /**
-     * data Starts the RPC server bound to the public facing address.
+     * Starts the RPC server bound to the public facing address.
      *
      * @param port the port to bind to or 0 to pick any unused port
      * @return the port that the server is bound to
@@ -247,7 +274,7 @@ public abstract class SimpleServer {
     }
 
     /**
-     * data Starts the RPC server bound to all interfaces
+     * Starts the RPC server bound to all interfaces.
      *
      * @param port the port to bind to or 0 to pick any unused port
      * @return the port that the server is bound to
@@ -293,6 +320,13 @@ public abstract class SimpleServer {
         return mServer.getLocalPort();
     }
 
+    /**
+     * Starts a ConnectionThread for a given socket.
+     *
+     * @param sock the Socket to start a ConnectionThread over
+     * @throws IOException when I/O Errors appear during read/writes.
+     * @throws JSONException when the received data from the socket is not in the expected format
+     */
     private void startConnectionThread(final Socket sock) throws IOException, JSONException {
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(sock.getInputStream()), 8192);
@@ -352,6 +386,7 @@ public abstract class SimpleServer {
         }
     }
 
+    /** Closes the server, preventing new connections from being added. */
     public void shutdown() {
         // Stop listening on the server socket to ensure that
         // beyond this point there are no incoming requests.
