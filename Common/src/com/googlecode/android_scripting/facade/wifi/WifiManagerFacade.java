@@ -862,8 +862,14 @@ public class WifiManagerFacade extends RpcReceiver {
         if (ssid != null) {
             config.SSID = ssid.substring(1, ssid.length() - 1);
         }
-        String pwd = config.preSharedKey;                                                                      if (pwd != null) {
+
+        config.allowedKeyManagement.clear();
+        String pwd = config.preSharedKey;
+        if (pwd != null) {
+            config.allowedKeyManagement.set(KeyMgmt.WPA2_PSK);
             config.preSharedKey = pwd.substring(1, pwd.length() - 1);
+        } else {
+            config.allowedKeyManagement.set(KeyMgmt.NONE);
         }
         return config;
     }
