@@ -20,7 +20,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.googlecode.android_scripting"
     android:sharedUserId="android.uid.system">
-    <protected-broadcast android:name="com.googlecode.android_scripting.sms.MESSAGE_SENT" />
     <uses-permission android:name="com.android.permission.WHITELIST_BLUETOOTH_DEVICE"
         android:protectionLevel="signature" />
     <uses-permission android:name="android.permission.ACCESS_BLUETOOTH_SHARE"
