@@ -1751,12 +1751,15 @@ public class GattClientFacade extends RpcReceiver {
             @RpcParameter(name = "minConnectionInterval") Integer minConnectionInterval,
             @RpcParameter(name = "maxConnectionInterval") Integer maxConnectionInterval,
             @RpcParameter(name = "slaveLatency") Integer slaveLatency,
-            @RpcParameter(name = "supervisionTimeout") Integer supervisionTimeout)
+            @RpcParameter(name = "supervisionTimeout") Integer supervisionTimeout,
+            @RpcParameter(name = "minConnectionEventLen") Integer minConnectionEventLen,
+            @RpcParameter(name = "maxConnectionEventLen") Integer maxConnectionEventLen)
             throws Exception {
         boolean result = false;
         if (mBluetoothGattList.get(index) != null) {
             result = mBluetoothGattList.get(index).requestLeConnectionUpdate(
-                minConnectionInterval, maxConnectionInterval, slaveLatency, supervisionTimeout);
+                minConnectionInterval, maxConnectionInterval, slaveLatency, supervisionTimeout,
+                minConnectionEventLen, maxConnectionEventLen);
         } else {
             throw new Exception("Invalid index input:" + index);
         }
