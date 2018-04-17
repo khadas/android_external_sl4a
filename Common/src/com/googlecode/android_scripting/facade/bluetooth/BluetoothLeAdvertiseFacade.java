@@ -16,10 +16,6 @@
 
 package com.googlecode.android_scripting.facade.bluetooth;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.le.AdvertiseCallback;
@@ -37,6 +33,10 @@ import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcParameter;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * BluetoothLe Advertise functions.
@@ -582,8 +582,14 @@ public class BluetoothLeAdvertiseFacade extends RpcReceiver {
         }
     }
 
-    @Override
-    public void shutdown() {
+    /**
+     * Clear all advertise settings
+     *
+     * @param None
+     */
+    @Rpc(description = "Clear all advertise settings")
+    public void bleAdvertiseClearAll() {
+        Log.d("bleAdvertiseClearAll: called");
         if (mBluetoothAdapter.getState() == BluetoothAdapter.STATE_ON) {
             for (MyAdvertiseCallback mAdvertise : mAdvertiseCallbackList
                 .values()) {
@@ -600,5 +606,10 @@ public class BluetoothLeAdvertiseFacade extends RpcReceiver {
         mAdvertiseCallbackList.clear();
         mAdvertiseSettingsList.clear();
         mAdvertiseDataList.clear();
+    }
+
+    @Override
+    public void shutdown() {
+        bleAdvertiseClearAll();
     }
 }
