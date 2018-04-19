@@ -153,6 +153,7 @@ public class SmsFacade extends RpcReceiver {
 
     private static HashMap<Integer, String> sSmsSendFailureMap = new HashMap<Integer, String>();
     private static HashMap<Integer, String> sMmsSendFailureMap = new HashMap<Integer, String>();
+    private static HashMap<Integer, String> sMmsSendResponseMap = new HashMap<Integer, String>();
 
     public SmsFacade(FacadeManager manager) {
 
@@ -201,6 +202,19 @@ public class SmsFacade extends RpcReceiver {
                     sSmsSendFailureMap.put((Integer) field.get(mSmsClass), name);
                 } else if (name.startsWith("MMS_ERROR_")) {
                     sMmsSendFailureMap.put((Integer) field.get(mSmsClass), name);
+                }
+            }
+        } catch (Exception e) {
+            Log.d("SmsFacade error: " + e.toString());
+        }
+
+        try {
+            Class<?> mPduHeadersClass = PduHeaders.class;
+            Field[] fields = mPduHeadersClass.getFields();
+            for (Field field : fields) {
+                String name = field.getName();
+                if (name.startsWith("RESPONSE_STATUS_")) {
+                    sMmsSendResponseMap.put((Integer) field.get(mPduHeadersClass), name);
                 }
             }
         } catch (Exception e) {
@@ -361,7 +375,6 @@ public class SmsFacade extends RpcReceiver {
                           .build();
 
         Bundle actionParameters = new Bundle();
-        actionParameters.putString(KEY_MESSAGE, message);
         actionParameters.putString(KEY_RECIPIENTS, toPhoneNumber);
         actionParameters.putString(KEY_SUBJECT_TEXT, subject);
         Uri messageUri = actionParameters.getParcelable(KEY_MESSAGE_URI);
@@ -396,7 +409,6 @@ public class SmsFacade extends RpcReceiver {
             ArrayList<PendingIntent> deliveredIntents = new ArrayList<PendingIntent>();
             for (int i = 0; i < messagesParts.size(); i++) {
                 Bundle actionParameters = new Bundle();
-                actionParameters.putString(KEY_MESSAGE, messagesParts.get(i));
                 actionParameters.putString(KEY_RECIPIENTS, phoneNumber);
                 Uri messageUri = actionParameters.getParcelable(KEY_MESSAGE_URI);
                 sentIntents.add(createBroadcastPendingIntent(SMS_MESSAGE_SENT_ACTION, messageUri));
@@ -411,7 +423,6 @@ public class SmsFacade extends RpcReceiver {
         } else {
             mNumExpectedSentEvents = mNumExpectedDeliveredEvents = 1;
             Bundle actionParameters = new Bundle();
-            actionParameters.putString(KEY_MESSAGE, message);
             actionParameters.putString(KEY_RECIPIENTS, phoneNumber);
             Uri messageUri = actionParameters.getParcelable(KEY_MESSAGE_URI);
             mSms.sendTextMessage(phoneNumber, null, message, createBroadcastPendingIntent(
@@ -509,6 +520,7 @@ public class SmsFacade extends RpcReceiver {
                 if (resultCode == Activity.RESULT_OK) {
                     if (mNumExpectedSentEvents == 1) {
                         event.putString("Type", "SmsSentSuccess");
+                        event.putString("ResultString", "RESULT_OK");
                         Log.d("SMS Message sent successfully");
                         mEventFacade.postEvent(TelephonyConstants.EventSmsSentSuccess, event);
                     }
@@ -516,9 +528,12 @@ public class SmsFacade extends RpcReceiver {
                         mNumExpectedSentEvents--;
                     }
                 } else {
-                    Log.e(String.format("SMS Message send failed with code %s", resultCode));
+                    String resultString = getSmsFailureReason(resultCode);
+                    event.putString("ResultString", resultString);
+                    Log.e("SMS Message send failed with code " + Integer.toString(
+                            resultCode) + resultString);
                     event.putString("Type", "SmsSentFailure");
-                    event.putString("Reason", getSmsFailureReason(resultCode));
+                    event.putString("Reason", resultString);
                     mEventFacade.postEvent(TelephonyConstants.EventSmsSentFailure, event);
                 }
             }
@@ -569,6 +584,7 @@ public class SmsFacade extends RpcReceiver {
             if (MMS_MESSAGE_SENT_ACTION.equals(action)) {
                 if (resultCode == Activity.RESULT_OK) {
                     final byte[] response = intent.getByteArrayExtra(SmsManager.EXTRA_MMS_DATA);
+                    event.putString("ResultString", "RESULT_OK");
                     if (response != null) {
                         boolean shouldParse = mSms.getCarrierConfigValues(
                             ).getBoolean(
@@ -576,13 +592,14 @@ public class SmsFacade extends RpcReceiver {
                         final GenericPdu pdu = new PduParser(response, shouldParse).parse();
                         if (pdu instanceof SendConf) {
                             final SendConf sendConf = (SendConf) pdu;
-                            if (sendConf.getResponseStatus() == PduHeaders.RESPONSE_STATUS_OK) {
+                            int responseCode = sendConf.getResponseStatus();
+                            String responseStatus = getMmsResponseStatus(responseCode);
+                            event.putString("ResponseStatus", responseStatus);
+                            if (responseCode == PduHeaders.RESPONSE_STATUS_OK) {
                                 Log.d("MMS Message sent successfully");
                                 eventType = TelephonyConstants.EventMmsSentSuccess;
                             } else {
-                                String responseStatus = String.format(
-                                        "%d", sendConf.getResponseStatus());
-                                Log.e("MMS sent, error=" + responseStatus);
+                                Log.e("MMS sent with error response = " + responseStatus);
                                 event.putString("Reason", responseStatus);
                             }
                         } else {
@@ -594,8 +611,11 @@ public class SmsFacade extends RpcReceiver {
                         event.putString("Reason", "EmptyResponse");
                     }
                 } else {
-                    Log.e(String.format("MMS Message send failed with code %d", resultCode));
-                    event.putString("Reason", getMmsFailureReason(resultCode));
+                    String resultString = getMmsFailureReason(resultCode);
+                    event.putString("ResultString", resultString);
+                    Log.e("MMS Message send failed with result code " + Integer.toString(
+                            resultCode) + resultString);
+                    event.putString("Reason", resultString);
                 }
                 event.putString("Type", eventType);
                 mEventFacade.postEvent(eventType, event);
@@ -721,6 +741,10 @@ public class SmsFacade extends RpcReceiver {
 
     private static String getMmsFailureReason(int resultCode) {
         return sMmsSendFailureMap.get(resultCode);
+    }
+
+    private static String getMmsResponseStatus(int resultCode) {
+        return sMmsSendResponseMap.get(resultCode);
     }
 
     private static String getETWSWarningType(int type) {
