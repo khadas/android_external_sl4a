@@ -740,6 +740,7 @@ public class JsonBuilder {
         result.put("cid", cellidentity.getCi());
         result.put("pcid", cellidentity.getPci());
         result.put("tac", cellidentity.getTac());
+        result.put("bandwidth", cellidentity.getBandwidth());
         result.put("rsrp", signalstrength.getDbm());
         result.put("asulevel", signalstrength.getAsuLevel());
         result.put("timing_advance", signalstrength.getTimingAdvance());
