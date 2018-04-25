@@ -664,6 +664,7 @@ public class JsonBuilder {
         result.put("rssi", data.getRssi());
         result.put("BSSID", data.getBSSID());
         result.put("mac_address", data.getMacAddress());
+        result.put("frequency", data.getFrequency());
         // Trim the double quotes if exist
         String ssid = data.getSSID();
         if (ssid.charAt(0) == '"'
