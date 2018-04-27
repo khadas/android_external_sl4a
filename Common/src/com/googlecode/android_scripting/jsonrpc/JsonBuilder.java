@@ -1023,6 +1023,9 @@ public class JsonBuilder {
         info.put("Domains", data.getDomains());
         info.put("Mtu", data.getMtu());
         info.put("Routes", build(data.getRoutes()));
+        info.put("IsPrivateDnsActive", data.isPrivateDnsActive());
+        info.put("PrivateDnsServerName", data.getPrivateDnsServerName());
+        info.put("ValidatedPrivateDnsServers", build(data.getValidatedPrivateDnsServers()));
         return info;
     }
 
