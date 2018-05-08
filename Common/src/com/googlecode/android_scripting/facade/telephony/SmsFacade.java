@@ -400,8 +400,8 @@ public class SmsFacade extends RpcReceiver {
             Boolean deliveryReportRequired) {
         int message_length = message.length();
         Log.d(String.format("Send SMS message of length %d", message_length));
-        if (message_length > MAX_MESSAGE_LENGTH) {
-            ArrayList<String> messagesParts = mSms.divideMessage(message);
+        ArrayList<String> messagesParts = mSms.divideMessage(message);
+        if (messagesParts.size() > 1) {
             mNumExpectedSentEvents = mNumExpectedDeliveredEvents = messagesParts.size();
             Log.d(String.format("SMS message of length %d is divided into %d parts",
                     message_length, mNumExpectedSentEvents));
@@ -421,12 +421,13 @@ public class SmsFacade extends RpcReceiver {
                     phoneNumber, null, messagesParts,
                     sentIntents, deliveryReportRequired ? deliveredIntents : null);
         } else {
+            Log.d(String.format("SMS message of length %s is sent as one part", message_length));
             mNumExpectedSentEvents = mNumExpectedDeliveredEvents = 1;
             Bundle actionParameters = new Bundle();
             actionParameters.putString(KEY_RECIPIENTS, phoneNumber);
             Uri messageUri = actionParameters.getParcelable(KEY_MESSAGE_URI);
-            mSms.sendTextMessage(phoneNumber, null, message, createBroadcastPendingIntent(
-                    SMS_MESSAGE_SENT_ACTION, messageUri),
+            mSms.sendTextMessage(phoneNumber, null, messagesParts.get(0),
+                    createBroadcastPendingIntent(SMS_MESSAGE_SENT_ACTION, messageUri),
                     deliveryReportRequired ? createBroadcastPendingIntent(
                             SMS_MESSAGE_STATUS_DELIVERED_ACTION, messageUri) : null);
         }
