@@ -140,6 +140,7 @@ public class WifiManagerFacade extends RpcReceiver {
         mStateChangeFilter = new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         mStateChangeFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
         mStateChangeFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
+        mStateChangeFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         mStateChangeFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
 
         mTetherFilter = new IntentFilter(WifiManager.WIFI_AP_STATE_CHANGED_ACTION);
@@ -248,6 +249,23 @@ public class WifiManagerFacade extends RpcReceiver {
                 Bundle msg = new Bundle();
                 msg.putBoolean("Connected", mIsConnected);
                 mEventFacade.postEvent("SupplicantConnectionChanged", msg);
+            } else if (action.equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+                int state = intent.getIntExtra(
+                        WifiManager.EXTRA_WIFI_STATE, WifiManager.WIFI_STATE_DISABLED);
+                Log.d("Wifi state changed to " + state);
+                boolean enabled;
+                if (state == WifiManager.WIFI_STATE_DISABLED) {
+                    enabled = false;
+                } else if (state == WifiManager.WIFI_STATE_ENABLED) {
+                    enabled = true;
+                } else {
+                    // we only care about enabled/disabled.
+                    Log.v("Ignoring intermediate wifi state change event...");
+                    return;
+                }
+                Bundle msg = new Bundle();
+                msg.putBoolean("enabled", enabled);
+                mEventFacade.postEvent("WifiStateChanged", msg);
             }
         }
     }
