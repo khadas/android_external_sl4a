@@ -45,6 +45,7 @@ import com.googlecode.android_scripting.facade.media.MediaRecorderFacade;
 import com.googlecode.android_scripting.facade.media.MediaScannerFacade;
 import com.googlecode.android_scripting.facade.media.MediaSessionFacade;
 import com.googlecode.android_scripting.facade.net.IpSecManagerFacade;
+import com.googlecode.android_scripting.facade.net.SocketFacade;
 import com.googlecode.android_scripting.facade.net.nsd.NsdManagerFacade;
 import com.googlecode.android_scripting.facade.telephony.CarrierConfigFacade;
 import com.googlecode.android_scripting.facade.telephony.ImsManagerFacade;
@@ -161,6 +162,7 @@ public class FacadeConfiguration {
             sFacadeClassList.add(BluetoothMapClientFacade.class);
             sFacadeClassList.add(BluetoothLeAdvertisingSetFacade.class);
             sFacadeClassList.add(IpSecManagerFacade.class);
+            sFacadeClassList.add(SocketFacade.class);
         }
 
         if (sSdkLevel >= 27) {
