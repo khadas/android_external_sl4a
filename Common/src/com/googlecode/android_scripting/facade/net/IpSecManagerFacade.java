@@ -27,8 +27,6 @@ import android.net.IpSecManager.UdpEncapsulationSocket;
 import android.net.IpSecTransform;
 import android.net.IpSecTransform.Builder;
 import android.net.NetworkUtils;
-import android.system.ErrnoException;
-import android.system.Os;
 
 import com.google.common.io.BaseEncoding;
 import com.googlecode.android_scripting.Log;
@@ -40,10 +38,9 @@ import com.googlecode.android_scripting.rpc.RpcParameter;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
-import java.io.InterruptedIOException;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
+import java.net.Socket;
 import java.util.HashMap;
 
 /*
@@ -75,12 +72,16 @@ public class IpSecManagerFacade extends RpcReceiver {
             byte[] authKey,
             Integer truncBits,
             SecurityParameterIndex spi,
-            InetAddress addr) {
+            InetAddress addr,
+            UdpEncapsulationSocket udpEncapSocket) {
         Builder builder = new Builder(mContext);
         builder = builder.setEncryption(new IpSecAlgorithm(encAlgo, cryptKey));
         builder =
                 builder.setAuthentication(
                         new IpSecAlgorithm(authAlgo, authKey, truncBits.intValue()));
+        if (udpEncapSocket != null) {
+            builder = builder.setIpv4Encapsulation(udpEncapSocket, udpEncapSocket.getPort());
+        }
         try {
             return builder.buildTransportModeTransform(addr, spi);
         } catch (SpiUnavailableException | IOException | ResourceUnavailableException e) {
@@ -138,10 +139,23 @@ public class IpSecManagerFacade extends RpcReceiver {
         return "UDPENCAPSOCK:" + socket.hashCode();
     }
 
-    @Rpc(description = "Apply Tranform to socket", returns = "True if transform is applied")
-    public Boolean ipSecApplyTransformToSocket(Integer socketFd, Integer direction, String id) {
-        FileDescriptor fd = new FileDescriptor();
-        fd.setInt$(socketFd.intValue());
+    /**
+     * Apply transport mode transform to FileDescriptor
+     * @param socketFd : Hash key of FileDescriptor object
+     * @param direction : In or Out direction to apply transform to
+     * @param id : Hash key of the transform
+     * @return True if transform is applied successfully
+     */
+    @Rpc(description = "Apply transport mode transform to FileDescriptor", returns = "True/False")
+    public Boolean ipSecApplyTransportModeTransformFileDescriptor(
+            String socketFd,
+            Integer direction,
+            String id) {
+        if (socketFd == null) {
+            Log.e("IpSec: Received null FileDescriptor key");
+            return false;
+        }
+        FileDescriptor fd = SocketFacade.getFileDescriptor(socketFd);
         IpSecTransform transform = sTransformHashMap.get(id);
         if (transform == null) {
             Log.e("IpSec: Transform does not exist for the requested id");
@@ -156,12 +170,124 @@ public class IpSecManagerFacade extends RpcReceiver {
         return true;
     }
 
-    @Rpc(description = "Remove Tranform to socket", returns = "True if transform is removed")
-    public Boolean ipSecRemoveTransformToSocket(Integer socketFd) {
-        FileDescriptor fd = new FileDescriptor();
-        fd.setInt$(socketFd.intValue());
+    /**
+     * Remove transport mode transform from a FileDescriptor
+     * @param socketFd : Hash key of FileDescriptor object
+     * @returns True if transform is removed successfully
+     */
+    @Rpc(description = "Remove transport mode transform to FileDescriptor", returns = "True/False")
+    public Boolean ipSecRemoveTransportModeTransformsFileDescriptor(String socketFd) {
+        if (socketFd == null) {
+            Log.e("IpSec: Received null FileDescriptor key");
+            return false;
+        }
+        FileDescriptor fd = SocketFacade.getFileDescriptor(socketFd);
         try {
             mIpSecManager.removeTransportModeTransforms(fd);
+            return true;
+        } catch (IOException e) {
+            Log.e("IpSec: Failed to remove transform " + e.toString());
+        }
+        return false;
+    }
+
+    /**
+     * Apply transport mode transform to DatagramSocket
+     * @param socketId : Hash key of DatagramSocket
+     * @param direction : In or Out direction to apply transform to
+     * @param transformId : Hash key of Transform to apply
+     * @return True if transform is applied successfully
+     */
+    @Rpc(description = "Apply transport mode transform to DatagramSocket", returns = "True/False")
+    public Boolean ipSecApplyTransportModeTransformDatagramSocket(
+            String socketId,
+            Integer direction,
+            String transformId) {
+        if (socketId == null) {
+            Log.e("IpSec: Received null DatagramSocket key");
+            return false;
+        }
+        DatagramSocket socket = SocketFacade.getDatagramSocket(socketId);
+        IpSecTransform transform = sTransformHashMap.get(transformId);
+        if (transform == null) {
+            Log.e("IpSec: Transform does not exist for the requested id");
+            return false;
+        }
+        try {
+            mIpSecManager.applyTransportModeTransform(socket, direction.intValue(), transform);
+        } catch (IOException e) {
+            Log.e("IpSec: Cannot apply transform to socket " + e.toString());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Remove transport mode transform from DatagramSocket
+     * @param socketId : Hash key of DatagramSocket
+     * @return True if removing transform is successful
+     */
+    @Rpc(description = "Remove transport mode tranform from DatagramSocket", returns = "True/False")
+    public Boolean ipSecRemoveTransportModeTransformsDatagramSocket(String socketId) {
+        if (socketId == null) {
+            Log.e("IpSec: Received null DatagramSocket key");
+            return false;
+        }
+        DatagramSocket socket = SocketFacade.getDatagramSocket(socketId);
+        try {
+            mIpSecManager.removeTransportModeTransforms(socket);
+            return true;
+        } catch (IOException e) {
+            Log.e("IpSec: Failed to remove transform " + e.toString());
+        }
+        return false;
+    }
+
+    /**
+     * Apply transport mode transform to DatagramSocket
+     * @param socketId : Hash key of Socket
+     * @param direction : In or Out direction to apply transform to
+     * @param transformId : Hash key of Transform to apply
+     * @return True if transform is applied successfully
+     */
+    @Rpc(description = "Apply transport mode transform to Socket", returns = "True/False")
+    public Boolean ipSecApplyTransportModeTransformSocket(
+            String socketId,
+            Integer direction,
+            String transformId) {
+        if (socketId == null) {
+            Log.e("IpSec: Received null Socket key");
+            return false;
+        }
+        Socket socket = SocketFacade.getSocket(socketId);
+        IpSecTransform transform = sTransformHashMap.get(transformId);
+        if (transform == null) {
+            Log.e("IpSec: Transform does not exist for the requested id");
+            return false;
+        }
+        try {
+            mIpSecManager.applyTransportModeTransform(socket, direction.intValue(), transform);
+        } catch (IOException e) {
+            Log.e("IpSec: Cannot apply transform to socket " + e.toString());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Remove transport mode transform from Socket
+     * @param socketId : Hash key of DatagramSocket
+     * @return True if removing transform is successful
+     */
+    @Rpc(description = "Remove transport mode tranform from Socket", returns = "True/False")
+    public Boolean ipSecRemoveTransportModeTransformsSocket(String socketId) {
+        if (socketId == null) {
+            Log.e("IpSec: Received null Socket key");
+            return false;
+        }
+        Socket socket = SocketFacade.getSocket(socketId);
+        try {
+            mIpSecManager.removeTransportModeTransforms(socket);
             return true;
         } catch (IOException e) {
             Log.e("IpSec: Failed to remove transform " + e.toString());
@@ -177,9 +303,11 @@ public class IpSecManagerFacade extends RpcReceiver {
             String authKeyHex,
             Integer truncBits,
             String spiId,
-            String addr) {
+            String addr,
+            String udpEncapSockId) {
         IpSecTransform transform = null;
         InetAddress inetAddr = NetworkUtils.numericToInetAddress(addr);
+        UdpEncapsulationSocket udpEncapSocket = sUdpEncapHashMap.get(udpEncapSockId);
         SecurityParameterIndex spi = sSpiHashMap.get(spiId);
         if (spi == null) {
             Log.e("IpSec: SPI does not exist for the requested spiId");
@@ -187,9 +315,8 @@ public class IpSecManagerFacade extends RpcReceiver {
         }
         byte[] cryptKey = BaseEncoding.base16().decode(cryptKeyHex.toUpperCase());
         byte[] authKey = BaseEncoding.base16().decode(authKeyHex.toUpperCase());
-        transform =
-                createTransportModeTransform(
-                        encAlgo, cryptKey, authAlgo, authKey, truncBits, spi, inetAddr);
+        transform = createTransportModeTransform(encAlgo, cryptKey, authAlgo, authKey, truncBits,
+                spi, inetAddr, udpEncapSocket);
         if (transform == null) return null;
         String id = getTransformId(transform);
         sTransformHashMap.put(id, transform);
@@ -281,67 +408,6 @@ public class IpSecManagerFacade extends RpcReceiver {
         }
         spi.close();
         sSpiHashMap.remove(id);
-    }
-
-    @Rpc(description = "Open socket", returns = "File descriptor of the socket")
-    public Integer ipSecOpenSocket(Integer domain, Integer type, String addr, Integer port) {
-        try {
-            FileDescriptor fd = Os.socket(domain, type, 0);
-            InetAddress localAddr = NetworkUtils.numericToInetAddress(addr);
-            Os.bind(fd, localAddr, port.intValue());
-            return fd.getInt$();
-        } catch (SocketException | ErrnoException e) {
-            Log.e("IpSec: Failed to open socket " + e.toString());
-        }
-        return -1;
-    }
-
-    @Rpc(description = "Close socket", returns = "True if socket is closed")
-    public Boolean ipSecCloseSocket(Integer socketFd) {
-        FileDescriptor fd = new FileDescriptor();
-        fd.setInt$(socketFd.intValue());
-        try {
-            Os.close(fd);
-            return true;
-        } catch (ErrnoException e) {
-            Log.e("IpSec: Failed to close socket " + e.toString());
-        }
-        return false;
-    }
-
-    @Rpc(description = "Send data to remote server", returns = "True if sending data successful")
-    public Boolean sendDataOverSocket(
-            String remoteAddr, Integer remotePort, String message, Integer socketFd) {
-        byte[] data = null;
-        FileDescriptor socket = new FileDescriptor();
-        socket.setInt$(socketFd.intValue());
-
-        InetAddress remote = NetworkUtils.numericToInetAddress(remoteAddr);
-        try {
-            data = new String(message).getBytes(StandardCharsets.UTF_8);
-            int bytes = Os.sendto(socket, data, 0, data.length, 0, remote, remotePort.intValue());
-            Log.d("IpSec: Sent " + String.valueOf(bytes) + " bytes");
-            return true;
-        } catch (ErrnoException | SocketException e) {
-            Log.e("IpSec: Sending data over socket failed " + e.toString());
-        }
-        return false;
-    }
-
-    @Rpc(description = "Recv data from remote server", returns = "Received data on the socket")
-    public String recvDataOverSocket(Integer socketFd) {
-        byte[] data = new byte[2048];
-        String returnData = null;
-        FileDescriptor socket = new FileDescriptor();
-        socket.setInt$(socketFd.intValue());
-
-        try {
-            Os.read(socket, data, 0, data.length);
-            returnData = new String(data, StandardCharsets.UTF_8);
-        } catch (ErrnoException | InterruptedIOException e) {
-            Log.e("IpSec: Receiving data over socket failed " + e.toString());
-        }
-        return returnData;
     }
 
     @Override
