@@ -17,6 +17,7 @@
 package com.googlecode.android_scripting.facade;
 
 import android.app.AlarmManager;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
@@ -25,6 +26,7 @@ import android.media.AudioManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.view.WindowManager;
 
@@ -52,6 +54,7 @@ public class SettingsFacade extends RpcReceiver {
     private final PowerManager mPower;
     private final AlarmManager mAlarm;
     private final LockPatternUtils mLockPatternUtils;
+    private final NotificationManager mNotificationManager;
 
     /**
      * Creates a new SettingsFacade.
@@ -66,6 +69,13 @@ public class SettingsFacade extends RpcReceiver {
         mPower = (PowerManager) mService.getSystemService(Context.POWER_SERVICE);
         mAlarm = (AlarmManager) mService.getSystemService(Context.ALARM_SERVICE);
         mLockPatternUtils = new LockPatternUtils(mService);
+        mNotificationManager =
+            (NotificationManager) mService.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (!mNotificationManager.isNotificationPolicyAccessGranted()) {
+            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mService.startActivity(intent);
+        }
     }
 
     @Rpc(description = "Sets the screen timeout to this number of seconds.",
