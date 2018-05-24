@@ -120,6 +120,7 @@
     <uses-permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE" />
     <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
     <uses-permission android:name="android.permission.RECEIVE_EMERGENCY_BROADCAST"/>
+    <uses-permission android:name="android.permission.NETWORK_STACK"/>
     <application
         android:icon="@drawable/sl4a_logo_48"
         android:label="@string/application_title"
