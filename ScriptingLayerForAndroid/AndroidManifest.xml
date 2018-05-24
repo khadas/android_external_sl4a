@@ -227,7 +227,7 @@
                   android:grantUriPermissions="true"
                   android:exported="true" />
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="com.googlecode.android_scripting.provider.telephonytestprovider"
             android:grantUriPermissions="true"
             android:exported="false">
