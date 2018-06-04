@@ -85,6 +85,7 @@ import com.android.internal.net.LegacyVpnInfo;
 import com.googlecode.android_scripting.ConvertUtils;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.event.Event;
+import com.googlecode.android_scripting.facade.DataUsageController.DataUsageInfo;
 import com.googlecode.android_scripting.facade.telephony.InCallServiceImpl;
 import com.googlecode.android_scripting.facade.telephony.TelephonyConstants;
 import com.googlecode.android_scripting.facade.telephony.TelephonyUtils;
@@ -245,6 +246,9 @@ public class JsonBuilder {
         }
         if (data instanceof SubscriptionInfo) {
             return buildSubscriptionInfoRecord((SubscriptionInfo) data);
+        }
+        if (data instanceof DataUsageInfo) {
+            return buildDataUsageInfo((DataUsageInfo) data);
         }
         if (data instanceof DhcpInfo) {
             return buildDhcpInfo((DhcpInfo) data);
@@ -846,6 +850,24 @@ public class JsonBuilder {
         url.put("Port", data.getPort());
         url.put("Protocol", data.getProtocol());
         return url;
+    }
+
+    /**
+     * Builds a json representation of a {@link DataUsageInfo}.
+     * @param data The DataUsageInfo convert to JSON.
+     * @return A JSONObject representation of a {@link DataUsageInfo}.
+     * @throws JSONException
+     */
+    private static JSONObject buildDataUsageInfo(@NonNull DataUsageInfo data)
+            throws JSONException {
+        JSONObject usage = new JSONObject();
+        usage.put("Carrier", data.carrier);
+        usage.put("Period", data.period);
+        usage.put("StartDate", data.startDate);
+        usage.put("LimitLevel", data.limitLevel);
+        usage.put("WarningLevel", data.warningLevel);
+        usage.put("UsageLevel", data.usageLevel);
+        return usage;
     }
 
     /**
