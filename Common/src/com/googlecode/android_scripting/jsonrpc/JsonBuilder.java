@@ -861,12 +861,16 @@ public class JsonBuilder {
     private static JSONObject buildDataUsageInfo(@NonNull DataUsageInfo data)
             throws JSONException {
         JSONObject usage = new JSONObject();
-        usage.put("Carrier", data.carrier);
+        usage.put("SubscriberId", data.subscriberId);
         usage.put("Period", data.period);
-        usage.put("StartDate", data.startDate);
+        usage.put("StartEpochMilli", data.startEpochMilli);
+        usage.put("EndEpochMilli", data.endEpochMilli);
+        usage.put("CycleStart", data.cycleStart);
+        usage.put("CycleEnd", data.cycleEnd);
         usage.put("LimitLevel", data.limitLevel);
         usage.put("WarningLevel", data.warningLevel);
         usage.put("UsageLevel", data.usageLevel);
+        usage.put("Uid", data.uId);
         return usage;
     }
 
