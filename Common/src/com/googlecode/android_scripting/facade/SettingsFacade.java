@@ -28,6 +28,8 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.view.WindowManager;
 
 import com.android.internal.widget.LockPatternUtils;
@@ -56,6 +58,7 @@ public class SettingsFacade extends RpcReceiver {
     private final LockPatternUtils mLockPatternUtils;
     private final NotificationManager mNotificationManager;
     private final DataUsageController mDataController;
+    private final TelephonyManager mTelephonyManager;
 
     /**
      * Creates a new SettingsFacade.
@@ -78,6 +81,8 @@ public class SettingsFacade extends RpcReceiver {
             mService.startActivity(intent);
         }
         mDataController = new DataUsageController(mService);
+        mTelephonyManager =
+                (TelephonyManager) mService.getSystemService(Context.TELEPHONY_SERVICE);
     }
 
     @Rpc(description = "Sets the screen timeout to this number of seconds.",
@@ -343,12 +348,32 @@ public class SettingsFacade extends RpcReceiver {
     }
 
     /**
-     * Get mobile data usage info.
+     * Get mobile data usage info for subscription.
      * @return DataUsageInfo: The Mobile data usage information.
      */
     @Rpc(description = "Get mobile data usage info", returns = "Mobile Data DataUsageInfo")
-    public DataUsageController.DataUsageInfo getMobileDataUsageInfo() {
-        return mDataController.getDataUsageInfo();
+    public DataUsageController.DataUsageInfo getMobileDataUsageInfo(
+            @RpcOptional @RpcParameter(name = "subId") Integer subId) {
+        if (subId == null) {
+            subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        }
+        String subscriberId = mTelephonyManager.getSubscriberId(subId);
+        return mDataController.getMobileDataUsageInfoForSubscriber(subscriberId);
+    }
+
+    /**
+     * Get mobile data usage info for for uid.
+     * @return DataUsageInfo: The Mobile data usage information.
+     */
+    @Rpc(description = "Get mobile data usage info", returns = "Mobile Data DataUsageInfo")
+    public DataUsageController.DataUsageInfo getMobileDataUsageInfoForUid(
+            @RpcParameter(name = "uId") Integer uId,
+            @RpcOptional @RpcParameter(name = "subId") Integer subId) {
+        if (subId == null) {
+            subId = SubscriptionManager.getDefaultDataSubscriptionId();
+        }
+        String subscriberId = mTelephonyManager.getSubscriberId(subId);
+        return mDataController.getMobileDataUsageInfoForUid(uId, subscriberId);
     }
 
     /**
