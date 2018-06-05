@@ -16,13 +16,6 @@
 
 package com.googlecode.android_scripting.facade.bluetooth;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import android.app.Service;
 import android.bluetooth.BluetoothA2dp;
 import android.bluetooth.BluetoothA2dpSink;
@@ -57,6 +50,13 @@ import com.googlecode.android_scripting.rpc.RpcParameter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BluetoothConnectionFacade extends RpcReceiver {
 
