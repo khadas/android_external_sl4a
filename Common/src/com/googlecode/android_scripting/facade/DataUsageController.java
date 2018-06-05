@@ -17,12 +17,14 @@
 package com.googlecode.android_scripting.facade;
 
 import static android.net.ConnectivityManager.TYPE_MOBILE;
+import static android.net.NetworkStats.SET_ALL;
 import static android.net.NetworkStatsHistory.FIELD_RX_BYTES;
 import static android.net.NetworkStatsHistory.FIELD_TX_BYTES;
-import static android.net.TrafficStats.MB_IN_BYTES;
 import static android.telephony.TelephonyManager.SIM_STATE_READY;
 import static android.text.format.DateUtils.FORMAT_ABBREV_MONTH;
 import static android.text.format.DateUtils.FORMAT_SHOW_DATE;
+import static android.text.format.DateUtils.FORMAT_SHOW_TIME;
+import static android.text.format.DateUtils.FORMAT_SHOW_YEAR;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -34,16 +36,12 @@ import android.net.NetworkStatsHistory;
 import android.net.NetworkTemplate;
 import android.os.RemoteException;
 import android.os.ServiceManager;
-import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.Pair;
 
-import com.android.internal.R;
-
 import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.Locale;
 
 /**
@@ -81,14 +79,6 @@ public class DataUsageController {
         mNetworkController = networkController;
     }
 
-    /**
-     * Returns the default warning level in bytes.
-     */
-    public long getDefaultWarningLevel() {
-        return MB_IN_BYTES
-                * mContext.getResources().getInteger(R.integer.default_data_warning_level_mb);
-    }
-
     private INetworkStatsSession getSession() {
         if (mSession == null) {
             try {
@@ -115,8 +105,7 @@ public class DataUsageController {
      * Get mobile data usage info.
      * @return DataUsageInfo: The Mobile data usage information.
      */
-    public DataUsageInfo getDataUsageInfo() {
-        final String subscriberId = getActiveSubscriberId(mContext);
+    public DataUsageInfo getMobileDataUsageInfoForSubscriber(String subscriberId) {
         if (subscriberId == null) {
             return warn("no subscriber id");
         }
@@ -124,6 +113,20 @@ public class DataUsageController {
         template = NetworkTemplate.normalize(template, mTelephonyManager.getMergedSubscriberIds());
 
         return getDataUsageInfo(template);
+    }
+
+    /**
+     * Get mobile data usage info.
+     * @return DataUsageInfo: The Mobile data usage information.
+     */
+    public DataUsageInfo getMobileDataUsageInfoForUid(Integer uId, String subscriberId) {
+        if (subscriberId == null) {
+            return warn("no subscriber id");
+        }
+        NetworkTemplate template = NetworkTemplate.buildTemplateMobileAll(subscriberId);
+        template = NetworkTemplate.normalize(template, mTelephonyManager.getMergedSubscriberIds());
+
+        return getDataUsageInfo(template, uId);
     }
 
     /**
@@ -141,13 +144,27 @@ public class DataUsageController {
      * @return DataUsageInfo: The data usage information.
      */
     public DataUsageInfo getDataUsageInfo(NetworkTemplate template) {
+        return getDataUsageInfo(template, -1);
+    }
+
+    /**
+     * Get data usage info for a given template.
+     * @param template A given template.
+     * @return DataUsageInfo: The data usage information.
+     */
+    public DataUsageInfo getDataUsageInfo(NetworkTemplate template, int uId) {
         final INetworkStatsSession session = getSession();
         if (session == null) {
             return warn("no stats session");
         }
         final NetworkPolicy policy = findNetworkPolicy(template);
         try {
-            final NetworkStatsHistory history = session.getHistoryForNetwork(template, FIELDS);
+            final NetworkStatsHistory mHistory;
+            if (uId == -1) {
+                mHistory = session.getHistoryForNetwork(template, FIELDS);
+            } else {
+                mHistory = session.getHistoryForUid(template, uId, SET_ALL, 0, FIELDS);
+            }
             final long now = System.currentTimeMillis();
             final long start, end;
             if (policy != null) {
@@ -160,33 +177,28 @@ public class DataUsageController {
                 end = now;
                 start = now - DateUtils.WEEK_IN_MILLIS * 4;
             }
-            final long callStart = System.currentTimeMillis();
-            final NetworkStatsHistory.Entry entry = history.getValues(start, end, now, null);
-            final long callEnd = System.currentTimeMillis();
-            if (DEBUG) {
-                Log.d(TAG, String.format("history call from %s to %s now=%s took %sms: %s",
-                            new Date(start), new Date(end), new Date(now), callEnd - callStart,
-                            historyEntryToString(entry)));
-            }
+            //final long callStart = System.currentTimeMillis();
+            final NetworkStatsHistory.Entry entry = mHistory.getValues(start, end, now, null);
             if (entry == null) {
                 return warn("no entry data");
             }
-            final long totalBytes = entry.rxBytes + entry.txBytes;
             final DataUsageInfo usage = new DataUsageInfo();
-            usage.startDate = start;
-            usage.usageLevel = totalBytes;
+            usage.subscriberId = template.getSubscriberId();
+            usage.startEpochMilli = start;
+            usage.endEpochMilli = end;
+            usage.usageLevel = mHistory.getTotalBytes();
             usage.period = formatDateRange(start, end);
-            usage.cycleStart = start;
-            usage.cycleEnd = end;
+            usage.cycleStart = DateUtils.formatDateTime(mContext, start,
+                    FORMAT_SHOW_DATE + FORMAT_SHOW_YEAR + FORMAT_SHOW_TIME);
+            usage.cycleEnd = DateUtils.formatDateTime(mContext, end,
+                    FORMAT_SHOW_DATE + FORMAT_SHOW_YEAR + FORMAT_SHOW_TIME);
 
             if (policy != null) {
-                usage.limitLevel = policy.limitBytes > 0 ? policy.limitBytes : 0;
-                usage.warningLevel = policy.warningBytes > 0 ? policy.warningBytes : 0;
-            } else {
-                usage.warningLevel = getDefaultWarningLevel();
+                usage.limitLevel = policy.limitBytes > 0 ? policy.limitBytes : -1;
+                usage.warningLevel = policy.warningBytes > 0 ? policy.warningBytes : -1;
             }
-            if (usage != null && mNetworkController != null) {
-                usage.carrier = mNetworkController.getMobileDataNetworkName();
+            if (uId != -1) {
+                usage.uId = uId;
             }
             return usage;
         } catch (RemoteException e) {
@@ -251,13 +263,6 @@ public class DataUsageController {
         return mTelephonyManager.getDataEnabled();
     }
 
-    private static String getActiveSubscriberId(Context context) {
-        final TelephonyManager tele = TelephonyManager.from(context);
-        final String actualSubscriberId = tele.getSubscriberId(
-                SubscriptionManager.getDefaultDataSubscriptionId());
-        return actualSubscriberId;
-    }
-
     private String formatDateRange(long start, long end) {
         final int flags = FORMAT_SHOW_DATE | FORMAT_ABBREV_MONTH;
         synchronized (PERIOD_BUILDER) {
@@ -272,14 +277,16 @@ public class DataUsageController {
     }
 
     public static class DataUsageInfo {
-        public String carrier;
+        public String subscriberId;
         public String period;
-        public long startDate;
+        public Integer uId;
+        public long startEpochMilli;
+        public long endEpochMilli;
         public long limitLevel;
         public long warningLevel;
         public long usageLevel;
-        public long cycleStart;
-        public long cycleEnd;
+        public String cycleStart;
+        public String cycleEnd;
     }
 
     public interface Callback {
