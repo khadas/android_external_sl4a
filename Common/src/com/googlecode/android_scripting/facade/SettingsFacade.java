@@ -55,6 +55,7 @@ public class SettingsFacade extends RpcReceiver {
     private final AlarmManager mAlarm;
     private final LockPatternUtils mLockPatternUtils;
     private final NotificationManager mNotificationManager;
+    private final DataUsageController mDataController;
 
     /**
      * Creates a new SettingsFacade.
@@ -76,6 +77,7 @@ public class SettingsFacade extends RpcReceiver {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mService.startActivity(intent);
         }
+        mDataController = new DataUsageController(mService);
     }
 
     @Rpc(description = "Sets the screen timeout to this number of seconds.",
@@ -328,6 +330,34 @@ public class SettingsFacade extends RpcReceiver {
         if(!getPrivateDnsMode().equals(ConnectivityConstants.PrivateDnsModeStrict)) return null;
         return android.provider.Settings.Global.getString(mService.getContentResolver(),
                 android.provider.Settings.Global.PRIVATE_DNS_SPECIFIER);
+    }
+
+    /**
+     * Enable or disable mobile data.
+     * @param enabled Enable data: True: Disable data: False.
+     */
+    @Rpc(description = "Set Mobile Data Enabled.")
+    public void setMobileDataEnabled(@RpcParameter(name = "enabled")
+            @RpcOptional @RpcDefault(value = "true") Boolean enabled) {
+        mDataController.setMobileDataEnabled(enabled);
+    }
+
+    /**
+     * Get mobile data usage info.
+     * @return DataUsageInfo: The Mobile data usage information.
+     */
+    @Rpc(description = "Get mobile data usage info", returns = "Mobile Data DataUsageInfo")
+    public DataUsageController.DataUsageInfo getMobileDataUsageInfo() {
+        return mDataController.getDataUsageInfo();
+    }
+
+    /**
+     * Get Wifi data usage info.
+     * @return DataUsageInfo: The Wifi data usage information.
+     */
+    @Rpc(description = "Get wifi data usage info", returns = "Wifi Data DataUsageInfo")
+    public DataUsageController.DataUsageInfo getWifiDataUsageInfo() {
+        return mDataController.getWifiDataUsageInfo();
     }
 
     @Override

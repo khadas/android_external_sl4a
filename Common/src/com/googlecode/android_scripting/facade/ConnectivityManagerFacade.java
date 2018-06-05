@@ -921,18 +921,62 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         mNetPolicyManager.factoryReset(subscriberId);
     }
 
-    @Rpc(description = "Set data usage limit for subscription ID")
-    public void connectivitySetDataUsageLimit(
-          String subscriberId, String dataLimit) {
+    /**
+     * Method to set data warning limit on the device.
+     */
+    @Rpc(description = "Set data warning limit for subscriber ID")
+    public void connectivitySetDataWarningLimit(String subscriberId, Long dataLimit) {
         NetworkPolicy[] allPolicies = mNetPolicyManager.getNetworkPolicies();
-        for(int i=0; i<allPolicies.length; i++) {
+        for (int i = 0; i < allPolicies.length; i++) {
             String subId = allPolicies[i].template.getSubscriberId();
-            if(subId!=null && subId.equals(subscriberId)) {
-                allPolicies[i].limitBytes = Long.valueOf(dataLimit);
+            if (subId != null && subId.equals(subscriberId)) {
+                allPolicies[i].warningBytes = dataLimit.longValue();
                 break;
             }
         }
         mNetPolicyManager.setNetworkPolicies(allPolicies);
+    }
+
+    /**
+     * Method to set data usage limit on the device.
+     */
+    @Rpc(description = "Set data usage limit for subscriber ID")
+    public void connectivitySetDataUsageLimit(String subscriberId, Long dataLimit) {
+        NetworkPolicy[] allPolicies = mNetPolicyManager.getNetworkPolicies();
+        for (int i = 0; i < allPolicies.length; i++) {
+            String subId = allPolicies[i].template.getSubscriberId();
+            if (subId != null && subId.equals(subscriberId)) {
+                allPolicies[i].limitBytes = dataLimit.longValue();
+                break;
+            }
+        }
+        mNetPolicyManager.setNetworkPolicies(allPolicies);
+    }
+
+    /**
+     * Method to get data usage limit on the device.
+     */
+    @Rpc(description = "Get data usage limit for subscriber ID")
+    public long connectivityGetDataUsageLimit(String subscriberId) {
+        NetworkPolicy[] allPolicies = mNetPolicyManager.getNetworkPolicies();
+        for (int i = 0; i < allPolicies.length; i++) {
+            String subId = allPolicies[i].template.getSubscriberId();
+            if (subId != null && subId.equals(subscriberId)) return allPolicies[i].limitBytes;
+        }
+        return -1;
+    }
+
+    /**
+     * Method to get data warning limit on the device
+     */
+    @Rpc(description = "Get data warning limit for subscriber ID")
+    public long connectivityGetDataWarningLimit(String subscriberId) {
+        NetworkPolicy[] allPolicies = mNetPolicyManager.getNetworkPolicies();
+        for (int i = 0; i < allPolicies.length; i++) {
+            String subId = allPolicies[i].template.getSubscriberId();
+            if (subId != null && subId.equals(subscriberId)) return allPolicies[i].warningBytes;
+        }
+        return -1;
     }
 
     @Rpc(description = "Get network stats for device")
