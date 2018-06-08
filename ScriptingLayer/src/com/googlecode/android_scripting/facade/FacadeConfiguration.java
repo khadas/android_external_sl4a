@@ -60,6 +60,7 @@ import com.googlecode.android_scripting.facade.wifi.HttpFacade;
 import com.googlecode.android_scripting.facade.wifi.WifiAwareManagerFacade;
 import com.googlecode.android_scripting.facade.wifi.WifiManagerFacade;
 import com.googlecode.android_scripting.facade.wifi.WifiP2pManagerFacade;
+import com.googlecode.android_scripting.facade.wifi.WifiRtt2ManagerFacade;
 import com.googlecode.android_scripting.facade.wifi.WifiRttManagerFacade;
 import com.googlecode.android_scripting.facade.wifi.WifiScannerFacade;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
@@ -162,6 +163,10 @@ public class FacadeConfiguration {
             sFacadeClassList.add(BluetoothLeAdvertisingSetFacade.class);
             sFacadeClassList.add(IpSecManagerFacade.class);
             sFacadeClassList.add(SocketFacade.class);
+        }
+
+        if (sSdkLevel >= 27) {
+            sFacadeClassList.add(WifiRtt2ManagerFacade.class);
         }
 
         for (Class<? extends RpcReceiver> recieverClass : sFacadeClassList) {

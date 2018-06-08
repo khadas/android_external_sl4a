@@ -40,7 +40,6 @@ import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiActivityEnergyInfo;
-import android.net.wifi.WifiChannel;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
@@ -261,9 +260,6 @@ public class JsonBuilder {
         }
         if (data instanceof WifiActivityEnergyInfo) {
             return buildWifiActivityEnergyInfo((WifiActivityEnergyInfo) data);
-        }
-        if (data instanceof WifiChannel) {
-            return buildWifiChannel((WifiChannel) data);
         }
         if (data instanceof WifiConfiguration) {
             return buildWifiConfiguration((WifiConfiguration) data);
@@ -610,16 +606,13 @@ public class JsonBuilder {
         result.put("level", scanResult.level);
         result.put("capabilities", scanResult.capabilities);
         result.put("timestamp", scanResult.timestamp);
-        result.put("blackListTimestamp", scanResult.blackListTimestamp);
         result.put("centerFreq0", scanResult.centerFreq0);
         result.put("centerFreq1", scanResult.centerFreq1);
         result.put("channelWidth", scanResult.channelWidth);
         result.put("distanceCm", scanResult.distanceCm);
         result.put("distanceSdCm", scanResult.distanceSdCm);
         result.put("is80211McRTTResponder", scanResult.is80211mcResponder());
-        result.put("numConnection", scanResult.numConnection);
         result.put("passpointNetwork", scanResult.isPasspointNetwork());
-        result.put("numIpConfigFailures", scanResult.numIpConfigFailures);
         result.put("numUsage", scanResult.numUsage);
         result.put("seen", scanResult.seen);
         result.put("untrusted", scanResult.untrusted);
@@ -630,12 +623,24 @@ public class JsonBuilder {
             for (ScanResult.InformationElement ie : scanResult.informationElements) {
                 JSONObject infoEle = new JSONObject();
                 infoEle.put("id", ie.id);
-                infoEle.put("bytes", Base64Codec.encodeBase64(ie.bytes).toString());
+                infoEle.put("bytes", Base64Codec.encodeBase64String(ie.bytes));
                 infoEles.put(infoEle);
             }
-            result.put("InfomationElements", infoEles);
+            result.put("InformationElements", infoEles);
         } else {
-            result.put("InfomationElements", null);
+            result.put("InformationElements", null);
+        }
+        if (scanResult.radioChainInfos != null) {
+            JSONArray radioChainEles = new JSONArray();
+            for (ScanResult.RadioChainInfo item : scanResult.radioChainInfos) {
+                JSONObject radioChainEle = new JSONObject();
+                radioChainEle.put("id", item.id);
+                radioChainEle.put("level", item.level);
+                radioChainEles.put(radioChainEle);
+            }
+            result.put("radioChainInfos", radioChainEles);
+        } else {
+            result.put("radioChainInfos", null);
         }
         return result;
     }
@@ -663,6 +668,7 @@ public class JsonBuilder {
         result.put("rssi", data.getRssi());
         result.put("BSSID", data.getBSSID());
         result.put("mac_address", data.getMacAddress());
+        result.put("frequency", data.getFrequency());
         // Trim the double quotes if exist
         String ssid = data.getSSID();
         if (ssid.charAt(0) == '"'
@@ -952,15 +958,6 @@ public class JsonBuilder {
         result.put("StackState", data.getStackState());
         result.put("TimeStamp", data.getTimeStamp());
         return result;
-    }
-
-    private static Object buildWifiChannel(WifiChannel data) throws JSONException {
-        JSONObject channel = new JSONObject();
-        channel.put("channelNum", data.channelNum);
-        channel.put("freqMHz", data.freqMHz);
-        channel.put("isDFS", data.isDFS);
-        channel.put("isValid", data.isValid());
-        return channel;
     }
 
     private static Object buildWifiConfiguration(WifiConfiguration data)
