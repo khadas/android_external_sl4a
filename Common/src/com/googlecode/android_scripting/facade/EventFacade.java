@@ -61,7 +61,6 @@ import com.googlecode.android_scripting.rpc.RpcParameter;
  * Queue.<br>
  * The Event Queue provides a useful means of recording background events (such as sensor data) when
  * the phone is busy with foreground activities.
- *
  */
 public class EventFacade extends RpcReceiver {
     /**
@@ -73,7 +72,7 @@ public class EventFacade extends RpcReceiver {
     private final CopyOnWriteArrayList<EventObserver> mGlobalEventObservers =
             new CopyOnWriteArrayList<EventObserver>();
     private final Multimap<String, EventObserver> mNamedEventObservers = Multimaps
-            .synchronizedListMultimap(ArrayListMultimap.<String, EventObserver> create());
+            .synchronizedListMultimap(ArrayListMultimap.<String, EventObserver>create());
     private EventServer mEventServer = null;
     private final HashMap<String, BroadcastListener> mBroadcastListeners =
             new HashMap<String, BroadcastListener>();
@@ -133,7 +132,7 @@ public class EventFacade extends RpcReceiver {
 
     /**
      * Actual data returned in the map will depend on the type of event.
-     *
+     * <p>
      * <pre>
      * Example (python):
      *     import android, time
@@ -146,7 +145,7 @@ public class EventFacade extends RpcReceiver {
      *     event_entry_number = 0
      *     x = e[event_entry_ number]['data']['xforce']
      * </pre>
-     *
+     * <p>
      * e has the format:<br>
      * [{u'data': {u'accuracy': 0, u'pitch': -0.48766891956329345, u'xmag': -5.6875, u'azimuth':
      * 0.3312483489513397, u'zforce': 8.3492730000000002, u'yforce': 4.5628165999999997, u'time':
@@ -174,10 +173,8 @@ public class EventFacade extends RpcReceiver {
     @Rpc(description = "Blocks until an event with the supplied name occurs. Event is removed from the buffer if removeEvent is True.",
             returns = "Map of event properties.")
     public Event eventWaitFor(
-            @RpcParameter(name = "eventName")
-            final String eventName,
-            @RpcParameter(name = "removeEvent")
-            final Boolean removeEvent,
+            @RpcParameter(name = "eventName") final String eventName,
+            @RpcParameter(name = "removeEvent") final Boolean removeEvent,
             @RpcParameter(name = "timeout", description = "the maximum time to wait (in ms)") @RpcOptional Integer timeout)
             throws InterruptedException {
         Event result = null;
@@ -295,24 +292,57 @@ public class EventFacade extends RpcReceiver {
      */
     public void postEvent(String name, Object data, boolean enqueue) {
         Event event = new Event(name, data);
-        if (enqueue != false) {
+        if (enqueue) {
+            Log.v(String.format("postEvent(%s)", name));
             synchronized (mEventQueue) {
                 while (mEventQueue.size() >= MAX_QUEUE_SIZE) {
                     mEventQueue.remove();
                 }
                 mEventQueue.add(event);
+                // b/77306870: Posting to the EventObservers when enqueuing an event must be
+                // done when mEventQueue is locked. Otherwise, we can run into the following
+                // race condition:
+                // 1) postEvent() adds the event to the event queue, and releases mEventQueue.
+                //                Here, the thread is put to sleep.
+                // 2) eventWait() is called when an event is queued, and exits immediately.
+                // 3) eventWait() is called a second time, finds no event and creates a
+                //                GlobalEventObserver.
+                // 4) postEvent() wakes back up, and continues to post the event to the observers.
+                //                The same event sent to the first eventWait call is sent to the
+                //                second eventWait call's observer, causing a duplicated received
+                //                event.
+                postEventToNamedObservers(event);
+                postEventToGlobalObservers(event);
             }
-            Log.v(String.format("postEvent(%s)", name));
+        } else {
+            postEventToNamedObservers(event);
+            postEventToGlobalObservers(event);
         }
+    }
+
+    /**
+     * Posts the event to all applicable Named Observers.
+     */
+    private void postEventToNamedObservers(Event event) {
         synchronized (mNamedEventObservers) {
-            for (EventObserver observer : mNamedEventObservers.get(name)) {
+            for (EventObserver observer : mNamedEventObservers.get(event.getName())) {
+                Log.d(String.format("namedEventObserver %s received event %s",
+                        observer,
+                        event.getName()));
                 observer.onEventReceived(event);
             }
         }
+    }
+
+    /**
+     * Posts the event to the Global Observers list.
+     */
+    private void postEventToGlobalObservers(Event event) {
         synchronized (mGlobalEventObservers) {
-            // TODO: Remove log.
-            Log.v(String.format("mGlobalEventObservers size (%s)", mGlobalEventObservers.size()));
             for (EventObserver observer : mGlobalEventObservers) {
+                Log.d(String.format("globalEventObserver %s received event %s",
+                        observer,
+                        event.getName()));
                 observer.onEventReceived(event);
             }
         }
@@ -338,10 +368,8 @@ public class EventFacade extends RpcReceiver {
     @Rpc(description = "Blocks until an event with the supplied name occurs. Event is removed from the buffer if removeEvent is True.",
             returns = "Map of event properties.")
     public Event waitForEvent(
-            @RpcParameter(name = "eventName")
-            final String eventName,
-            @RpcOptional
-            final Boolean removeEvent,
+            @RpcParameter(name = "eventName") final String eventName,
+            @RpcOptional final Boolean removeEvent,
             @RpcParameter(name = "timeout", description = "the maximum time to wait") @RpcOptional Integer timeout)
             throws InterruptedException {
         return eventWaitFor(eventName, removeEvent, timeout);
