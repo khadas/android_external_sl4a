@@ -16,16 +16,6 @@
 
 package com.googlecode.android_scripting.facade;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
-
-import org.json.JSONException;
-
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -38,7 +28,6 @@ import com.google.common.collect.Multimaps;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.event.Event;
 import com.googlecode.android_scripting.event.EventObserver;
-import com.googlecode.android_scripting.event.EventServer;
 import com.googlecode.android_scripting.future.FutureResult;
 import com.googlecode.android_scripting.jsonrpc.JsonBuilder;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
@@ -48,6 +37,16 @@ import com.googlecode.android_scripting.rpc.RpcDeprecated;
 import com.googlecode.android_scripting.rpc.RpcName;
 import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
+
+import org.json.JSONException;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manage the event queue. <br>
@@ -73,17 +72,14 @@ public class EventFacade extends RpcReceiver {
             new CopyOnWriteArrayList<EventObserver>();
     private final Multimap<String, EventObserver> mNamedEventObservers = Multimaps
             .synchronizedListMultimap(ArrayListMultimap.<String, EventObserver>create());
-    private EventServer mEventServer = null;
     private final HashMap<String, BroadcastListener> mBroadcastListeners =
             new HashMap<String, BroadcastListener>();
     private final Context mContext;
-    private boolean bEventServerRunning;
 
     public EventFacade(FacadeManager manager) {
         super(manager);
         mContext = manager.getService().getApplicationContext();
         Log.v("Creating new EventFacade Instance()");
-        bEventServerRunning = false;
     }
 
     /**
@@ -375,49 +371,8 @@ public class EventFacade extends RpcReceiver {
         return eventWaitFor(eventName, removeEvent, timeout);
     }
 
-    @Rpc(description = "Opens up a socket where you can read for events posted")
-    public int startEventDispatcher(
-            @RpcParameter(name = "port", description = "Port to use") @RpcDefault("0") @RpcOptional() Integer port) {
-        if (mEventServer == null) {
-            if (port == null) {
-                port = 0;
-            }
-            mEventServer = new EventServer(port);
-            addGlobalEventObserver(mEventServer);
-            bEventServerRunning = true;
-        }
-        return mEventServer.getAddress().getPort();
-    }
-
-    @Rpc(description = "sl4a session is shutting down, send terminate event to client.")
-    public void closeSl4aSession() {
-        eventClearBuffer();
-        postEvent("EventDispatcherShutdown", null);
-    }
-
-    @Rpc(description = "Stops the event server, you can't read in the port anymore")
-    public void stopEventDispatcher() throws RuntimeException {
-        if (bEventServerRunning == true) {
-            if (mEventServer == null) {
-                throw new RuntimeException("Not running");
-            }
-            bEventServerRunning = false;
-            mEventServer.shutdown();
-            Log.v(String.format("stopEventDispatcher   (%s)", mEventServer));
-            removeEventObserver(mEventServer);
-            mEventServer = null;
-        }
-        return;
-    }
-
     @Override
     public void shutdown() {
-
-        try {
-            stopEventDispatcher();
-        } catch (Exception e) {
-            Log.e("Exception tearing down event dispatcher", e);
-        }
         mGlobalEventObservers.clear();
         mEventQueue.clear();
     }
