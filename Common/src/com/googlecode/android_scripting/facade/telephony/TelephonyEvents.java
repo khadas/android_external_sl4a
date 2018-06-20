@@ -231,62 +231,12 @@ public class TelephonyEvents {
         }
 
         public JSONObject toJSON() throws JSONException {
-            JSONObject serviceState = new JSONObject();
-
+            JSONObject serviceState =
+                    com.googlecode.android_scripting.jsonrpc.JsonBuilder.buildServiceState(
+                            mServiceState);
             serviceState.put(
                     TelephonyConstants.ServiceStateContainer.SUBSCRIPTION_ID,
                     mSubscriptionId);
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.VOICE_REG_STATE,
-                    TelephonyUtils.getNetworkStateString(
-                            mServiceState.getVoiceRegState()));
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.VOICE_NETWORK_TYPE,
-                    TelephonyUtils.getNetworkTypeString(
-                            mServiceState.getVoiceNetworkType()));
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.DATA_REG_STATE,
-                    TelephonyUtils.getNetworkStateString(
-                            mServiceState.getDataRegState()));
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.DATA_NETWORK_TYPE,
-                    TelephonyUtils.getNetworkTypeString(
-                            mServiceState.getDataNetworkType()));
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.OPERATOR_NAME,
-                    mServiceState.getOperatorAlphaLong());
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.OPERATOR_ID,
-                    mServiceState.getOperatorNumeric());
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.IS_MANUAL_NW_SELECTION,
-                    mServiceState.getIsManualSelection());
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.ROAMING,
-                    mServiceState.getRoaming());
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.IS_EMERGENCY_ONLY,
-                    mServiceState.isEmergencyOnly());
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.NETWORK_ID,
-                    mServiceState.getCdmaNetworkId());
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.SYSTEM_ID,
-                    mServiceState.getCdmaSystemId());
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.SERVICE_STATE,
-                    mServiceStateString);
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.CHANNEL_NUMBER,
-                    mServiceState.getChannelNumber());
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.CELL_BANDWIDTHS,
-                    mServiceState.getCellBandwidths() != null
-                            ? new JSONArray(mServiceState.getCellBandwidths())
-                            : JSONObject.NULL);
-            serviceState.put(
-                    TelephonyConstants.ServiceStateContainer.DUPLEX_MODE,
-                    mServiceState.getDuplexMode());
 
             return serviceState;
         }
