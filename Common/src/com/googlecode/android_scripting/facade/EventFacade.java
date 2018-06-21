@@ -371,6 +371,12 @@ public class EventFacade extends RpcReceiver {
         return eventWaitFor(eventName, removeEvent, timeout);
     }
 
+    @Rpc(description = "sl4a session is shutting down, send terminate event to client.")
+    public void closeSl4aSession() {
+        eventClearBuffer();
+        postEvent("EventDispatcherShutdown", null);
+    }
+
     @Override
     public void shutdown() {
         mGlobalEventObservers.clear();
