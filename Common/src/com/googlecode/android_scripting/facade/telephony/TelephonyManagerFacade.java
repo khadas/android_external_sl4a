@@ -1235,16 +1235,15 @@ public class TelephonyManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Returns the service state string for default subscription ID")
-    public String telephonyGetServiceState() {
+    public ServiceState telephonyGetServiceState() {
         return telephonyGetServiceStateForSubscription(
                                  SubscriptionManager.getDefaultSubscriptionId());
     }
 
     @Rpc(description = "Returns the service state string for specified subscription ID")
-    public String telephonyGetServiceStateForSubscription(
+    public ServiceState telephonyGetServiceStateForSubscription(
                   @RpcParameter(name = "subId") Integer subId) {
-        ServiceState ss = mTelephonyManager.getServiceStateForSubscriber(subId);
-        return ServiceState.rilServiceStateToString(ss.getState());
+        return mTelephonyManager.getServiceStateForSubscriber(subId);
     }
 
     @Rpc(description = "Returns the call state for default subscription ID")
