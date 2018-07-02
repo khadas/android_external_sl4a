@@ -501,12 +501,19 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         PacketKeepaliveReceiver mPacketKeepaliveReceiver =
                 mPacketKeepaliveReceiverMap.get(key);
         if (mPacketKeepaliveReceiver != null) {
-            mPacketKeepaliveReceiverMap.remove(key);
             mPacketKeepaliveReceiver.mPacketKeepalive.stop();
             return true;
         } else {
             return false;
         }
+    }
+
+    /**
+     * Remove key from the PacketKeepaliveReceiver map
+     */
+    @Rpc(description = "remove PacketKeepaliveReceiver key")
+    public void connectivityRemovePacketKeepaliveReceiverKey(String key) {
+        mPacketKeepaliveReceiverMap.remove(key);
     }
 
     @Rpc(description = "start listening for NattKeepalive Event")
