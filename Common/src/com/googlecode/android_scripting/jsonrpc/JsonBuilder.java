@@ -35,6 +35,7 @@ import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.ProxyInfo;
 import android.net.RouteInfo;
 import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
@@ -289,6 +290,9 @@ public class JsonBuilder {
         }
         if (data instanceof IpPrefix) {
             return buildIpPrefix((IpPrefix) data);
+        }
+        if (data instanceof ProxyInfo) {
+            return buildProxyInfo((ProxyInfo) data);
         }
         if (data instanceof byte[]) {
             JSONArray result = new JSONArray();
@@ -1086,6 +1090,15 @@ public class JsonBuilder {
         JSONObject info = new JSONObject();
         info.put("Address", data.getAddress());
         info.put("PrefixLength", data.getPrefixLength());
+        return info;
+    }
+
+    private static JSONObject buildProxyInfo(ProxyInfo data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("Hostname", data.getHost());
+        info.put("Port", data.getPort());
+        info.put("ExclList", data.getExclusionListAsString());
+        info.put("PacUrl", data.getPacFileUrl().toString());
         return info;
     }
 
