@@ -716,7 +716,7 @@ public class WifiManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Returns wifi activity and energy usage info.")
     public WifiActivityEnergyInfo wifiGetControllerActivityEnergyInfo() {
-        return mWifi.getControllerActivityEnergyInfo(0);
+        return mWifi.getControllerActivityEnergyInfo();
     }
 
     @Rpc(description = "Get the country code used by WiFi.")
