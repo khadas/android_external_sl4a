@@ -61,7 +61,6 @@ public class ScriptingLayerService extends ForegroundService {
     private final IBinder mBinder;
     private final Map<Integer, InterpreterProcess> mProcessMap;
     private static final String CHANNEL_ID = "scripting_layer_service_channel";
-    private final String LOG_TAG = "sl4a";
     private volatile int mModCount = 0;
     private Notification mNotification;
     private PendingIntent mNotificationPendingIntent;
@@ -90,7 +89,7 @@ public class ScriptingLayerService extends ForegroundService {
 
     public ScriptingLayerService() {
         super(NOTIFICATION_ID);
-        mProcessMap = new ConcurrentHashMap<Integer, InterpreterProcess>();
+        mProcessMap = new ConcurrentHashMap<>();
         mBinder = new LocalBinder();
     }
 
@@ -99,7 +98,7 @@ public class ScriptingLayerService extends ForegroundService {
         super.onCreate();
         mInterpreterConfiguration = ((BaseApplication) getApplication())
                 .getInterpreterConfiguration();
-        mRecentlyKilledProcess = new WeakReference<InterpreterProcess>(null);
+        mRecentlyKilledProcess = new WeakReference<>(null);
         mTerminalManager = new TerminalManager(this);
         mPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         mHide = mPreferences.getBoolean(Constants.HIDE_NOTIFY, false);
@@ -162,10 +161,11 @@ public class ScriptingLayerService extends ForegroundService {
     }
 
     private void startAction(Intent intent, int flags, int startId) {
-        AndroidProxy proxy = null;
+        AndroidProxy proxy;
         InterpreterProcess interpreterProcess = null;
         String errmsg = null;
-        if (intent == null) {
+        if (intent == null || intent.getAction() == null) {
+            return;
         } else if (intent.getAction().equals(Constants.ACTION_KILL_ALL)) {
             killAll();
             stopSelf(startId);
@@ -257,37 +257,27 @@ public class ScriptingLayerService extends ForegroundService {
     private ScriptProcess launchScript(Intent intent, AndroidProxy proxy) {
         final int port = proxy.getAddress().getPort();
         File script = new File(intent.getStringExtra(Constants.EXTRA_SCRIPT_PATH));
-        return ScriptLauncher.launchScript(script, mInterpreterConfiguration, proxy,
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        // TODO(damonkohler): This action actually kills the script rather than
-                        // notifying the service that script exited on its own. We should
-                        // distinguish between these two cases.
-                        Intent intent = new Intent(ScriptingLayerService.this,
-                                ScriptingLayerService.class);
-                        intent.setAction(Constants.ACTION_KILL_PROCESS);
-                        intent.putExtra(Constants.EXTRA_PROXY_PORT, port);
-                        startService(intent);
-                    }
-                });
+        return ScriptLauncher.launchScript(script, mInterpreterConfiguration, proxy, () -> {
+            // TODO(damonkohler): This action actually kills the script rather than notifying the
+            // service that script exited on its own. We should distinguish between these two cases.
+            Intent newIntent = new Intent(ScriptingLayerService.this, ScriptingLayerService.class);
+            newIntent.setAction(Constants.ACTION_KILL_PROCESS);
+            newIntent.putExtra(Constants.EXTRA_PROXY_PORT, port);
+            startService(newIntent);
+        });
     }
 
     private InterpreterProcess launchInterpreter(Intent intent, AndroidProxy proxy) {
         InterpreterConfiguration config =
                 ((BaseApplication) getApplication()).getInterpreterConfiguration();
         final int port = proxy.getAddress().getPort();
-        return ScriptLauncher.launchInterpreter(proxy, intent, config, new Runnable() {
-            @Override
-            public void run() {
-                // TODO(damonkohler): This action actually kills the script rather than notifying
-                // the service that script exited on its own. We should distinguish between these
-                // two cases.
-                Intent intent = new Intent(ScriptingLayerService.this, ScriptingLayerService.class);
-                intent.setAction(Constants.ACTION_KILL_PROCESS);
-                intent.putExtra(Constants.EXTRA_PROXY_PORT, port);
-                startService(intent);
-            }
+        return ScriptLauncher.launchInterpreter(proxy, intent, config, () -> {
+            // TODO(damonkohler): This action actually kills the script rather than notifying the
+            // service that script exited on its own. We should distinguish between these two cases.
+            Intent newIntent = new Intent(ScriptingLayerService.this, ScriptingLayerService.class);
+            newIntent.setAction(Constants.ACTION_KILL_PROCESS);
+            newIntent.putExtra(Constants.EXTRA_PROXY_PORT, port);
+            startService(newIntent);
         });
     }
 
@@ -334,7 +324,7 @@ public class ScriptingLayerService extends ForegroundService {
         InterpreterProcess process = removeProcess(processId);
         if (process != null) {
             process.kill();
-            mRecentlyKilledProcess = new WeakReference<InterpreterProcess>(process);
+            mRecentlyKilledProcess = new WeakReference<>(process);
         }
     }
 
@@ -353,16 +343,18 @@ public class ScriptingLayerService extends ForegroundService {
 
     /**
      * Returns the list of all running InterpreterProcesses. This list includes RPC servers.
+     *
      * @return a list of all running interpreter processes
      */
     public List<InterpreterProcess> getScriptProcessesList() {
-        ArrayList<InterpreterProcess> result = new ArrayList<InterpreterProcess>();
+        ArrayList<InterpreterProcess> result = new ArrayList<>();
         result.addAll(mProcessMap.values());
         return result;
     }
 
     /**
      * Returns the process running on the given port, if any.
+     *
      * @param port the integer value corresponding to the port to find a process on
      * @return the InterpreterProcess running on that port, or null
      */
