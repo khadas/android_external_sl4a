@@ -18,13 +18,7 @@ package com.googlecode.android_scripting;
 
 import com.google.common.collect.Lists;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.BindException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -37,15 +31,14 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * A simple server.
  */
 public abstract class SimpleServer {
-    private static int threadIndex = 0;
-    private final ConcurrentHashMap<Integer, ConnectionThread> mConnectionThreads =
-            new ConcurrentHashMap<>();
+    private final CopyOnWriteArrayList<ConnectionThread> mConnectionThreads =
+            new CopyOnWriteArrayList<>();
     private final List<SimpleServerObserver> mObservers = Lists.newArrayList();
     private volatile boolean mStopServer = false;
     private ServerSocket mServer;
@@ -63,12 +56,6 @@ public abstract class SimpleServer {
 
     /** An abstract method for handling non-RPC connections. */
     protected abstract void handleConnection(Socket socket) throws Exception;
-
-    /** An abstract method for handling RPC connections. */
-    protected abstract void handleRPCConnection(Socket socket,
-                                                Integer UID,
-                                                BufferedReader reader,
-                                                PrintWriter writer) throws Exception;
 
     /**
      * Adds an observer.
@@ -105,42 +92,24 @@ public abstract class SimpleServer {
     private final class ConnectionThread extends Thread {
         /** The socket used for communication. */
         private final Socket mmSocket;
-        /** The BufferedReader providing input to the socket. */
-        private final BufferedReader reader;
-        /** The PrintWriter bound to the socket's output. */
-        private final PrintWriter writer;
-        /** The SessionID associated with this connection. */
-        private final Integer UID;
-        private final boolean isRpc;
 
-        private ConnectionThread(Socket socket, boolean rpc, Integer uid, BufferedReader reader,
-                                 PrintWriter writer) {
+        private ConnectionThread(Socket socket) {
             setName("SimpleServer ConnectionThread " + getId());
             mmSocket = socket;
-            this.UID = uid;
-            this.reader = reader;
-            this.writer = writer;
-            this.isRpc = rpc;
         }
 
         @Override
         public void run() {
             Log.v("Server thread " + getId() + " started.");
             try {
-                if (isRpc) {
-                    Log.d("Handling RPC connection in " + getId());
-                    handleRPCConnection(mmSocket, UID, reader, writer);
-                } else {
-                    Log.d("Handling Non-RPC connection in " + getId());
-                    handleConnection(mmSocket);
-                }
+                handleConnection(mmSocket);
             } catch (Exception e) {
                 if (!mStopServer) {
                     Log.e("Server error.", e);
                 }
             } finally {
                 close();
-                mConnectionThreads.remove(this.UID);
+                mConnectionThreads.remove(this);
                 notifyOnDisconnect();
                 Log.v("Server thread " + getId() + " stopped.");
             }
@@ -305,10 +274,6 @@ public abstract class SimpleServer {
                     if (!mStopServer) {
                         Log.e("Failed to accept connection.", e);
                     }
-                } catch (JSONException e) {
-                    if (!mStopServer) {
-                        Log.e("Failed to parse request.", e);
-                    }
                 }
             }
         });
@@ -317,70 +282,11 @@ public abstract class SimpleServer {
         return mServer.getLocalPort();
     }
 
-    /**
-     * Starts a ConnectionThread for a given socket.
-     *
-     * @param sock the Socket to start a ConnectionThread over
-     * @throws IOException when I/O Errors appear during read/writes.
-     * @throws JSONException when the received data from the socket is not in the expected format
-     */
-    private void startConnectionThread(final Socket sock) throws IOException, JSONException {
-        BufferedReader reader =
-                new BufferedReader(new InputStreamReader(sock.getInputStream()), 8192);
-        PrintWriter writer = new PrintWriter(sock.getOutputStream(), true);
-        String data;
-        if ((data = reader.readLine()) != null) {
-            Log.v("Received: " + data);
-            JSONObject request = new JSONObject(data);
-            if (request.has("cmd") && request.has("uid")) {
-                String cmd = request.getString("cmd");
-                int uid = request.getInt("uid");
-                JSONObject result = new JSONObject();
-                if (cmd.equals("initiate")) {
-                    Log.d("Initiate a new session");
-                    threadIndex += 1;
-                    int mUID = threadIndex;
-                    ConnectionThread networkThread = new ConnectionThread(sock, true, mUID,
-                            reader, writer);
-                    mConnectionThreads.put(mUID, networkThread);
-                    networkThread.start();
-                    notifyOnConnect();
-                    result.put("uid", mUID);
-                    result.put("status", true);
-                    result.put("error", null);
-                } else if (cmd.equals("continue")) {
-                    Log.d("Continue an existing session");
-                    Log.d("keys: " + mConnectionThreads.keySet().toString());
-                    if (!mConnectionThreads.containsKey(uid)) {
-                        result.put("uid", uid);
-                        result.put("status", false);
-                        result.put("error", "Session does not exist.");
-                    } else {
-                        ConnectionThread networkThread = new ConnectionThread(sock, true, uid,
-                                reader, writer);
-                        mConnectionThreads.put(uid, networkThread);
-                        networkThread.start();
-                        notifyOnConnect();
-                        result.put("uid", uid);
-                        result.put("status", true);
-                        result.put("error", null);
-                    }
-                } else {
-                    result.put("uid", uid);
-                    result.put("status", false);
-                    result.put("error", "Unrecognized command.");
-                }
-                writer.write(result + "\n");
-                writer.flush();
-                Log.v("Sent: " + result);
-            } else {
-                ConnectionThread networkThread = new ConnectionThread(sock, false, 0, reader,
-                        writer);
-                mConnectionThreads.put(0, networkThread);
-                networkThread.start();
-                notifyOnConnect();
-            }
-        }
+    protected void startConnectionThread(final Socket sock) {
+        ConnectionThread networkThread = new ConnectionThread(sock);
+        mConnectionThreads.add(networkThread);
+        networkThread.start();
+        notifyOnConnect();
     }
 
     /** Closes the server, preventing new connections from being added. */
@@ -398,7 +304,7 @@ public abstract class SimpleServer {
         // threads. In the worst case, one of the running threads will already have
         // shut down. Since this is a CopyOnWriteList, we don't have to worry about
         // concurrency issues while iterating over the set of threads.
-        for (ConnectionThread connectionThread : mConnectionThreads.values()) {
+        for (ConnectionThread connectionThread : mConnectionThreads) {
             connectionThread.close();
         }
         for (SimpleServerObserver observer : mObservers) {
