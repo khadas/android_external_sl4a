@@ -19,9 +19,7 @@ package com.googlecode.android_scripting.facade.webcam;
 import com.googlecode.android_scripting.Log;
 import com.googlecode.android_scripting.SimpleServer;
 
-import java.io.BufferedReader;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
 
 class MjpegServer extends SimpleServer {
@@ -62,13 +60,5 @@ class MjpegServer extends SimpleServer {
             outputStream.write("\r\n\r\n".getBytes());
             outputStream.flush();
         }
-    }
-
-    @Override
-    protected void handleRPCConnection(Socket sock,
-                                       Integer uid,
-                                       BufferedReader reader,
-                                       PrintWriter writer)
-            throws Exception {
     }
 }
