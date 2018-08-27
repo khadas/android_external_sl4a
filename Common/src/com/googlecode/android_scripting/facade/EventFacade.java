@@ -371,26 +371,45 @@ public class EventFacade extends RpcReceiver {
         return eventWaitFor(eventName, removeEvent, timeout);
     }
 
+    /**
+     * Closes this SL4A session, and sends a terminating signal to the event observers.
+     */
     @Rpc(description = "sl4a session is shutting down, send terminate event to client.")
     public void closeSl4aSession() {
         eventClearBuffer();
         postEvent("EventDispatcherShutdown", null);
     }
 
+    /**
+     * Shuts down the RPC server.
+     */
     @Override
     public void shutdown() {
         mGlobalEventObservers.clear();
         mEventQueue.clear();
     }
 
+    /**
+     * Adds a named observer to the event listening queue.
+     * @param eventName the name of the event to listen to
+     * @param observer  the observer object
+     */
     public void addNamedEventObserver(String eventName, EventObserver observer) {
         mNamedEventObservers.put(eventName, observer);
     }
 
+    /**
+     * Adds a global event listener ot the listening queue.
+     * @param observer the observer object
+     */
     public void addGlobalEventObserver(EventObserver observer) {
         mGlobalEventObservers.add(observer);
     }
 
+    /**
+     * Removes an observer from the event listening queue.
+     * @param observer the observer to remove
+     */
     public void removeEventObserver(EventObserver observer) {
         mNamedEventObservers.removeAll(observer);
         mGlobalEventObservers.remove(observer);
