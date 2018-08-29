@@ -56,6 +56,7 @@ public class SocketFacade extends RpcReceiver {
     private static HashMap<String, FileDescriptor> sFileDescriptorHashMap =
             new HashMap<String, FileDescriptor>();
     public static int MAX_BUF_SZ = 2048;
+    public static int SOCK_TIMEOUT = 1500;
 
     public SocketFacade(FacadeManager manager) {
         super(manager);
@@ -312,6 +313,7 @@ public class SocketFacade extends RpcReceiver {
         InetAddress localAddr = NetworkUtils.numericToInetAddress(addr);
         try {
             DatagramSocket socket = new DatagramSocket(port.intValue(), localAddr);
+            socket.setSoTimeout(SOCK_TIMEOUT);
             String id = getDatagramSocketId(socket);
             sDatagramSocketHashMap.put(id, socket);
             return id;
