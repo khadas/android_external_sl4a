@@ -30,5 +30,5 @@ import java.lang.annotation.Target;
 @Documented
 public @interface RpcStartEvent {
     /** The name of the event that is generated. */
-    public String value();
+    String value();
 }

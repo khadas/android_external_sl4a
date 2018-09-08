@@ -30,8 +30,8 @@ import java.lang.annotation.Target;
 @Documented
 public @interface RpcDefault {
     /** The default value of the RPC parameter. */
-    public String value();
+    String value();
 
     @SuppressWarnings("rawtypes")
-    public Class<? extends Converter> converter() default Converter.class;
+    Class<? extends Converter> converter() default Converter.class;
 }
