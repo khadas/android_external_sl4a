@@ -1149,6 +1149,14 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         mManager.setGlobalProxy(null);
     }
 
+    /**
+     * Check if active network is metered.
+     */
+    @Rpc(description = "Is active network metered")
+    public boolean connectivityIsActiveNetworkMetered() {
+        return mManager.isActiveNetworkMetered();
+    }
+
     @Override
     public void shutdown() {
         connectivityStopTrackingConnectivityStateChange();

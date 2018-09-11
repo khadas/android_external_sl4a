@@ -357,6 +357,9 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("wepTxKeyIndex")) {
             config.wepTxKeyIndex = j.getInt("wepTxKeyIndex");
         }
+        if (j.has("meteredOverride")) {
+            config.meteredOverride = j.getInt("meteredOverride");
+        }
         return config;
     }
 
