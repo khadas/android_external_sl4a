@@ -30,5 +30,5 @@ import java.lang.annotation.Target;
 @Documented
 public @interface RpcName {
     /** The default value of the RPC parameter. */
-    public String name();
+    String name();
 }

@@ -27,5 +27,5 @@ import java.lang.annotation.RetentionPolicy;
 @Documented
 public @interface RpcMinSdk {
     /** Minimum SDK Level. */
-    public int value();
+    int value();
 }
