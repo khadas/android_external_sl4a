@@ -161,12 +161,16 @@ public class ScriptingLayerService extends ForegroundService {
     }
 
     private void startAction(Intent intent, int flags, int startId) {
+        if (intent == null || intent.getAction() == null) {
+            return;
+        }
+
         AndroidProxy proxy;
         InterpreterProcess interpreterProcess = null;
         String errmsg = null;
-        if (intent == null || intent.getAction() == null) {
-            return;
-        } else if (intent.getAction().equals(Constants.ACTION_KILL_ALL)) {
+        Log.d(String.format("Received intent with action '%s'.", intent.getAction()));
+
+        if (intent.getAction().equals(Constants.ACTION_KILL_ALL)) {
             killAll();
             stopSelf(startId);
         } else if (intent.getAction().equals(Constants.ACTION_KILL_PROCESS)) {
