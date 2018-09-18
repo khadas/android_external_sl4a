@@ -32,11 +32,11 @@ public @interface RpcParameter {
     /**
      * The name of the formal parameter. This should be in agreement with the java code.
      */
-    public String name();
+    String name();
 
     /**
      * Description of the RPC. This should be a short descriptive statement without a full stop, such
      * as 'disables the WiFi mode'.
      */
-    public String description() default "";
+    String description() default "";
 }
