@@ -30,5 +30,5 @@ import java.lang.annotation.Target;
 @Documented
 public @interface RpcStopEvent {
     /** The name of the event that stops being generated. */
-    public String value();
+    String value();
 }
