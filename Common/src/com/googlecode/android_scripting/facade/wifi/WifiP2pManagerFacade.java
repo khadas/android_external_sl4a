@@ -51,6 +51,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -410,7 +411,9 @@ public class WifiP2pManagerFacade extends RpcReceiver {
             @RpcParameter(name = "serviceType") String serviceType,
             @RpcParameter(name = "txtMap") JSONObject txtMap) throws JSONException {
         Map<String, String> map = new HashMap<String, String>();
-        for (String key : txtMap.keySet()) {
+        Iterator<String> keyIterator = txtMap.keys();
+        while (keyIterator.hasNext()) {
+            String key = keyIterator.next();
             map.put(key, txtMap.getString(key));
         }
         mServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(instanceName, serviceType, map);
