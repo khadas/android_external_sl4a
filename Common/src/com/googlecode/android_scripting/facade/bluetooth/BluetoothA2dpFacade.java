@@ -18,13 +18,21 @@ package com.googlecode.android_scripting.facade.bluetooth;
 
 import android.app.Service;
 import android.bluetooth.BluetoothA2dp;
+import android.bluetooth.BluetoothCodecStatus;
+import android.bluetooth.BluetoothCodecConfig;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothUuid;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.ParcelUuid;
 
 import com.googlecode.android_scripting.Log;
+import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
@@ -37,17 +45,33 @@ public class BluetoothA2dpFacade extends RpcReceiver {
         BluetoothUuid.AudioSink, BluetoothUuid.AdvAudioDist,
     };
     private final Service mService;
+    private final EventFacade mEventFacade;
+    private final BroadcastReceiver mBluetoothA2dpReceiver;
     private final BluetoothAdapter mBluetoothAdapter;
 
     private static boolean sIsA2dpReady = false;
     private static BluetoothA2dp sA2dpProfile = null;
+    private BluetoothCodecConfig mBluetoothCodecConfig;
 
     public BluetoothA2dpFacade(FacadeManager manager) {
         super(manager);
         mService = manager.getService();
+        mEventFacade = manager.getReceiver(EventFacade.class);
+
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mBluetoothA2dpReceiver = new BluetoothA2dpReceiver();
+        mBluetoothCodecConfig = new BluetoothCodecConfig(
+                BluetoothCodecConfig.SOURCE_CODEC_TYPE_INVALID,
+                BluetoothCodecConfig.CODEC_PRIORITY_DEFAULT,
+                BluetoothCodecConfig.SAMPLE_RATE_NONE,
+                BluetoothCodecConfig.BITS_PER_SAMPLE_NONE,
+                BluetoothCodecConfig.CHANNEL_MODE_NONE,
+                0L, 0L, 0L, 0L);
         mBluetoothAdapter.getProfileProxy(mService, new A2dpServiceListener(),
                 BluetoothProfile.A2DP);
+
+        mService.registerReceiver(mBluetoothA2dpReceiver,
+                          new IntentFilter(BluetoothA2dp.ACTION_CODEC_CONFIG_CHANGED));
     }
 
     class A2dpServiceListener implements BluetoothProfile.ServiceListener {
@@ -62,6 +86,23 @@ public class BluetoothA2dpFacade extends RpcReceiver {
             sIsA2dpReady = false;
         }
     }
+
+    class BluetoothA2dpReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (BluetoothA2dp.ACTION_CODEC_CONFIG_CHANGED.equals(action)) {
+                BluetoothCodecStatus codecStatus = intent.getParcelableExtra(
+                        BluetoothCodecStatus.EXTRA_CODEC_STATUS);
+                if (codecStatus.getCodecConfig().equals(mBluetoothCodecConfig)) {
+                    mEventFacade.postEvent("BluetoothA2dpCodecConfigChanged", new Bundle());
+                }
+            }
+        }
+    }
+
+
 
     /**
      * Connect A2DP Profile to input BluetoothDevice
@@ -187,7 +228,39 @@ public class BluetoothA2dpFacade extends RpcReceiver {
                     BluetoothProfile.STATE_DISCONNECTING});
     }
 
+    /**
+     * Set active devices with giving codec config
+     *
+     * @param codecType codec type want to set to, list in BluetoothCodecConfig.
+     * @param sampleRate sample rate want to set to, list in BluetoothCodecConfig.
+     * @param bitsPerSample bits per sample want to set to, list in BluetoothCodecConfig.
+     * @param channelMode channel mode want to set to, list in BluetoothCodecConfig.
+     * @return True if set codec config successfully.
+     */
+    @Rpc(description = "Set A2dp codec config.")
+    public boolean bluetoothA2dpSetCodecConfigPreference(
+            @RpcParameter(name = "codecType") Integer codecType,
+            @RpcParameter(name = "sampleRate") Integer sampleRate,
+            @RpcParameter(name = "bitsPerSample") Integer bitsPerSample,
+            @RpcParameter(name = "channelMode") Integer channelMode,
+            @RpcParameter(name = "codecSpecific1") Long codecSpecific1) {
+        if (sA2dpProfile == null) {
+            return false;
+        }
+        mBluetoothCodecConfig = new BluetoothCodecConfig(
+                codecType,
+                BluetoothCodecConfig.CODEC_PRIORITY_HIGHEST,
+                sampleRate,
+                bitsPerSample,
+                channelMode,
+                codecSpecific1,
+                0L, 0L, 0L);
+       sA2dpProfile.setCodecConfigPreference(null, mBluetoothCodecConfig);
+       return true;
+    }
+
     @Override
     public void shutdown() {
+        mService.unregisterReceiver(mBluetoothA2dpReceiver);
     }
 }
