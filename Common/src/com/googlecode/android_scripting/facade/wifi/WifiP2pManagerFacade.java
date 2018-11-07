@@ -249,15 +249,14 @@ public class WifiP2pManagerFacade extends RpcReceiver {
 
     class WifiP2pStateChangedReceiver extends BroadcastReceiver {
         private final EventFacade mEventFacade;
-        private final Bundle mResults;
 
         WifiP2pStateChangedReceiver(EventFacade eventFacade) {
             mEventFacade = eventFacade;
-            mResults = new Bundle();
         }
 
         @Override
         public void onReceive(Context c, Intent intent) {
+            Bundle mResults = new Bundle();
             String action = intent.getAction();
             if (action.equals(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)) {
                 Log.d("Wifi P2p State Changed.");
@@ -286,7 +285,6 @@ public class WifiP2pManagerFacade extends RpcReceiver {
                     mResults.putParcelable("P2pInfo", p2pInfo);
                     mResults.putParcelable("Group", group);
                     mEventFacade.postEvent(mEventType + "Connected", mResults);
-                    mResults.clear();
                 } else {
                     mEventFacade.postEvent(mEventType + "Disconnected", null);
                 }
@@ -296,7 +294,6 @@ public class WifiP2pManagerFacade extends RpcReceiver {
                         .getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
                 mResults.putParcelable("Device", device);
                 mEventFacade.postEvent(mEventType + "ThisDeviceChanged", mResults);
-                mResults.clear();
             } else if (action.equals(WifiP2pManager.WIFI_P2P_DISCOVERY_CHANGED_ACTION)) {
                 Log.d("Wifi P2p Discovery Changed.");
                 int state = intent.getIntExtra(WifiP2pManager.EXTRA_DISCOVERY_STATE, 0);
