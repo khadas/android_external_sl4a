@@ -27,6 +27,7 @@ import android.net.DhcpInfo;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.NetworkInfo.DetailedState;
+import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiActivityEnergyInfo;
 import android.net.wifi.WifiConfiguration;
@@ -36,9 +37,12 @@ import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.WifiLock;
+import android.net.wifi.WifiSsid;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.hotspot2.ConfigParser;
+import android.net.wifi.hotspot2.OsuProvider;
 import android.net.wifi.hotspot2.PasspointConfiguration;
+import android.net.wifi.hotspot2.ProvisioningCallback;
 import android.os.Bundle;
 import android.provider.Settings.Global;
 import android.provider.Settings.SettingNotFoundException;
@@ -62,6 +66,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -74,6 +79,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -651,7 +657,88 @@ public class WifiManagerFacade extends RpcReceiver {
         return fqdnList;
     }
 
-     /**
+    private class ProvisioningCallbackFacade extends ProvisioningCallback {
+        private final EventFacade mEventFacade;
+
+        ProvisioningCallbackFacade(EventFacade eventFacade) {
+            mEventFacade = eventFacade;
+        }
+
+        @Override
+        public void onProvisioningFailure(int status) {
+            Log.v("Provisioning Failure " + status);
+            Bundle msg = new Bundle();
+            msg.putString("tag", "failure");
+            msg.putInt("reason", status);
+            mEventFacade.postEvent("onProvisioningCallback", msg);
+        }
+
+        @Override
+        public void onProvisioningStatus(int status) {
+            Log.v("Provisioning status " + status);
+            Bundle msg = new Bundle();
+            msg.putString("tag", "status");
+            msg.putInt("status", status);
+            mEventFacade.postEvent("onProvisioningCallback", msg);
+        }
+
+        @Override
+        public void onProvisioningComplete() {
+            Log.v("Provisioning Complete");
+            Bundle msg = new Bundle();
+            msg.putString("tag", "success");
+            mEventFacade.postEvent("onProvisioningCallback", msg);
+        }
+    }
+
+    private OsuProvider buildTestOsuProvider(JSONObject config) {
+        String osuServiceDescription = "Google Passpoint Test Service";
+        List<Integer> osuMethodList =
+                Arrays.asList(OsuProvider.METHOD_SOAP_XML_SPP);
+
+        try {
+            if (!config.has("osuSSID")) {
+                Log.e("missing osuSSID from the config");
+                return null;
+            }
+            WifiSsid osuSsid = WifiSsid.createFromByteArray(
+                    config.getString("osuSSID").getBytes(StandardCharsets.UTF_8));
+
+            if (!config.has("osuUri")) {
+                Log.e("missing osuUri from the config");
+                return null;
+            }
+            Uri osuServerUri = Uri.parse(config.getString("osuUri"));
+
+            Log.v("OSU Server URI " + osuServerUri.toString());
+            if (!config.has("osuFriendlyName")) {
+                Log.e("missing osuFriendlyName from the config");
+                return null;
+            }
+            String osuFriendlyName = config.getString("osuFriendlyName");
+
+            if (config.has("description")) {
+                osuServiceDescription = config.getString("description");
+            }
+            return new OsuProvider(osuSsid, osuFriendlyName, osuServiceDescription,
+                    osuServerUri, null, osuMethodList, null);
+        } catch (JSONException e) {
+            Log.e("JSON Parsing error: " + e);
+            return null;
+        }
+    }
+
+    /**
+     * Start subscription provisioning
+     */
+    @Rpc(description = "Starts subscription provisioning flow")
+    public void startSubscriptionProvisioning(
+            @RpcParameter(name = "configJson") JSONObject configJson) {
+        ProvisioningCallback callback = new ProvisioningCallbackFacade(mEventFacade);
+        mWifi.startSubscriptionProvisioning(buildTestOsuProvider(configJson), callback, null);
+    }
+
+    /**
      * Connects to a wifi network using networkId.
      * @param networkId the network identity for the network in the supplicant
      */
