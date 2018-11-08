@@ -373,6 +373,19 @@ public class WifiP2pManagerFacade extends RpcReceiver {
         m.send(msg);
     }
 
+    /**
+     * Confirm p2p keypad connection invitation.
+     */
+    @Rpc(description = "Confirm p2p keypad connection invitation.")
+    public void wifiP2pConfirmConnection() throws RemoteException {
+        Log.d("Confirm p2p connection.");
+        Messenger m = mP2p.getP2pStateMachineMessenger();
+        int user_confirm = Protocol.BASE_WIFI_P2P_SERVICE + 7;
+        Message msg = Message.obtain();
+        msg.what = user_confirm;
+        m.send(msg);
+    }
+
     @Rpc(description = "Register a local service for service discovery. One of the \"CreateXxxServiceInfo functions needs to be called first.\"")
     public void wifiP2pAddLocalService() {
         mP2p.addLocalService(mChannel, mServiceInfo,
