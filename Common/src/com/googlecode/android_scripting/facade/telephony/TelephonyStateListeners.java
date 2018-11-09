@@ -16,7 +16,6 @@
 
 package com.googlecode.android_scripting.facade.telephony;
 
-import com.googlecode.android_scripting.facade.EventFacade;
 import android.os.Looper;
 import android.telephony.CellInfo;
 import android.telephony.DataConnectionRealTimeInfo;
@@ -27,7 +26,8 @@ import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.telephony.VoLteServiceState;
+
+import com.googlecode.android_scripting.facade.EventFacade;
 
 import java.util.List;
 
@@ -241,31 +241,31 @@ public class TelephonyStateListeners {
         }
     }
 
-    public static class VolteServiceStateChangeListener
+    public static class SrvccStateChangeListener
             extends PhoneStateListener {
 
         private final EventFacade mEventFacade;
 
-        public VolteServiceStateChangeListener(EventFacade ef) {
+        public SrvccStateChangeListener(EventFacade ef) {
             super();
             mEventFacade = ef;
         }
 
-        public VolteServiceStateChangeListener(EventFacade ef, int subId) {
+        public SrvccStateChangeListener(EventFacade ef, int subId) {
             super(subId);
             mEventFacade = ef;
         }
 
-        public VolteServiceStateChangeListener(EventFacade ef, int subId, Looper looper) {
+        public SrvccStateChangeListener(EventFacade ef, int subId, Looper looper) {
             super(subId, looper);
             mEventFacade = ef;
         }
 
         @Override
-        public void onVoLteServiceStateChanged(VoLteServiceState volteInfo) {
+        public void onSrvccStateChanged(int srvccState) {
             mEventFacade.postEvent(
-                    TelephonyConstants.EventVolteServiceStateChanged,
-                    volteInfo);
+                    TelephonyConstants.EventSrvccStateChanged,
+                    srvccState);
         }
     }
 
