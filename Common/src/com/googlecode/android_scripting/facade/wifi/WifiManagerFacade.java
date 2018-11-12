@@ -47,6 +47,7 @@ import android.net.wifi.WifiManager.NetworkRequestUserSelectionCallback;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiNetworkConfigBuilder;
 import android.net.wifi.WifiNetworkSpecifier;
+import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.WifiSsid;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.hotspot2.ConfigParser;
@@ -228,6 +229,7 @@ public class WifiManagerFacade extends RpcReceiver {
         mStateChangeFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
         mStateChangeFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
         mStateChangeFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        mStateChangeFilter.addAction(WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION);
         mStateChangeFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
 
         mTetherFilter = new IntentFilter(WifiManager.WIFI_AP_STATE_CHANGED_ACTION);
@@ -354,6 +356,12 @@ public class WifiManagerFacade extends RpcReceiver {
                 Bundle msg = new Bundle();
                 msg.putBoolean("enabled", enabled);
                 mEventFacade.postEvent("WifiStateChanged", msg);
+            } else if (action.equals(WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION)) {
+                WifiNetworkSuggestion networkSuggestion =
+                        intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_SUGGESTION);
+                mEventFacade.postEvent(
+                        "WifiNetworkSuggestionPostConnection",
+                        networkSuggestion.wifiConfiguration.SSID);
             }
         }
     }
@@ -571,6 +579,55 @@ public class WifiManagerFacade extends RpcReceiver {
             builder = builder.setEnterpriseConfig(genWifiEnterpriseConfig(j));
         }
         return builder.buildNetworkSpecifier();
+    }
+
+    private WifiNetworkSuggestion genWifiNetworkSuggestion(JSONObject j) throws JSONException,
+            GeneralSecurityException {
+        if (j == null) {
+            return null;
+        }
+        WifiNetworkConfigBuilder builder = new WifiNetworkConfigBuilder();
+        if (j.has("SSID")) {
+            builder = builder.setSsid(j.getString("SSID"));
+        }
+        if (j.has("hiddenSSID") && j.getBoolean("hiddenSSID")) {
+            builder = builder.setIsHiddenSsid();
+        }
+        if (j.has("password")) {
+            builder = builder.setPskPassphrase(j.getString("password"));
+        }
+        if (j.has("preSharedKey")) {
+            builder = builder.setPskPassphrase(j.getString("preSharedKey"));
+        }
+        if (j.has("isAppInteractionRequired") && j.getBoolean("isAppInteractionRequired")) {
+            builder = builder.setIsAppInteractionRequired();
+        }
+        if (j.has("isUserInteractionRequired") && j.getBoolean("isUserInteractionRequired")) {
+            builder = builder.setIsUserInteractionRequired();
+        }
+        if (j.has("isMetered") && j.getBoolean("isMetered")) {
+            builder = builder.setIsMetered();
+        }
+        if (j.has("priority")) {
+            builder = builder.setPriority(j.getInt("priority"));
+        }
+        if (j.has(WifiEnterpriseConfig.EAP_KEY)) {
+            builder = builder.setEnterpriseConfig(genWifiEnterpriseConfig(j));
+        }
+        return builder.buildNetworkSuggestion();
+    }
+
+    private List<WifiNetworkSuggestion> genWifiNetworkSuggestions(
+            JSONArray jsonNetworkSuggestionsArray) throws JSONException, GeneralSecurityException {
+        if (jsonNetworkSuggestionsArray == null) {
+            return null;
+        }
+        List<WifiNetworkSuggestion> networkSuggestions = new ArrayList<>();
+        for (int i = 0; i < jsonNetworkSuggestionsArray.length(); i++) {
+            networkSuggestions.add(
+                    genWifiNetworkSuggestion(jsonNetworkSuggestionsArray.getJSONObject(i)));
+        }
+        return networkSuggestions;
     }
 
     private boolean matchScanResult(ScanResult result, String id) {
@@ -1335,6 +1392,36 @@ public class WifiManagerFacade extends RpcReceiver {
             }
             mNetworkRequestUserSelectionCallback.reject();
         }
+    }
+
+    /**
+     * Add network suggestions.
+
+     * @param wifiNetworkSuggestions Array of JSONObject Dictionary of wifi network suggestion
+     *                               parameters
+     * @throws JSONException
+     * @throws GeneralSecurityException
+     */
+    @Rpc(description = "Add network suggestions to the platform")
+    public boolean wifiAddNetworkSuggestions(
+            @RpcParameter(name = "wifiNetworkSuggestions") JSONArray wifiNetworkSuggestions)
+            throws JSONException, GeneralSecurityException {
+        return mWifi.addNetworkSuggestions(genWifiNetworkSuggestions(wifiNetworkSuggestions));
+    }
+
+    /**
+     * Remove network suggestions.
+
+     * @param wifiNetworkSuggestions Array of JSONObject Dictionary of wifi network suggestion
+     *                               parameters
+     * @throws JSONException
+     * @throws GeneralSecurityException
+     */
+    @Rpc(description = "Remove network suggestions from the platform")
+    public Boolean wifiRemoveNetworkSuggestions(
+            @RpcParameter(name = "wifiNetworkSuggestions") JSONArray wifiNetworkSuggestions)
+            throws JSONException, GeneralSecurityException {
+        return mWifi.removeNetworkSuggestions(genWifiNetworkSuggestions(wifiNetworkSuggestions));
     }
 
     @Override
