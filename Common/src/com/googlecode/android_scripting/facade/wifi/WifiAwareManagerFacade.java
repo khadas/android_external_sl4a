@@ -164,7 +164,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
             pmk = Base64.decode(j.getString(NS_KEY_PMK), Base64.DEFAULT);
         }
         if (j.has(NS_KEY_PASSPHRASE)) {
-            passphrase = j.getString((NS_KEY_PASSPHRASE));
+            passphrase = j.getString(NS_KEY_PASSPHRASE);
         }
 
         return new WifiAwareNetworkSpecifier(type, role, clientId, sessionId, peerId, peerMac, pmk,
@@ -567,8 +567,7 @@ public class WifiAwareManagerFacade extends RpcReceiver {
                 @RpcOptional String passphrase,
             @RpcParameter(name = "pmk",
                 description = "PMK of the data-path (base64 encoded). Optional, can be empty/null.")
-                @RpcOptional String pmk)
-        throws JSONException {
+                @RpcOptional String pmk) throws JSONException {
         DiscoverySession session;
         synchronized (mLock) {
             session = mDiscoverySessions.get(sessionId);

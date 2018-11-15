@@ -16,6 +16,9 @@
 
 package com.googlecode.android_scripting.facade;
 
+import android.net.TransportInfo;
+import android.net.wifi.aware.WifiAwareNetworkInfo;
+
 import com.googlecode.android_scripting.jsonrpc.JsonSerializable;
 
 import org.json.JSONException;
@@ -121,11 +124,13 @@ public class ConnectivityEvents {
      */
     public static class NetworkCallbackEventOnCapabilitiesChanged extends NetworkCallbackEventBase {
         private int mRssi;
+        private TransportInfo mTransportInfo;
 
         public NetworkCallbackEventOnCapabilitiesChanged(String id, String event,
-                long createTimestamp, int rssi) {
+                long createTimestamp, int rssi, TransportInfo transportInfo) {
             super(id, event, createTimestamp);
             mRssi = rssi;
+            mTransportInfo = transportInfo;
         }
 
         /**
@@ -134,6 +139,17 @@ public class ConnectivityEvents {
         public JSONObject toJSON() throws JSONException {
             JSONObject json = super.toJSON();
             json.put(ConnectivityConstants.NetworkCallbackContainer.RSSI, mRssi);
+            if (mTransportInfo != null) {
+                if (mTransportInfo instanceof WifiAwareNetworkInfo) {
+                    WifiAwareNetworkInfo anc = (WifiAwareNetworkInfo) mTransportInfo;
+
+                    String ipv6 = anc.getPeerIpv6Addr().toString();
+                    if (ipv6.charAt(0) == '/') {
+                        ipv6 = ipv6.substring(1);
+                    }
+                    json.put("aware_ipv6", ipv6);
+                }
+            }
             return json;
         }
     }
