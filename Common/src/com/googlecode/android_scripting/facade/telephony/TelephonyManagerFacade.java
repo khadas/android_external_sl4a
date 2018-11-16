@@ -67,6 +67,7 @@ import com.googlecode.android_scripting.rpc.RpcParameter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * Exposes TelephonyManager functionality.
@@ -989,10 +990,51 @@ public class TelephonyManagerFacade extends RpcReceiver {
         mTelephonyManager.setCellInfoListRate(rate);
     }
 
-    @Rpc(description = "Returns all observed cell information from all radios"+
-                       "on the device including the primary and neighboring cells")
+    /**
+     * Request a list of the current (latest) CellInfo.
+     *
+     * <p>When invoked on a device running Q or later, this will only return cached info.
+     */
+    @Rpc(description = "Returns all observed cell information from all radios"
+                       + "on the device including the primary and neighboring cells.")
     public List<CellInfo> telephonyGetAllCellInfo() {
         return mTelephonyManager.getAllCellInfo();
+    }
+
+    private abstract class FacadeCellInfoCallback extends TelephonyManager.CellInfoCallback {
+        public List<CellInfo> cellInfo;
+    }
+
+    /** Request an asynchronous update for the latest CellInfo */
+    @Rpc(description = "Request updated CellInfo scan information for"
+                       + " primary and neighboring cells.")
+    public List<CellInfo> telephonyRequestCellInfoUpdate() {
+        FacadeCellInfoCallback tmCiCb = new FacadeCellInfoCallback() {
+            @Override
+            public void onCellInfo(List<CellInfo> ci) {
+                synchronized (this) {
+                    this.cellInfo = ci;
+                    notifyAll();
+                }
+            }
+        };
+
+        synchronized (tmCiCb) {
+            mTelephonyManager.requestCellInfoUpdate(
+                    new Executor() {
+                        public void execute(Runnable r) {
+                            Log.d("Running cellInfo Executor");
+                            r.run();
+                        }
+                    }, tmCiCb);
+            try {
+                tmCiCb.wait(3000 /* millis */);
+            } catch (InterruptedException e) {
+                Log.d("Timed out waiting for cellInfo Executor");
+                return null;
+            }
+        }
+        return tmCiCb.cellInfo;
     }
 
     @Rpc(description = "Returns True if cellular data is enabled for" +
