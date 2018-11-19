@@ -546,6 +546,34 @@ public class WifiManagerFacade extends RpcReceiver {
         return config;
     }
 
+    // Set the security params in the provided network config builder from the provided Json object.
+    private WifiNetworkConfigBuilder setSecurityParamsInBuilder(
+            WifiNetworkConfigBuilder builder, JSONObject j)
+            throws JSONException, GeneralSecurityException {
+        if (j.has("isEnhancedOpen") && j.getBoolean("isEnhancedOpen")) {
+            builder = builder.setIsEnhancedOpen();
+        }
+        boolean isWpa3 = false;
+        if (j.has("isWpa3") && j.getBoolean("isWpa3")) {
+            isWpa3 = true;
+        }
+        if (j.has("password")) {
+            if (!isWpa3) {
+                builder = builder.setWpa2Passphrase(j.getString("password"));
+            } else {
+                builder = builder.setWpa3Passphrase(j.getString("password"));
+            }
+        }
+        if (j.has(WifiEnterpriseConfig.EAP_KEY)) {
+            if (!isWpa3) {
+                builder = builder.setWpa2EnterpriseConfig(genWifiEnterpriseConfig(j));
+            } else {
+                builder = builder.setWpa3EnterpriseConfig(genWifiEnterpriseConfig(j));
+            }
+        }
+        return builder;
+    }
+
     private NetworkSpecifier genWifiNetworkSpecifier(JSONObject j) throws JSONException,
             GeneralSecurityException {
         if (j == null) {
@@ -569,15 +597,7 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("hiddenSSID") && j.getBoolean("hiddenSSID")) {
             builder = builder.setIsHiddenSsid();
         }
-        if (j.has("password")) {
-            builder = builder.setPskPassphrase(j.getString("password"));
-        }
-        if (j.has("preSharedKey")) {
-            builder = builder.setPskPassphrase(j.getString("preSharedKey"));
-        }
-        if (j.has(WifiEnterpriseConfig.EAP_KEY)) {
-            builder = builder.setEnterpriseConfig(genWifiEnterpriseConfig(j));
-        }
+        builder = setSecurityParamsInBuilder(builder, j);
         return builder.buildNetworkSpecifier();
     }
 
@@ -593,12 +613,7 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("hiddenSSID") && j.getBoolean("hiddenSSID")) {
             builder = builder.setIsHiddenSsid();
         }
-        if (j.has("password")) {
-            builder = builder.setPskPassphrase(j.getString("password"));
-        }
-        if (j.has("preSharedKey")) {
-            builder = builder.setPskPassphrase(j.getString("preSharedKey"));
-        }
+        builder = setSecurityParamsInBuilder(builder, j);
         if (j.has("isAppInteractionRequired") && j.getBoolean("isAppInteractionRequired")) {
             builder = builder.setIsAppInteractionRequired();
         }
@@ -610,9 +625,6 @@ public class WifiManagerFacade extends RpcReceiver {
         }
         if (j.has("priority")) {
             builder = builder.setPriority(j.getInt("priority"));
-        }
-        if (j.has(WifiEnterpriseConfig.EAP_KEY)) {
-            builder = builder.setEnterpriseConfig(genWifiEnterpriseConfig(j));
         }
         return builder.buildNetworkSuggestion();
     }
