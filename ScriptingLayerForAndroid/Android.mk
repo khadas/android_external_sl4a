@@ -56,6 +56,3 @@ include $(BUILD_PACKAGE)
 include $(CLEAR_VARS)
 LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := locale_platform:libs/locale_platform.jar
 include $(BUILD_MULTI_PREBUILT)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
-
