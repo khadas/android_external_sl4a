@@ -31,9 +31,11 @@ import android.net.wifi.p2p.WifiP2pGroupList;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.net.wifi.p2p.nsd.WifiP2pServiceInfo;
 import android.net.wifi.p2p.nsd.WifiP2pServiceRequest;
 import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceInfo;
+import android.net.wifi.p2p.nsd.WifiP2pUpnpServiceRequest;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.Messenger;
@@ -48,6 +50,7 @@ import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
 import com.googlecode.android_scripting.rpc.Rpc;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -171,7 +174,6 @@ public class WifiP2pManagerFacade extends RpcReceiver {
             msg.putString("SourceDeviceAddress", srcDevice.deviceAddress);
             mEventFacade.postEvent(mEventType + "OnDnsSdTxtRecordAvailable", msg);
         }
-
     }
 
     class WifiP2pGroupInfoListener implements WifiP2pManager.GroupInfoListener {
@@ -227,7 +229,6 @@ public class WifiP2pManagerFacade extends RpcReceiver {
             }
             mEventFacade.postEvent(mEventType + "OnPersistentGroupInfoAvailable", gs);
         }
-
     }
 
     class WifiP2pOngoingPeerConfigListener implements WifiP2pManager.OngoingPeerInfoListener {
@@ -244,7 +245,25 @@ public class WifiP2pManagerFacade extends RpcReceiver {
             Bundle msg = new Bundle();
             mEventFacade.postEvent(mEventType + "OnOngoingPeerAvailable", config);
         }
+    }
 
+    class WifiP2pUpnpServiceResponseListener implements WifiP2pManager.UpnpServiceResponseListener {
+        private final EventFacade mEventFacade;
+        private final String mEventType;
+
+        WifiP2pUpnpServiceResponseListener(EventFacade eventFacade) {
+            mEventType = "WifiP2p";
+            mEventFacade = eventFacade;
+        }
+
+        @Override
+        public void onUpnpServiceAvailable(List<String> uniqueServiceNames,
+                WifiP2pDevice srcDevice) {
+            Bundle msg = new Bundle();
+            msg.putParcelable("Device", srcDevice);
+            msg.putStringArrayList("ServiceList", new ArrayList(uniqueServiceNames));
+            mEventFacade.postEvent(mEventType + "OnUpnpServiceAvailable", msg);
+        }
     }
 
     class WifiP2pStateChangedReceiver extends BroadcastReceiver {
@@ -403,6 +422,51 @@ public class WifiP2pManagerFacade extends RpcReceiver {
         return mServiceRequestCnt;
     }
 
+    /**
+     * Add a service upnp discovery request.
+     * @param query The part of service specific query
+     */
+    @Rpc(description = "Add a service upnp discovery request.")
+    public Integer wifiP2pAddUpnpServiceRequest(
+            @RpcParameter(name = "query") String query) {
+        WifiP2pUpnpServiceRequest request = WifiP2pUpnpServiceRequest.newInstance(query);
+        mServiceRequestCnt += 1;
+        mServiceRequests.put(mServiceRequestCnt, request);
+        mP2p.addServiceRequest(mChannel, request, new WifiP2pActionListener(mEventFacade,
+                "AddUpnpServiceRequest"));
+        return mServiceRequestCnt;
+    }
+
+    /**
+     * Create a service discovery request to get the TXT data from the specified
+     * Bonjour service.
+     *
+     * @param instanceName instance name. Can be null.
+     * e.g)
+     *  "MyPrinter"
+     * @param serviceType service type. Cannot be null.
+     * e.g)
+     *  "_afpovertcp._tcp."(Apple File Sharing over TCP)
+     *  "_ipp._tcp" (IP Printing over TCP)
+     *  "_http._tcp" (http service)
+     */
+    @Rpc(description = "Add a service dns discovery request.")
+    public Integer wifiP2pAddDnssdServiceRequest(
+            @RpcParameter(name = "serviceType") String serviceType,
+            @RpcParameter(name = "instanceName") String instanceName) {
+        WifiP2pDnsSdServiceRequest request;
+        if (instanceName != null) {
+            request = WifiP2pDnsSdServiceRequest.newInstance(instanceName, serviceType);
+        } else {
+            request = WifiP2pDnsSdServiceRequest.newInstance(serviceType);
+        }
+        mServiceRequestCnt += 1;
+        mServiceRequests.put(mServiceRequestCnt, request);
+        mP2p.addServiceRequest(mChannel, request, new WifiP2pActionListener(mEventFacade,
+                "AddDnssdServiceRequest"));
+        return mServiceRequestCnt;
+    }
+
     @Rpc(description = "Cancel any ongoing connect negotiation.")
     public void wifiP2pCancelConnect() {
         mP2p.cancelConnect(mChannel, new WifiP2pActionListener(mEventFacade, "CancelConnect"));
@@ -456,8 +520,13 @@ public class WifiP2pManagerFacade extends RpcReceiver {
     public void wifiP2pCreateUpnpServiceInfo(
             @RpcParameter(name = "uuid") String uuid,
             @RpcParameter(name = "device") String device,
-            @RpcParameter(name = "services") List<String> services) {
-        mServiceInfo = WifiP2pUpnpServiceInfo.newInstance(uuid, device, services);
+            @RpcParameter(name = "services") JSONArray services) throws JSONException {
+        List<String> serviceList = new ArrayList<String>();
+        for (int i = 0; i < services.length(); i++) {
+            serviceList.add(services.getString(i));
+            Log.d("wifiP2pCreateUpnpServiceInfo, services: " + services.getString(i));
+        }
+        mServiceInfo = WifiP2pUpnpServiceInfo.newInstance(uuid, device, serviceList);
     }
 
     @Rpc(description = "Delete a stored persistent group from the system settings.")
@@ -548,6 +617,17 @@ public class WifiP2pManagerFacade extends RpcReceiver {
         mP2p.setDnsSdResponseListeners(mChannel,
                 new WifiP2pDnsSdServiceResponseListener(mEventFacade),
                 new WifiP2pDnsSdTxtRecordListener(mEventFacade));
+    }
+
+    /**
+     * Register a callback to be invoked on receiving
+     * Upnp service discovery response.
+     */
+    @Rpc(description = "Register a callback to be invoked on receiving "
+            + "Upnp service discovery response.")
+    public void wifiP2pSetUpnpResponseListeners() {
+        mP2p.setUpnpServiceResponseListener(mChannel,
+                new WifiP2pUpnpServiceResponseListener(mEventFacade));
     }
 
     @Rpc(description = "Stop an ongoing peer discovery.")
