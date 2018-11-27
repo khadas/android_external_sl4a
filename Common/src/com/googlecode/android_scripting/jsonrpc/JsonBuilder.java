@@ -45,6 +45,8 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiScanner.ScanData;
+import android.net.wifi.WpsInfo;
+import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
@@ -265,6 +267,9 @@ public class JsonBuilder {
         }
         if (data instanceof WifiConfiguration) {
             return buildWifiConfiguration((WifiConfiguration) data);
+        }
+        if (data instanceof WifiP2pConfig) {
+            return buildWifiP2pConfig((WifiP2pConfig) data);
         }
         if (data instanceof WifiP2pDevice) {
             return buildWifiP2pDevice((WifiP2pDevice) data);
@@ -1018,6 +1023,25 @@ public class JsonBuilder {
         config.put(WifiEnterpriseConfig.PRIVATE_KEY_ID_KEY, privateKeyString);
         config.put(WifiEnterpriseConfig.PASSWORD_KEY, data.getPassword());
         return config;
+    }
+
+    private static JSONObject buildWpsInfo(WpsInfo data)
+            throws JSONException {
+        JSONObject wpsInfo = new JSONObject();
+        wpsInfo.put("setup", data.setup);
+        wpsInfo.put("BSSID", data.BSSID);
+        wpsInfo.put("pin", data.pin);
+        return wpsInfo;
+    }
+
+    private static JSONObject buildWifiP2pConfig(WifiP2pConfig data)
+            throws JSONException {
+        JSONObject wifiP2pConfig = new JSONObject();
+        wifiP2pConfig.put("deviceAddress", data.deviceAddress);
+        wifiP2pConfig.put("wpsInfo", buildWpsInfo(data.wps));
+        wifiP2pConfig.put("groupOwnerIntent", data.groupOwnerIntent);
+        wifiP2pConfig.put("netId", data.netId);
+        return wifiP2pConfig;
     }
 
     private static JSONObject buildWifiP2pDevice(WifiP2pDevice data)
