@@ -35,6 +35,7 @@ import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.ProxyInfo;
 import android.net.RouteInfo;
 import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
@@ -70,6 +71,7 @@ import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.ModemActivityInfo;
 import android.telephony.NeighboringCellInfo;
+import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SmsMessage;
 import android.telephony.SubscriptionInfo;
@@ -285,6 +287,9 @@ public class JsonBuilder {
         if (data instanceof IpPrefix) {
             return buildIpPrefix((IpPrefix) data);
         }
+        if (data instanceof ProxyInfo) {
+            return buildProxyInfo((ProxyInfo) data);
+        }
         if (data instanceof byte[]) {
             JSONArray result = new JSONArray();
             for (byte b : (byte[]) data) {
@@ -333,6 +338,9 @@ public class JsonBuilder {
         }
         if (data instanceof SignalStrength) {
             return buildSignalStrength((SignalStrength) data);
+        }
+        if (data instanceof ServiceState) {
+            return buildServiceState((ServiceState) data);
         }
 
         return data.toString();
@@ -1082,6 +1090,15 @@ public class JsonBuilder {
         return info;
     }
 
+    private static JSONObject buildProxyInfo(ProxyInfo data) throws JSONException {
+        JSONObject info = new JSONObject();
+        info.put("Hostname", data.getHost());
+        info.put("Port", data.getPort());
+        info.put("ExclList", data.getExclusionListAsString());
+        info.put("PacUrl", data.getPacFileUrl().toString());
+        return info;
+    }
+
     private static <T> JSONObject buildCallEvent(InCallServiceImpl.CallEvent<T> callEvent)
             throws JSONException {
         JSONObject jsonEvent = new JSONObject();
@@ -1281,6 +1298,67 @@ public class JsonBuilder {
         info.put(TelephonyConstants.SignalStrengthContainer.SIGNAL_STRENGTH_DBM,
                 signalStrength.getDbm());
         return info;
+    }
+
+    public static JSONObject buildServiceState(ServiceState ss) throws JSONException {
+        JSONObject info = new JSONObject();
+
+    info.put(TelephonyConstants.ServiceStateContainer.VOICE_REG_STATE,
+            TelephonyUtils.getNetworkStateString(ss.getVoiceRegState()));
+    info.put(TelephonyConstants.ServiceStateContainer.VOICE_NETWORK_TYPE,
+            TelephonyUtils.getNetworkTypeString(ss.getVoiceNetworkType()));
+    info.put(TelephonyConstants.ServiceStateContainer.DATA_REG_STATE,
+            TelephonyUtils.getNetworkStateString(ss.getDataRegState()));
+    info.put(TelephonyConstants.ServiceStateContainer.DATA_NETWORK_TYPE,
+            TelephonyUtils.getNetworkTypeString(ss.getDataNetworkType()));
+    info.put(TelephonyConstants.ServiceStateContainer.OPERATOR_NAME, ss.getOperatorAlphaLong());
+    info.put(TelephonyConstants.ServiceStateContainer.OPERATOR_ID, ss.getOperatorNumeric());
+    info.put(TelephonyConstants.ServiceStateContainer.IS_MANUAL_NW_SELECTION,
+            ss.getIsManualSelection());
+    info.put(TelephonyConstants.ServiceStateContainer.ROAMING, ss.getRoaming());
+    info.put(TelephonyConstants.ServiceStateContainer.IS_EMERGENCY_ONLY, ss.isEmergencyOnly());
+    info.put(TelephonyConstants.ServiceStateContainer.NETWORK_ID, ss.getCdmaNetworkId());
+    info.put(TelephonyConstants.ServiceStateContainer.SYSTEM_ID, ss.getCdmaSystemId());
+    info.put(TelephonyConstants.ServiceStateContainer.SERVICE_STATE,
+            TelephonyUtils.getNetworkStateString(ss.getState()));
+    info.put(TelephonyConstants.ServiceStateContainer.CHANNEL_NUMBER, ss.getChannelNumber());
+    info.put(TelephonyConstants.ServiceStateContainer.CELL_BANDWIDTHS,
+            ss.getCellBandwidths() != null
+                    ? new JSONArray(ss.getCellBandwidths())
+                    : JSONObject.NULL);
+    info.put(TelephonyConstants.ServiceStateContainer.DUPLEX_MODE, ss.getDuplexMode());
+    info.put(TelephonyConstants.ServiceStateContainer.VOICE_ROAMING_TYPE,
+            ss.getVoiceRoamingType());
+    info.put(TelephonyConstants.ServiceStateContainer.DATA_ROAMING_TYPE,
+            ss.getDataRoamingType());
+    info.put(TelephonyConstants.ServiceStateContainer.VOICE_OPERATOR_ALPHA_LONG,
+            ss.getVoiceOperatorAlphaLong());
+    info.put(TelephonyConstants.ServiceStateContainer.VOICE_OPERATOR_ALPHA_SHORT,
+            ss.getVoiceOperatorAlphaShort());
+    info.put(TelephonyConstants.ServiceStateContainer.VOICE_OPERATOR_NUMERIC,
+            ss.getVoiceOperatorNumeric());
+    info.put(TelephonyConstants.ServiceStateContainer.DATA_OPERATOR_ALPHA_LONG,
+            ss.getDataOperatorAlphaLong());
+    info.put(TelephonyConstants.ServiceStateContainer.DATA_OPERATOR_ALPHA_SHORT,
+            ss.getDataOperatorAlphaShort());
+    info.put(TelephonyConstants.ServiceStateContainer.DATA_OPERATOR_NUMERIC,
+            ss.getDataOperatorNumeric());
+    info.put(TelephonyConstants.ServiceStateContainer.VOICE_RADIO_TECHNOLOGY,
+            ss.getRilVoiceRadioTechnology());
+    info.put(TelephonyConstants.ServiceStateContainer.DATA_RADIO_TECHNOLOGY,
+            ss.getRilDataRadioTechnology());
+    info.put(TelephonyConstants.ServiceStateContainer.CSS_INDICATOR, ss.getCssIndicator());
+    info.put(TelephonyConstants.ServiceStateContainer.CDMA_ROAMING_INDICATOR,
+            ss.getCdmaRoamingIndicator());
+    info.put(TelephonyConstants.ServiceStateContainer.CDMA_DEFAULT_ROAMING_INDICATOR,
+            ss.getCdmaDefaultRoamingIndicator());
+    info.put(TelephonyConstants.ServiceStateContainer.IS_DATA_ROAMING_FROM_REGISTRATION,
+            ss.getDataRoamingFromRegistration());
+    info.put(TelephonyConstants.ServiceStateContainer.IS_USING_CARRIER_AGGREGATION,
+            ss.isUsingCarrierAggregation());
+    info.put(TelephonyConstants.ServiceStateContainer.LTE_EARFCN_RSRP_BOOST,
+            ss.getLteEarfcnRsrpBoost());
+    return info;
     }
 
     private JsonBuilder() {

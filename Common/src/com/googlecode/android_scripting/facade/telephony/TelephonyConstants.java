@@ -420,6 +420,27 @@ public class TelephonyConstants {
         public static final String SYSTEM_ID = "systemId";
         public static final String SUBSCRIPTION_ID = "subscriptionId";
         public static final String SERVICE_STATE = "serviceState";
+        public static final String CHANNEL_NUMBER = "channelNumber";
+        public static final String CELL_BANDWIDTHS = "cellBandwidths";
+        public static final String DUPLEX_MODE = "duplexMode";
+
+        public static final String VOICE_ROAMING_TYPE = "voiceRoamingType";
+        public static final String DATA_ROAMING_TYPE = "dataRoamingType";
+        public static final String VOICE_OPERATOR_ALPHA_LONG = "voiceOperatorAlphaLong";
+        public static final String VOICE_OPERATOR_ALPHA_SHORT = "voiceOperatorAlphaShort";
+        public static final String DATA_OPERATOR_ALPHA_LONG = "dataOperatorAlphaLong";
+        public static final String DATA_OPERATOR_ALPHA_SHORT = "dataOperatorAlphaShort";
+        public static final String VOICE_OPERATOR_NUMERIC = "voiceOperatorNumeric";
+        public static final String DATA_OPERATOR_NUMERIC = "dataOperatorNumeric";
+        public static final String VOICE_RADIO_TECHNOLOGY = "voiceRadioTechnology";
+        public static final String DATA_RADIO_TECHNOLOGY = "dataRadioTechnology";
+        public static final String CSS_INDICATOR = "cssIndicator";
+        public static final String CDMA_ROAMING_INDICATOR = "cdmaRoamingIndicator";
+        public static final String CDMA_DEFAULT_ROAMING_INDICATOR = "cdmaDefaultRoamingIndicator";
+        public static final String IS_DATA_ROAMING_FROM_REGISTRATION =
+                "isDataRoamingFromRegistration";
+        public static final String IS_USING_CARRIER_AGGREGATION = "isUsingCarrierAggregation";
+        public static final String LTE_EARFCN_RSRP_BOOST = "lteEarfcnRsrpBoost";
     }
 
     public static class MessageWaitingIndicatorContainer {
