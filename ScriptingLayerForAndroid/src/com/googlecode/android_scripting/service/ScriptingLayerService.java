@@ -168,7 +168,7 @@ public class ScriptingLayerService extends ForegroundService {
         AndroidProxy proxy;
         InterpreterProcess interpreterProcess = null;
         String errmsg = null;
-        Log.d(String.format("Received intent with action '%s'.", intent.getAction()));
+        Log.d(String.format("Received intent: %s", intent.toUri(0)));
 
         if (intent.getAction().equals(Constants.ACTION_KILL_ALL)) {
             killAll();
@@ -267,6 +267,8 @@ public class ScriptingLayerService extends ForegroundService {
             Intent newIntent = new Intent(ScriptingLayerService.this, ScriptingLayerService.class);
             newIntent.setAction(Constants.ACTION_KILL_PROCESS);
             newIntent.putExtra(Constants.EXTRA_PROXY_PORT, port);
+            Log.i(String.format("Killing process from default shutdownHook: %s",
+                    newIntent.toUri(0)));
             startService(newIntent);
         });
     }
@@ -281,6 +283,8 @@ public class ScriptingLayerService extends ForegroundService {
             Intent newIntent = new Intent(ScriptingLayerService.this, ScriptingLayerService.class);
             newIntent.setAction(Constants.ACTION_KILL_PROCESS);
             newIntent.putExtra(Constants.EXTRA_PROXY_PORT, port);
+            Log.i(String.format("Killing process from default shutdownHook: %s",
+                    newIntent.toUri(0)));
             startService(newIntent);
         });
     }
