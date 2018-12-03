@@ -1418,7 +1418,8 @@ public class WifiManagerFacade extends RpcReceiver {
     public boolean wifiAddNetworkSuggestions(
             @RpcParameter(name = "wifiNetworkSuggestions") JSONArray wifiNetworkSuggestions)
             throws JSONException, GeneralSecurityException {
-        return mWifi.addNetworkSuggestions(genWifiNetworkSuggestions(wifiNetworkSuggestions));
+        return mWifi.addNetworkSuggestions(genWifiNetworkSuggestions(wifiNetworkSuggestions))
+                == WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
     }
 
     /**
@@ -1430,10 +1431,11 @@ public class WifiManagerFacade extends RpcReceiver {
      * @throws GeneralSecurityException
      */
     @Rpc(description = "Remove network suggestions from the platform")
-    public Boolean wifiRemoveNetworkSuggestions(
+    public boolean wifiRemoveNetworkSuggestions(
             @RpcParameter(name = "wifiNetworkSuggestions") JSONArray wifiNetworkSuggestions)
             throws JSONException, GeneralSecurityException {
-        return mWifi.removeNetworkSuggestions(genWifiNetworkSuggestions(wifiNetworkSuggestions));
+        return mWifi.removeNetworkSuggestions(genWifiNetworkSuggestions(wifiNetworkSuggestions))
+                == WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
     }
 
     @Override
