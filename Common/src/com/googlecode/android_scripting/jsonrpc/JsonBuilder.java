@@ -1097,6 +1097,7 @@ public class JsonBuilder {
         JSONObject deviceInfo = new JSONObject();
         deviceInfo.put("Name", data.deviceName);
         deviceInfo.put("Address", data.deviceAddress);
+        deviceInfo.put("GroupCapability", data.groupCapability);
         return deviceInfo;
     }
 
