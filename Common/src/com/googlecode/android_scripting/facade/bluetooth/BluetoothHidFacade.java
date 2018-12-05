@@ -440,5 +440,6 @@ public class BluetoothHidFacade extends RpcReceiver {
 
     @Override
     public void shutdown() {
+        mService.unregisterReceiver(mHidServiceBroadcastReceiver);
     }
 }
