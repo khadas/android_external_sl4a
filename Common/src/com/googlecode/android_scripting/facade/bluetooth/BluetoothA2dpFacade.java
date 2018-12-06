@@ -18,9 +18,9 @@ package com.googlecode.android_scripting.facade.bluetooth;
 
 import android.app.Service;
 import android.bluetooth.BluetoothA2dp;
-import android.bluetooth.BluetoothCodecStatus;
-import android.bluetooth.BluetoothCodecConfig;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothCodecConfig;
+import android.bluetooth.BluetoothCodecStatus;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothUuid;
@@ -228,6 +228,15 @@ public class BluetoothA2dpFacade extends RpcReceiver {
                     BluetoothProfile.STATE_DISCONNECTING});
     }
 
+    private boolean isSelectableCodec(BluetoothCodecConfig target,
+            BluetoothCodecConfig capability) {
+        return target.getCodecType() == capability.getCodecType()
+                && (target.getSampleRate() & capability.getSampleRate()) != 0
+                && (target.getBitsPerSample() & capability.getBitsPerSample()) != 0
+                && (target.getChannelMode() & capability.getChannelMode()) != 0
+                && target.getCodecSpecific1() == capability.getCodecSpecific1();
+    }
+
     /**
      * Set active devices with giving codec config
      *
@@ -247,7 +256,7 @@ public class BluetoothA2dpFacade extends RpcReceiver {
         if (sA2dpProfile == null) {
             return false;
         }
-        mBluetoothCodecConfig = new BluetoothCodecConfig(
+        BluetoothCodecConfig codecConfig = new BluetoothCodecConfig(
                 codecType,
                 BluetoothCodecConfig.CODEC_PRIORITY_HIGHEST,
                 sampleRate,
@@ -255,8 +264,21 @@ public class BluetoothA2dpFacade extends RpcReceiver {
                 channelMode,
                 codecSpecific1,
                 0L, 0L, 0L);
-       sA2dpProfile.setCodecConfigPreference(null, mBluetoothCodecConfig);
-       return true;
+        BluetoothCodecStatus currentCodecStatus = sA2dpProfile.getCodecStatus(
+                sA2dpProfile.getActiveDevice());
+        if (isSelectableCodec(codecConfig, currentCodecStatus.getCodecConfig())) {
+            Log.e("Same as current codec configuration " + currentCodecStatus.getCodecConfig());
+            return false;
+        }
+        for (BluetoothCodecConfig selectable :
+                currentCodecStatus.getCodecsSelectableCapabilities()) {
+            if (isSelectableCodec(codecConfig, selectable)) {
+                mBluetoothCodecConfig = codecConfig;
+                sA2dpProfile.setCodecConfigPreference(null, mBluetoothCodecConfig);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
