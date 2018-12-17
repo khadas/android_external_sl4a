@@ -911,7 +911,9 @@ public class WifiManagerFacade extends RpcReceiver {
             if (config.has("description")) {
                 osuServiceDescription = config.getString("description");
             }
-            return new OsuProvider(osuSsid, osuFriendlyName, osuServiceDescription,
+            Map<String, String> osuFriendlyNames = new HashMap<>();
+            osuFriendlyNames.put("en", osuFriendlyName);
+            return new OsuProvider(osuSsid, osuFriendlyNames, osuServiceDescription,
                     osuServerUri, null, osuMethodList, null);
         } catch (JSONException e) {
             Log.e("JSON Parsing error: " + e);
