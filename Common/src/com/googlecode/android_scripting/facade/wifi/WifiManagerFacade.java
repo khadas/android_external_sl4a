@@ -34,6 +34,7 @@ import android.net.NetworkInfo.DetailedState;
 import android.net.NetworkRequest;
 import android.net.NetworkSpecifier;
 import android.net.Uri;
+import android.net.wifi.DppStatusCallback;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiActivityEnergyInfo;
 import android.net.wifi.WifiConfiguration;
@@ -60,6 +61,7 @@ import android.os.HandlerThread;
 import android.os.PatternMatcher;
 import android.provider.Settings.Global;
 import android.provider.Settings.SettingNotFoundException;
+import android.text.TextUtils;
 import android.util.Base64;
 
 import com.android.internal.annotations.GuardedBy;
@@ -417,8 +419,22 @@ public class WifiManagerFacade extends RpcReceiver {
             config.SSID = "\"" + j.getString("ssid") + "\"";
         }
         if (j.has("password")) {
-            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+            String security;
+
+            // Check if new security type SAE (WPA3) is present. Default to PSK
+            if (j.has("security")) {
+                if (TextUtils.equals(j.getString("security"), "SAE")) {
+                    config.allowedKeyManagement.set(KeyMgmt.SAE);
+                } else {
+                    config.allowedKeyManagement.set(KeyMgmt.WPA_PSK);
+                }
+            } else {
+                config.allowedKeyManagement.set(KeyMgmt.WPA_PSK);
+            }
             config.preSharedKey = "\"" + j.getString("password") + "\"";
+        } else if (j.has("preSharedKey")) {
+            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+            config.preSharedKey = j.getString("preSharedKey");
         } else {
             config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
         }
@@ -433,10 +449,6 @@ public class WifiManagerFacade extends RpcReceiver {
         }
         if (j.has("apBand")) {
             config.apBand = j.getInt("apBand");
-        }
-        if (j.has("preSharedKey")) {
-            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-            config.preSharedKey = j.getString("preSharedKey");
         }
         if (j.has("wepKeys")) {
             // Looks like we only support static WEP.
@@ -1450,5 +1462,92 @@ public class WifiManagerFacade extends RpcReceiver {
         if (mTrackingTetherStateChange == true) {
             wifiStopTrackingTetherStateChange();
         }
+    }
+
+    private class DppCallback extends DppStatusCallback {
+        private static final String DPP_CALLBACK_TAG = "onDppCallback";
+
+        @Override
+        public void onEnrolleeSuccess(int newWifiConfigurationId) {
+            Bundle msg = new Bundle();
+            msg.putString("Type", "onEnrolleeSuccess");
+            msg.putInt("NetworkId", newWifiConfigurationId);
+            mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
+        }
+
+        @Override
+        public void onConfiguratorSuccess(int code) {
+            Bundle msg = new Bundle();
+            msg.putString("Type", "onConfiguratorSuccess");
+            msg.putInt("Status", code);
+            mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
+        }
+
+        @Override
+        public void onFailure(int code) {
+            Bundle msg = new Bundle();
+            msg.putString("Type", "onFailure");
+            msg.putInt("Status", code);
+            mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
+        }
+
+        @Override
+        public void onProgress(int code) {
+            Bundle msg = new Bundle();
+            msg.putString("Type", "onProgress");
+            msg.putInt("Status", code);
+            mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
+        }
+    }
+
+    /**
+     * Start DPP in Initiator-Configurator role: Send Wi-Fi configuration to a peer
+     *
+     * @param enrolleeUri Peer URI
+     * @param selectedNetworkId Wi-Fi configuration ID
+     */
+    @Rpc(description = "DPP Initiator-Configurator: Send Wi-Fi configuration to peer")
+    public void startDppAsConfiguratorInitiator(@RpcParameter(name = "enrolleeUri") String
+            enrolleeUri, @RpcParameter(name = "selectedNetworkId") Integer selectedNetworkId,
+            @RpcParameter(name = "netRole") String netRole)
+            throws JSONException {
+        DppCallback dppStatusCallback = new DppCallback();
+        int netRoleInternal;
+
+        if (netRole.equals("ap")) {
+            netRoleInternal = WifiManager.DPP_NETWORK_ROLE_AP;
+        } else {
+            netRoleInternal = WifiManager.DPP_NETWORK_ROLE_STA;
+        }
+
+        // Start DPP
+        mWifi.startDppAsConfiguratorInitiator(enrolleeUri, selectedNetworkId,
+                netRoleInternal, new Handler(mCallbackHandlerThread.getLooper()),
+                dppStatusCallback);
+    }
+
+    /**
+     * Start DPP in Initiator-Enrollee role: Receive Wi-Fi configuration from a peer
+     *
+     * @param configuratorUri
+     */
+    @Rpc(description = "DPP Initiator-Enrollee: Receive Wi-Fi configuration from peer")
+    public void startDppAsEnrolleeInitiator(@RpcParameter(name = "configuratorUri") String
+            configuratorUri) {
+        DppCallback dppStatusCallback = new DppCallback();
+
+        // Start DPP
+        mWifi.startDppAsEnrolleeInitiator(configuratorUri,
+                new Handler(mCallbackHandlerThread.getLooper()), dppStatusCallback);
+    }
+
+    /**
+     * Stop DPP session
+     *
+     */
+    @Rpc(description = "Stop DPP session")
+    public void stopDppSession() {
+        // Stop DPP
+        mWifi.stopDppSession();
     }
 }

@@ -991,6 +991,19 @@ public class JsonBuilder {
         config.put("providerFriendlyName", data.providerFriendlyName);
         config.put("isPasspoint", data.isPasspoint());
         config.put("hiddenSSID", data.hiddenSSID);
+        if (data.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SAE)) {
+            config.put("security", "SAE");
+        } else if (data.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_PSK)) {
+            config.put("security", "PSK");
+        } else if (data.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.OWE)) {
+            config.put("security", "OWE");
+        } else if (data.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SUITE_B_192)) {
+            config.put("security", "SUITE_B_192");
+        } else if (data.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_EAP)) {
+            config.put("security", "EAP");
+        } else if (data.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.NONE)) {
+            config.put("security", "NONE");
+        }
         if (data.status == WifiConfiguration.Status.CURRENT) {
             config.put("status", "CURRENT");
         } else if (data.status == WifiConfiguration.Status.DISABLED) {
