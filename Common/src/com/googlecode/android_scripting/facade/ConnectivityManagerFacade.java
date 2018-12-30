@@ -300,8 +300,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                     new ConnectivityEvents.NetworkCallbackEventOnCapabilitiesChanged(
                         mId,
                         getNetworkCallbackEventString(EVENT_CAPABILITIES_CHANGED), mCreateTimestamp,
-                        networkCapabilities.getSignalStrength(),
-                        networkCapabilities.getTransportInfo()));
+                        networkCapabilities));
             }
         }
 
