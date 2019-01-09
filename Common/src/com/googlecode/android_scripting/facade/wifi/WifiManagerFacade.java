@@ -1134,6 +1134,35 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.isTdlsSupported();
     }
 
+    /**
+     * @return true if this device supports WPA3-Personal SAE
+     */
+    @Rpc(description = "Check if WPA3-Personal SAE is supported on this device.")
+    public Boolean wifiIsWpa3SaeSupported() {
+        return mWifi.isWpa3SaeSupported();
+    }
+    /**
+     * @return true if this device supports WPA3-Enterprise Suite-B-192
+     */
+    @Rpc(description = "Check if WPA3-Enterprise Suite-B-192 is supported on this device.")
+    public Boolean wifiIsWpa3SuiteBSupported() {
+        return mWifi.isWpa3SuiteBSupported();
+    }
+    /**
+     * @return true if this device supports Wi-Fi Enhanced Open (OWE)
+     */
+    @Rpc(description = "Check if Enhanced Open (OWE) is supported on this device.")
+    public Boolean wifiIsOweSupported() {
+        return mWifi.isOweSupported();
+    }
+    /**
+     * @return true if this device supports Wi-Fi Device Provisioning Protocol (Easy-connect)
+     */
+    @Rpc(description = "Check if Device Provisioning Protocol is supported on this device.")
+    public Boolean wifiIsDppSupported() {
+        return mWifi.isDppSupported();
+    }
+
     @Rpc(description = "Acquires a full Wifi lock.")
     public void wifiLockAcquireFull() {
         makeLock(WifiManager.WIFI_MODE_FULL);
@@ -1472,6 +1501,7 @@ public class WifiManagerFacade extends RpcReceiver {
             Bundle msg = new Bundle();
             msg.putString("Type", "onEnrolleeSuccess");
             msg.putInt("NetworkId", newWifiConfigurationId);
+            Log.d("Posting event: onEnrolleeSuccess");
             mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
         }
 
@@ -1480,6 +1510,7 @@ public class WifiManagerFacade extends RpcReceiver {
             Bundle msg = new Bundle();
             msg.putString("Type", "onConfiguratorSuccess");
             msg.putInt("Status", code);
+            Log.d("Posting event: onConfiguratorSuccess");
             mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
         }
 
@@ -1488,6 +1519,7 @@ public class WifiManagerFacade extends RpcReceiver {
             Bundle msg = new Bundle();
             msg.putString("Type", "onFailure");
             msg.putInt("Status", code);
+            Log.d("Posting event: onFailure");
             mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
         }
 
@@ -1496,6 +1528,7 @@ public class WifiManagerFacade extends RpcReceiver {
             Bundle msg = new Bundle();
             msg.putString("Type", "onProgress");
             msg.putInt("Status", code);
+            Log.d("Posting event: onProgress");
             mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
         }
     }
