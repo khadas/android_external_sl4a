@@ -1151,12 +1151,10 @@ public class TelephonyManagerFacade extends RpcReceiver {
                @RpcOptional Integer subId) {
         //TODO: b/26273471 Need to find out how to get Number of APNs for specific subId
         int result = 0;
-        String where = "numeric=\"" + android.os.SystemProperties.get(
-                        TelephonyProperties.PROPERTY_ICC_OPERATOR_NUMERIC, "") + "\"";
 
         Cursor cursor = mService.getContentResolver().query(
-                Telephony.Carriers.CONTENT_URI,
-                new String[] {"_id", "name", "apn", "type"}, where, null,
+                Telephony.Carriers.SIM_APN_URI,
+                new String[] {"_id", "name", "apn", "type"}, null, null,
                 Telephony.Carriers.DEFAULT_SORT_ORDER);
 
         if (cursor != null) {
