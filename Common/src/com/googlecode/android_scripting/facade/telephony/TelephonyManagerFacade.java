@@ -1017,6 +1017,12 @@ public class TelephonyManagerFacade extends RpcReceiver {
                     notifyAll();
                 }
             }
+
+            @Override
+            public void onError(int errorCode, Throwable detail) {
+                Log.d("Error in telephonyRequestCellInfoUpdate(): errorCode=" + errorCode
+                        + "detail=" + detail);
+            }
         };
 
         synchronized (tmCiCb) {
