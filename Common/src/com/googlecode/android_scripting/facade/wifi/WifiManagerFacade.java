@@ -34,7 +34,7 @@ import android.net.NetworkInfo.DetailedState;
 import android.net.NetworkRequest;
 import android.net.NetworkSpecifier;
 import android.net.Uri;
-import android.net.wifi.DppStatusCallback;
+import android.net.wifi.EasyConnectStatusCallback;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiActivityEnergyInfo;
 import android.net.wifi.WifiConfiguration;
@@ -1493,8 +1493,8 @@ public class WifiManagerFacade extends RpcReceiver {
         }
     }
 
-    private class DppCallback extends DppStatusCallback {
-        private static final String DPP_CALLBACK_TAG = "onDppCallback";
+    private class EasyConnectCallback extends EasyConnectStatusCallback {
+        private static final String EASY_CONNECT_CALLBACK_TAG = "onDppCallback";
 
         @Override
         public void onEnrolleeSuccess(int newWifiConfigurationId) {
@@ -1502,7 +1502,7 @@ public class WifiManagerFacade extends RpcReceiver {
             msg.putString("Type", "onEnrolleeSuccess");
             msg.putInt("NetworkId", newWifiConfigurationId);
             Log.d("Posting event: onEnrolleeSuccess");
-            mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
+            mEventFacade.postEvent(EASY_CONNECT_CALLBACK_TAG, msg);
         }
 
         @Override
@@ -1511,7 +1511,7 @@ public class WifiManagerFacade extends RpcReceiver {
             msg.putString("Type", "onConfiguratorSuccess");
             msg.putInt("Status", code);
             Log.d("Posting event: onConfiguratorSuccess");
-            mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
+            mEventFacade.postEvent(EASY_CONNECT_CALLBACK_TAG, msg);
         }
 
         @Override
@@ -1520,7 +1520,7 @@ public class WifiManagerFacade extends RpcReceiver {
             msg.putString("Type", "onFailure");
             msg.putInt("Status", code);
             Log.d("Posting event: onFailure");
-            mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
+            mEventFacade.postEvent(EASY_CONNECT_CALLBACK_TAG, msg);
         }
 
         @Override
@@ -1529,58 +1529,58 @@ public class WifiManagerFacade extends RpcReceiver {
             msg.putString("Type", "onProgress");
             msg.putInt("Status", code);
             Log.d("Posting event: onProgress");
-            mEventFacade.postEvent(DPP_CALLBACK_TAG, msg);
+            mEventFacade.postEvent(EASY_CONNECT_CALLBACK_TAG, msg);
         }
     }
 
     /**
-     * Start DPP in Initiator-Configurator role: Send Wi-Fi configuration to a peer
+     * Start Easy Connect (DPP) in Initiator-Configurator role: Send Wi-Fi configuration to a peer
      *
      * @param enrolleeUri Peer URI
      * @param selectedNetworkId Wi-Fi configuration ID
      */
-    @Rpc(description = "DPP Initiator-Configurator: Send Wi-Fi configuration to peer")
-    public void startDppAsConfiguratorInitiator(@RpcParameter(name = "enrolleeUri") String
+    @Rpc(description = "Easy Connect Initiator-Configurator: Send Wi-Fi configuration to peer")
+    public void startEasyConnectAsConfiguratorInitiator(@RpcParameter(name = "enrolleeUri") String
             enrolleeUri, @RpcParameter(name = "selectedNetworkId") Integer selectedNetworkId,
             @RpcParameter(name = "netRole") String netRole)
             throws JSONException {
-        DppCallback dppStatusCallback = new DppCallback();
+        EasyConnectCallback dppStatusCallback = new EasyConnectCallback();
         int netRoleInternal;
 
         if (netRole.equals("ap")) {
-            netRoleInternal = WifiManager.DPP_NETWORK_ROLE_AP;
+            netRoleInternal = WifiManager.EASY_CONNECT_NETWORK_ROLE_AP;
         } else {
-            netRoleInternal = WifiManager.DPP_NETWORK_ROLE_STA;
+            netRoleInternal = WifiManager.EASY_CONNECT_NETWORK_ROLE_STA;
         }
 
-        // Start DPP
-        mWifi.startDppAsConfiguratorInitiator(enrolleeUri, selectedNetworkId,
+        // Start Easy Connect
+        mWifi.startEasyConnectAsConfiguratorInitiator(enrolleeUri, selectedNetworkId,
                 netRoleInternal, new Handler(mCallbackHandlerThread.getLooper()),
                 dppStatusCallback);
     }
 
     /**
-     * Start DPP in Initiator-Enrollee role: Receive Wi-Fi configuration from a peer
+     * Start Easy Connect (DPP) in Initiator-Enrollee role: Receive Wi-Fi configuration from a peer
      *
      * @param configuratorUri
      */
-    @Rpc(description = "DPP Initiator-Enrollee: Receive Wi-Fi configuration from peer")
-    public void startDppAsEnrolleeInitiator(@RpcParameter(name = "configuratorUri") String
+    @Rpc(description = "Easy Connect Initiator-Enrollee: Receive Wi-Fi configuration from peer")
+    public void startEasyConnectAsEnrolleeInitiator(@RpcParameter(name = "configuratorUri") String
             configuratorUri) {
-        DppCallback dppStatusCallback = new DppCallback();
+        EasyConnectCallback dppStatusCallback = new EasyConnectCallback();
 
-        // Start DPP
-        mWifi.startDppAsEnrolleeInitiator(configuratorUri,
+        // Start Easy Connect
+        mWifi.startEasyConnectAsEnrolleeInitiator(configuratorUri,
                 new Handler(mCallbackHandlerThread.getLooper()), dppStatusCallback);
     }
 
     /**
-     * Stop DPP session
+     * Stop Easy Connect (DPP) session
      *
      */
-    @Rpc(description = "Stop DPP session")
-    public void stopDppSession() {
-        // Stop DPP
-        mWifi.stopDppSession();
+    @Rpc(description = "Stop Easy Connect session")
+    public void stopEasyConnectSession() {
+        // Stop Easy Connect
+        mWifi.stopEasyConnectSession();
     }
 }
