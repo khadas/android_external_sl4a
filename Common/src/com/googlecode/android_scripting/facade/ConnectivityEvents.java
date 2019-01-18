@@ -16,7 +16,7 @@
 
 package com.googlecode.android_scripting.facade;
 
-import android.net.TransportInfo;
+import android.net.NetworkCapabilities;
 import android.net.wifi.aware.WifiAwareNetworkInfo;
 
 import com.googlecode.android_scripting.jsonrpc.JsonSerializable;
@@ -123,14 +123,12 @@ public class ConnectivityEvents {
      * callback.
      */
     public static class NetworkCallbackEventOnCapabilitiesChanged extends NetworkCallbackEventBase {
-        private int mRssi;
-        private TransportInfo mTransportInfo;
+        private NetworkCapabilities mNetworkCapabilities;
 
         public NetworkCallbackEventOnCapabilitiesChanged(String id, String event,
-                long createTimestamp, int rssi, TransportInfo transportInfo) {
+                long createTimestamp, NetworkCapabilities networkCapabilities) {
             super(id, event, createTimestamp);
-            mRssi = rssi;
-            mTransportInfo = transportInfo;
+            mNetworkCapabilities = networkCapabilities;
         }
 
         /**
@@ -138,23 +136,21 @@ public class ConnectivityEvents {
          */
         public JSONObject toJSON() throws JSONException {
             JSONObject json = super.toJSON();
-            json.put(ConnectivityConstants.NetworkCallbackContainer.RSSI, mRssi);
-            if (mTransportInfo != null) {
-                if (mTransportInfo instanceof WifiAwareNetworkInfo) {
-                    WifiAwareNetworkInfo anc = (WifiAwareNetworkInfo) mTransportInfo;
+            json.put(ConnectivityConstants.NetworkCallbackContainer.RSSI,
+                    mNetworkCapabilities.getSignalStrength());
+            if (mNetworkCapabilities.getNetworkSpecifier() != null) {
+                json.put("network_specifier",
+                        mNetworkCapabilities.getNetworkSpecifier().toString());
+            }
+            if (mNetworkCapabilities.getTransportInfo() instanceof WifiAwareNetworkInfo) {
+                WifiAwareNetworkInfo anc =
+                        (WifiAwareNetworkInfo) mNetworkCapabilities.getTransportInfo();
 
-                    String ipv6 = anc.getPeerIpv6Addr().toString();
-                    if (ipv6.charAt(0) == '/') {
-                        ipv6 = ipv6.substring(1);
-                    }
-                    json.put("aware_ipv6", ipv6);
-                    if (anc.getPort() != 0) {
-                        json.put("aware_port", anc.getPort());
-                    }
-                    if (anc.getTransportProtocol() != -1) {
-                        json.put("aware_transport_protocol", anc.getTransportProtocol());
-                    }
+                String ipv6 = anc.getPeerIpv6Addr().toString();
+                if (ipv6.charAt(0) == '/') {
+                    ipv6 = ipv6.substring(1);
                 }
+                json.put("aware_ipv6", ipv6);
             }
             return json;
         }
