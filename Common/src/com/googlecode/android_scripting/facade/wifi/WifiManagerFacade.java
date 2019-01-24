@@ -733,7 +733,14 @@ public class WifiManagerFacade extends RpcReceiver {
     }
 
     @Rpc(description = "Add a network.")
+    @Deprecated
     public Integer wifiAddNetwork(@RpcParameter(name = "wifiConfig") JSONObject wifiConfig)
+            throws JSONException {
+        return wifiaddOrUpdateNetwork(wifiConfig);
+    }
+
+    @Rpc(description = "Add or update a network.")
+    public Integer wifiaddOrUpdateNetwork(@RpcParameter(name = "wifiConfig") JSONObject wifiConfig)
             throws JSONException {
         return mWifi.addNetwork(genWifiConfig(wifiConfig));
     }
@@ -803,6 +810,30 @@ public class WifiManagerFacade extends RpcReceiver {
         mWifi.connect(wifiConfig, listener);
     }
 
+    /**
+    * Gets the Wi-Fi factory MAC addresses.
+    * @return An array of String represnting Wi-Fi MAC addresses,
+    *         Or an empty Srting if failed.
+    */
+    @Rpc(description = "Gets the Wi-Fi factory MAC addresses", returns = "An array of String, representing the MAC address")
+    public String[] wifigetFactorymacAddresses(){
+        return mWifi.getFactoryMacAddresses();
+    }
+
+    @Rpc(description = "Gets the randomized MAC address", returns = "A MAC address or null")
+    public MacAddress wifigetRandomizedMacAddress(@RpcParameter(name = "config") JSONObject config)
+            throws JSONException{
+        List<WifiConfiguration> configList = mWifi.getConfiguredNetworks();
+        for(WifiConfiguration WifiConfig : configList){
+            String ssid = WifiConfig.SSID;
+            ssid = ssid.replace("\"", "");
+            if (ssid.equals(config.getString("SSID"))){
+                return WifiConfig.getRandomizedMacAddress();
+            }
+        }
+        Log.d("Did not find a matching object in wifiManager.");
+        return null;
+    }
    /**
      * Generate a Passpoint configuration from JSON config.
      * @param config JSON config containing base64 encoded Passpoint profile
