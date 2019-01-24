@@ -1025,6 +1025,16 @@ public class WifiManagerFacade extends RpcReceiver {
         mWifi.forget(networkId, listener);
     }
 
+    /**
+     * Disable ephemeral network.
+     *
+     * @param ssid SSID of wifi network
+     */
+    @Rpc(description = "Forget a wifi network by networkId")
+    public void wifiDisableEphemeralNetwork(@RpcParameter(name = "ssid") String ssid) {
+        mWifi.disableEphemeralNetwork("\"" + ssid + "\"");
+    }
+
     @Rpc(description = "Gets the Wi-Fi AP Configuration.")
     public WifiConfiguration wifiGetApConfiguration() {
         return mWifi.getWifiApConfiguration();
