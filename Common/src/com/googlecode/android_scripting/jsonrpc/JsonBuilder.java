@@ -746,6 +746,7 @@ public class JsonBuilder {
         JSONObject result = new JSONObject();
         result.put("rat", "lte");
         result.put("registered", data.isRegistered());
+        result.put("timestamp", data.getTimeStamp());
         CellIdentityLte cellidentity = ((CellInfoLte) data).getCellIdentity();
         CellSignalStrengthLte signalstrength = ((CellInfoLte) data).getCellSignalStrength();
         result.put("mcc", cellidentity.getMcc());
@@ -765,6 +766,7 @@ public class JsonBuilder {
         JSONObject result = new JSONObject();
         result.put("rat", "gsm");
         result.put("registered", data.isRegistered());
+        result.put("timestamp", data.getTimeStamp());
         CellIdentityGsm cellidentity = ((CellInfoGsm) data).getCellIdentity();
         CellSignalStrengthGsm signalstrength = ((CellInfoGsm) data).getCellSignalStrength();
         result.put("mcc", cellidentity.getMcc());
@@ -783,6 +785,7 @@ public class JsonBuilder {
         JSONObject result = new JSONObject();
         result.put("rat", "wcdma");
         result.put("registered", data.isRegistered());
+        result.put("timestamp", data.getTimeStamp());
         CellIdentityWcdma cellidentity = ((CellInfoWcdma) data).getCellIdentity();
         CellSignalStrengthWcdma signalstrength = ((CellInfoWcdma) data).getCellSignalStrength();
         result.put("mcc", cellidentity.getMcc());
@@ -800,6 +803,7 @@ public class JsonBuilder {
         JSONObject result = new JSONObject();
         result.put("rat", "cdma");
         result.put("registered", data.isRegistered());
+        result.put("timestamp", data.getTimeStamp());
         CellIdentityCdma cellidentity = ((CellInfoCdma) data).getCellIdentity();
         CellSignalStrengthCdma signalstrength = ((CellInfoCdma) data).getCellSignalStrength();
         result.put("network_id", cellidentity.getNetworkId());
