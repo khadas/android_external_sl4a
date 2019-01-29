@@ -46,7 +46,6 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.NetworkRequestMatchCallback;
 import android.net.wifi.WifiManager.NetworkRequestUserSelectionCallback;
 import android.net.wifi.WifiManager.WifiLock;
-import android.net.wifi.WifiNetworkConfigBuilder;
 import android.net.wifi.WifiNetworkSpecifier;
 import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.WifiSsid;
@@ -558,10 +557,29 @@ public class WifiManagerFacade extends RpcReceiver {
         return config;
     }
 
-    // Set the security params in the provided network config builder from the provided Json object.
-    private WifiNetworkConfigBuilder setSecurityParamsInBuilder(
-            WifiNetworkConfigBuilder builder, JSONObject j)
-            throws JSONException, GeneralSecurityException {
+    private NetworkSpecifier genWifiNetworkSpecifier(JSONObject j) throws JSONException,
+            GeneralSecurityException {
+        if (j == null) {
+            return null;
+        }
+        WifiNetworkSpecifier.Builder builder = new WifiNetworkSpecifier.Builder();
+        if (j.has("SSID")) {
+            builder = builder.setSsid(j.getString("SSID"));
+        } else if (j.has("ssidPattern")) {
+            builder = builder.setSsidPattern(
+                    new PatternMatcher(j.getString("ssidPattern"),
+                            PatternMatcher.PATTERN_ADVANCED_GLOB));
+        }
+        if (j.has("BSSID")) {
+            builder = builder.setBssid(MacAddress.fromString(j.getString("BSSID")));
+        } else if (j.has("bssidPattern")) {
+            builder = builder.setBssidPattern(
+                    MacAddress.fromString(j.getJSONArray("bssidPattern").getString(0)),
+                    MacAddress.fromString(j.getJSONArray("bssidPattern").getString(1)));
+        }
+        if (j.has("hiddenSSID") && j.getBoolean("hiddenSSID")) {
+            builder = builder.setIsHiddenSsid();
+        }
         if (j.has("isEnhancedOpen") && j.getBoolean("isEnhancedOpen")) {
             builder = builder.setIsEnhancedOpen();
         }
@@ -583,34 +601,7 @@ public class WifiManagerFacade extends RpcReceiver {
                 builder = builder.setWpa3EnterpriseConfig(genWifiEnterpriseConfig(j));
             }
         }
-        return builder;
-    }
-
-    private NetworkSpecifier genWifiNetworkSpecifier(JSONObject j) throws JSONException,
-            GeneralSecurityException {
-        if (j == null) {
-            return null;
-        }
-        WifiNetworkConfigBuilder builder = new WifiNetworkConfigBuilder();
-        if (j.has("SSID")) {
-            builder = builder.setSsid(j.getString("SSID"));
-        } else if (j.has("ssidPattern")) {
-            builder = builder.setSsidPattern(
-                    new PatternMatcher(j.getString("ssidPattern"),
-                            PatternMatcher.PATTERN_ADVANCED_GLOB));
-        }
-        if (j.has("BSSID")) {
-            builder = builder.setBssid(MacAddress.fromString(j.getString("BSSID")));
-        } else if (j.has("bssidPattern")) {
-            builder = builder.setBssidPattern(
-                    MacAddress.fromString(j.getJSONArray("bssidPattern").getString(0)),
-                    MacAddress.fromString(j.getJSONArray("bssidPattern").getString(1)));
-        }
-        if (j.has("hiddenSSID") && j.getBoolean("hiddenSSID")) {
-            builder = builder.setIsHiddenSsid();
-        }
-        builder = setSecurityParamsInBuilder(builder, j);
-        return builder.buildNetworkSpecifier();
+        return builder.build();
     }
 
     private WifiNetworkSuggestion genWifiNetworkSuggestion(JSONObject j) throws JSONException,
@@ -618,14 +609,37 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j == null) {
             return null;
         }
-        WifiNetworkConfigBuilder builder = new WifiNetworkConfigBuilder();
+        WifiNetworkSuggestion.Builder builder = new WifiNetworkSuggestion.Builder();
         if (j.has("SSID")) {
             builder = builder.setSsid(j.getString("SSID"));
+        }
+        if (j.has("BSSID")) {
+            builder = builder.setBssid(MacAddress.fromString(j.getString("BSSID")));
         }
         if (j.has("hiddenSSID") && j.getBoolean("hiddenSSID")) {
             builder = builder.setIsHiddenSsid();
         }
-        builder = setSecurityParamsInBuilder(builder, j);
+        if (j.has("isEnhancedOpen") && j.getBoolean("isEnhancedOpen")) {
+            builder = builder.setIsEnhancedOpen();
+        }
+        boolean isWpa3 = false;
+        if (j.has("isWpa3") && j.getBoolean("isWpa3")) {
+            isWpa3 = true;
+        }
+        if (j.has("password")) {
+            if (!isWpa3) {
+                builder = builder.setWpa2Passphrase(j.getString("password"));
+            } else {
+                builder = builder.setWpa3Passphrase(j.getString("password"));
+            }
+        }
+        if (j.has(WifiEnterpriseConfig.EAP_KEY)) {
+            if (!isWpa3) {
+                builder = builder.setWpa2EnterpriseConfig(genWifiEnterpriseConfig(j));
+            } else {
+                builder = builder.setWpa3EnterpriseConfig(genWifiEnterpriseConfig(j));
+            }
+        }
         if (j.has("isAppInteractionRequired") && j.getBoolean("isAppInteractionRequired")) {
             builder = builder.setIsAppInteractionRequired();
         }
@@ -638,7 +652,7 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("priority")) {
             builder = builder.setPriority(j.getInt("priority"));
         }
-        return builder.buildNetworkSuggestion();
+        return builder.build();
     }
 
     private List<WifiNetworkSuggestion> genWifiNetworkSuggestions(
