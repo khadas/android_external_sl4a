@@ -513,7 +513,21 @@ public class WifiP2pManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Create a wifi p2p group.")
     public void wifiP2pCreateGroup() {
-        mP2p.createGroup(mChannel, new WifiP2pActionListener(mEventFacade, "CreatGroup"));
+        mP2p.createGroup(mChannel, new WifiP2pActionListener(mEventFacade, "CreateGroup"));
+    }
+
+    /**
+     * Create a group with config.
+     *
+     * @param config JSONObject Dictionary of p2p connection parameters
+     * @throws JSONException
+     */
+    @Rpc(description = "Create a wifi p2p group with config.")
+    public void wifiP2pCreateGroupWithConfig(@RpcParameter(name = "config") JSONObject config)
+            throws JSONException {
+        WifiP2pConfig wifiP2pConfig = genWifiP2pConfig(config);
+        mP2p.createGroup(mChannel, wifiP2pConfig,
+                new WifiP2pActionListener(mEventFacade, "CreateGroup"));
     }
 
     @Rpc(description = "Create a Upnp service info object to be used for wifiP2pAddLocalService.")
@@ -653,11 +667,21 @@ public class WifiP2pManagerFacade extends RpcReceiver {
         return wpsInfo;
     }
 
-    private WifiP2pConfig genWifiP2pConfig(JSONObject j) throws JSONException {
+    private WifiP2pConfig genWifiP2pConfig(JSONObject j) throws JSONException,
+            NumberFormatException {
         if (j == null) {
             return null;
         }
         WifiP2pConfig config = new WifiP2pConfig();
+        if (j.has("networkName") && j.has("passphrase")) {
+            WifiP2pConfig.Builder b = new WifiP2pConfig.Builder();
+            b.setNetworkName(j.getString("networkName"));
+            b.setPassphrase(j.getString("passphrase"));
+            if (j.has("groupOwnerBand")) {
+                b.setGroupOperatingBand(Integer.parseInt(j.getString("groupOwnerBand")));
+            }
+            config = b.build();
+        }
         if (j.has("deviceAddress")) {
             config.deviceAddress = j.getString("deviceAddress");
         }
