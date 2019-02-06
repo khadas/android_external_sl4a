@@ -467,6 +467,9 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("meteredOverride")) {
             config.meteredOverride = j.getInt("meteredOverride");
         }
+        if (j.has("macRand")) {
+            config.macRandomizationSetting = j.getInt("macRand");
+        }
         return config;
     }
 
