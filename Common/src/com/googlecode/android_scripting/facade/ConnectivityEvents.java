@@ -151,6 +151,12 @@ public class ConnectivityEvents {
                     ipv6 = ipv6.substring(1);
                 }
                 json.put("aware_ipv6", ipv6);
+                if (anc.getPort() != 0) {
+                    json.put("aware_port", anc.getPort());
+                }
+                if (anc.getTransportProtocol() != -1) {
+                    json.put("aware_transport_protocol", anc.getTransportProtocol());
+                }
             }
             return json;
         }
