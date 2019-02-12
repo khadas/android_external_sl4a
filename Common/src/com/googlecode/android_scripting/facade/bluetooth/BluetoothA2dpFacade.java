@@ -233,8 +233,7 @@ public class BluetoothA2dpFacade extends RpcReceiver {
         return target.getCodecType() == capability.getCodecType()
                 && (target.getSampleRate() & capability.getSampleRate()) != 0
                 && (target.getBitsPerSample() & capability.getBitsPerSample()) != 0
-                && (target.getChannelMode() & capability.getChannelMode()) != 0
-                && target.getCodecSpecific1() == capability.getCodecSpecific1();
+                && (target.getChannelMode() & capability.getChannelMode()) != 0;
     }
 
     /**
@@ -252,9 +251,10 @@ public class BluetoothA2dpFacade extends RpcReceiver {
             @RpcParameter(name = "sampleRate") Integer sampleRate,
             @RpcParameter(name = "bitsPerSample") Integer bitsPerSample,
             @RpcParameter(name = "channelMode") Integer channelMode,
-            @RpcParameter(name = "codecSpecific1") Long codecSpecific1) {
-        if (sA2dpProfile == null) {
-            return false;
+            @RpcParameter(name = "codecSpecific1") Long codecSpecific1)
+            throws Exception {
+        while (!sIsA2dpReady) {
+            continue;
         }
         BluetoothCodecConfig codecConfig = new BluetoothCodecConfig(
                 codecType,
@@ -264,10 +264,16 @@ public class BluetoothA2dpFacade extends RpcReceiver {
                 channelMode,
                 codecSpecific1,
                 0L, 0L, 0L);
-        BluetoothCodecStatus currentCodecStatus = sA2dpProfile.getCodecStatus(
-                sA2dpProfile.getActiveDevice());
-        if (isSelectableCodec(codecConfig, currentCodecStatus.getCodecConfig())) {
-            Log.e("Same as current codec configuration " + currentCodecStatus.getCodecConfig());
+        BluetoothDevice activeDevice = sA2dpProfile.getActiveDevice();
+        if (activeDevice == null) {
+            Log.e("No active device");
+            throw new Exception("No active device");
+        }
+        BluetoothCodecStatus currentCodecStatus = sA2dpProfile.getCodecStatus(activeDevice);
+        BluetoothCodecConfig currentCodecConfig = currentCodecStatus.getCodecConfig();
+        if (isSelectableCodec(codecConfig, currentCodecConfig)
+                && codecConfig.getCodecSpecific1() == currentCodecConfig.getCodecSpecific1()) {
+            Log.e("Same as current codec configuration " + currentCodecConfig);
             return false;
         }
         for (BluetoothCodecConfig selectable :
