@@ -1474,19 +1474,24 @@ public class WifiManagerFacade extends RpcReceiver {
     /**
      * Triggers connect to a specific wifi network.
      *
-     * @param config JSONObject Dictionary of wifi connection parameters
+     * @param jsonConfig JSONObject Dictionary of wifi connection parameters
      * @throws JSONException
      * @throws GeneralSecurityException
      */
     @Rpc(description = "Connects to the specified network for the ongoing network request")
     public void wifiSendUserSelectionForNetworkRequestMatch(
-            @RpcParameter(name = "config") JSONObject config)
+            @RpcParameter(name = "jsonConfig") JSONObject jsonConfig)
             throws JSONException, GeneralSecurityException {
         synchronized (mCallbackLock) {
             if (mNetworkRequestUserSelectionCallback == null) {
                 throw new IllegalStateException("user callback is null");
             }
-            mNetworkRequestUserSelectionCallback.select(genWifiConfig(config));
+            // Copy the SSID for user selection.
+            WifiConfiguration config = new WifiConfiguration();
+            if (jsonConfig.has("SSID")) {
+                config.SSID = "\"" + jsonConfig.getString("SSID") + "\"";
+            }
+            mNetworkRequestUserSelectionCallback.select(config);
         }
     }
 
