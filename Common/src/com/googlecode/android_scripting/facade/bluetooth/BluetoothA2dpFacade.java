@@ -44,6 +44,8 @@ public class BluetoothA2dpFacade extends RpcReceiver {
     static final ParcelUuid[] SINK_UUIDS = {
         BluetoothUuid.AudioSink, BluetoothUuid.AdvAudioDist,
     };
+    private BluetoothCodecConfig mBluetoothCodecConfig;
+
     private final Service mService;
     private final EventFacade mEventFacade;
     private final BroadcastReceiver mBluetoothA2dpReceiver;
@@ -51,7 +53,6 @@ public class BluetoothA2dpFacade extends RpcReceiver {
 
     private static boolean sIsA2dpReady = false;
     private static BluetoothA2dp sA2dpProfile = null;
-    private BluetoothCodecConfig mBluetoothCodecConfig;
 
     public BluetoothA2dpFacade(FacadeManager manager) {
         super(manager);
@@ -285,6 +286,23 @@ public class BluetoothA2dpFacade extends RpcReceiver {
             }
         }
         return false;
+    }
+
+    /**
+     * Get current active device codec config
+     *
+     * @return Current active device codec config,
+     */
+    @Rpc(description = "Get current codec config.")
+    public BluetoothCodecConfig bluetoothA2dpGetCurrentCodecConfig() throws Exception {
+        while (!sIsA2dpReady) {
+            continue;
+        }
+        if (sA2dpProfile.getActiveDevice() == null) {
+            Log.e("No active device.");
+            throw new Exception("No active device");
+        }
+        return sA2dpProfile.getCodecStatus(sA2dpProfile.getActiveDevice()).getCodecConfig();
     }
 
     @Override
