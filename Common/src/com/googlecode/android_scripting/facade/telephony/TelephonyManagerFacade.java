@@ -791,6 +791,28 @@ public class TelephonyManagerFacade extends RpcReceiver {
             mTelephonyManager.getSimState(slotId));
     }
 
+    /**
+     * Switch device mode multisim
+     *
+     * @param numOfSims (1: single sim, 2: multi sim)
+     **/
+    @Rpc(description = "Switch configs to enable multi-sim or switch back to single-sim")
+    public void telephonySwitchMultiSimConfig(
+            @RpcParameter(name = "numOfSims")
+            Integer numOfSims) {
+        mTelephonyManager.switchMultiSimConfig(numOfSims.intValue());
+    }
+
+    /**
+     * Gets device mode multisim
+     *
+     * @return phoneCount (1-single sim, 2-dual sim, 3-tri sim)
+     **/
+    @Rpc(description = "Returns if device is in Single, Dual, Tri SIM Mode")
+    public Integer telephonyGetPhoneCount() {
+        return mTelephonyManager.getPhoneCount();
+    }
+
     @Rpc(description = "Get Authentication Challenge Response from a " +
             "given SIM Application")
     public String telephonyGetIccSimChallengeResponse(
