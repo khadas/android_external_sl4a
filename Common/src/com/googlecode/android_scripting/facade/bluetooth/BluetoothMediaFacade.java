@@ -366,6 +366,28 @@ public class BluetoothMediaFacade extends RpcReceiver {
     }
 
     /**
+     * Relevance - Phone and Car.
+     * Returns the currently playing media's playback state.
+     * Can be queried on the car and the phone in the middle of a streaming session to
+     * verify they are in sync.
+     *
+     * @return Currently playing Media's playback state
+     */
+    @Rpc(description = "Gets the state of current playback")
+    public PlaybackState bluetoothMediaGetCurrentPlaybackState() throws Exception {
+        if (mMediaController == null) {
+            Log.e(TAG + "MediaController not set");
+            throw new Exception("MediaController not set");
+        }
+        PlaybackState playbackState = mMediaController.getPlaybackState();
+        if (playbackState == null) {
+            Log.d("No playback state available.");
+            return null;
+        }
+        return playbackState;
+    }
+
+    /**
      * Relevance - Phone and Car
      * Returns the current active media sessions for the device. This is useful to see if a
      * Media Session we are interested in is currently active.
