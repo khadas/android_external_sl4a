@@ -29,6 +29,7 @@ import android.content.Intent;
 import android.graphics.Point;
 import android.location.Address;
 import android.location.Location;
+import android.media.session.PlaybackState;
 import android.net.DhcpInfo;
 import android.net.IpPrefix;
 import android.net.LinkAddress;
@@ -210,6 +211,9 @@ public class JsonBuilder {
         }
         if (data instanceof BluetoothDevice) {
             return buildJsonBluetoothDevice((BluetoothDevice) data);
+        }
+        if (data instanceof PlaybackState) {
+            return buildJsonPlaybackState((PlaybackState) data);
         }
         if (data instanceof CellLocation) {
             return buildJsonCellLocation((CellLocation) data);
@@ -598,6 +602,16 @@ public class JsonBuilder {
             }
             result.put(key, build(entry.getValue()));
         }
+        return result;
+    }
+
+    private static JSONObject buildJsonPlaybackState(PlaybackState playbackState)
+            throws JSONException {
+        JSONObject result = new JSONObject();
+        result.put("state", playbackState.getState());
+        result.put("position", playbackState.getPosition());
+        result.put("speed", playbackState.getPlaybackSpeed());
+        result.put("actions", playbackState.getActions());
         return result;
     }
 
