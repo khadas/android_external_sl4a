@@ -119,13 +119,16 @@ public class WifiManagerFacade extends RpcReceiver {
     private final IntentFilter mScanFilter;
     private final IntentFilter mStateChangeFilter;
     private final IntentFilter mTetherFilter;
+    private final IntentFilter mNetworkSuggestionStateChangeFilter;
     private final WifiScanReceiver mScanResultsAvailableReceiver;
     private final WifiStateChangeReceiver mStateChangeReceiver;
+    private final WifiNetworkSuggestionStateChangeReceiver mNetworkSuggestionStateChangeReceiver;
     private final HandlerThread mCallbackHandlerThread;
     private final Object mCallbackLock = new Object();
     private final Map<NetworkSpecifier, NetworkCallback> mNetworkCallbacks = new HashMap<>();
     private boolean mTrackingWifiStateChange;
     private boolean mTrackingTetherStateChange;
+    private boolean mTrackingNetworkSuggestionStateChange;
     @GuardedBy("mCallbackLock")
     private NetworkRequestUserSelectionCallback mNetworkRequestUserSelectionCallback;
 
@@ -230,16 +233,20 @@ public class WifiManagerFacade extends RpcReceiver {
         mStateChangeFilter.addAction(WifiManager.SUPPLICANT_STATE_CHANGED_ACTION);
         mStateChangeFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
         mStateChangeFilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-        mStateChangeFilter.addAction(WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION);
         mStateChangeFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
 
         mTetherFilter = new IntentFilter(WifiManager.WIFI_AP_STATE_CHANGED_ACTION);
         mTetherFilter.addAction(ConnectivityManager.ACTION_TETHER_STATE_CHANGED);
 
+        mNetworkSuggestionStateChangeFilter = new IntentFilter(
+                WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION);
+
         mScanResultsAvailableReceiver = new WifiScanReceiver(mEventFacade);
         mStateChangeReceiver = new WifiStateChangeReceiver();
+        mNetworkSuggestionStateChangeReceiver = new WifiNetworkSuggestionStateChangeReceiver();
         mTrackingWifiStateChange = false;
         mTrackingTetherStateChange = false;
+        mTrackingNetworkSuggestionStateChange = false;
         mCallbackHandlerThread.start();
     }
 
@@ -357,7 +364,15 @@ public class WifiManagerFacade extends RpcReceiver {
                 Bundle msg = new Bundle();
                 msg.putBoolean("enabled", enabled);
                 mEventFacade.postEvent("WifiStateChanged", msg);
-            } else if (action.equals(WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION)) {
+            }
+        }
+    }
+
+    public class WifiNetworkSuggestionStateChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION)) {
                 WifiNetworkSuggestion networkSuggestion =
                         intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_SUGGESTION);
                 mEventFacade.postEvent(
@@ -1335,6 +1350,21 @@ public class WifiManagerFacade extends RpcReceiver {
         if (mTrackingTetherStateChange == true) {
             mService.unregisterReceiver(mTetherStateReceiver);
             mTrackingTetherStateChange = false;
+        }
+    }
+
+    @Rpc(description = "Start listening for network suggestion change related broadcasts.")
+    public void wifiStartTrackingNetworkSuggestionStateChange() {
+        mService.registerReceiver(
+                mNetworkSuggestionStateChangeReceiver, mNetworkSuggestionStateChangeFilter);
+        mTrackingNetworkSuggestionStateChange = true;
+    }
+
+    @Rpc(description = "Stop listening for network suggestion change related broadcasts.")
+    public void wifiStopTrackingNetworkSuggestionStateChange() {
+        if (mTrackingNetworkSuggestionStateChange) {
+            mService.unregisterReceiver(mNetworkSuggestionStateChangeReceiver);
+            mTrackingNetworkSuggestionStateChange = false;
         }
     }
 
