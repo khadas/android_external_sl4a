@@ -1210,8 +1210,8 @@ public class WifiManagerFacade extends RpcReceiver {
      * @return true if this device supports Wi-Fi Enhanced Open (OWE)
      */
     @Rpc(description = "Check if Enhanced Open (OWE) is supported on this device.")
-    public Boolean wifiIsOweSupported() {
-        return mWifi.isOweSupported();
+    public Boolean wifiIsEnhancedOpenSupported() {
+        return mWifi.isEnhancedOpenSupported();
     }
     /**
      * @return true if this device supports Wi-Fi Device Provisioning Protocol (Easy-connect)
