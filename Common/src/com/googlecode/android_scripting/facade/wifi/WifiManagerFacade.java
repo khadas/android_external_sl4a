@@ -1003,7 +1003,8 @@ public class WifiManagerFacade extends RpcReceiver {
     public void startSubscriptionProvisioning(
             @RpcParameter(name = "configJson") JSONObject configJson) {
         ProvisioningCallback callback = new ProvisioningCallbackFacade(mEventFacade);
-        mWifi.startSubscriptionProvisioning(buildTestOsuProvider(configJson), callback, null);
+        mWifi.startSubscriptionProvisioning(buildTestOsuProvider(configJson),
+                mService.getMainExecutor(), callback);
     }
 
     /**
