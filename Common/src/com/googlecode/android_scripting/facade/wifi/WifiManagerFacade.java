@@ -628,11 +628,11 @@ public class WifiManagerFacade extends RpcReceiver {
                     MacAddress.fromString(j.getJSONArray("bssidPattern").getString(0)),
                     MacAddress.fromString(j.getJSONArray("bssidPattern").getString(1)));
         }
-        if (j.has("hiddenSSID") && j.getBoolean("hiddenSSID")) {
-            builder = builder.setIsHiddenSsid();
+        if (j.has("hiddenSSID")) {
+            builder = builder.setIsHiddenSsid(j.getBoolean("hiddenSSID"));
         }
-        if (j.has("isEnhancedOpen") && j.getBoolean("isEnhancedOpen")) {
-            builder = builder.setIsEnhancedOpen();
+        if (j.has("isEnhancedOpen")) {
+            builder = builder.setIsEnhancedOpen(j.getBoolean("isEnhancedOpen"));
         }
         boolean isWpa3 = false;
         if (j.has("isWpa3") && j.getBoolean("isWpa3")) {
@@ -667,11 +667,11 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("BSSID")) {
             builder = builder.setBssid(MacAddress.fromString(j.getString("BSSID")));
         }
-        if (j.has("hiddenSSID") && j.getBoolean("hiddenSSID")) {
-            builder = builder.setIsHiddenSsid();
+        if (j.has("hiddenSSID")) {
+            builder = builder.setIsHiddenSsid(j.getBoolean("hiddenSSID"));
         }
-        if (j.has("isEnhancedOpen") && j.getBoolean("isEnhancedOpen")) {
-            builder = builder.setIsEnhancedOpen();
+        if (j.has("isEnhancedOpen")) {
+            builder = builder.setIsEnhancedOpen(j.getBoolean("isEnhancedOpen"));
         }
         boolean isWpa3 = false;
         if (j.has("isWpa3") && j.getBoolean("isWpa3")) {
@@ -691,14 +691,15 @@ public class WifiManagerFacade extends RpcReceiver {
                 builder = builder.setWpa3EnterpriseConfig(genWifiEnterpriseConfig(j));
             }
         }
-        if (j.has("isAppInteractionRequired") && j.getBoolean("isAppInteractionRequired")) {
-            builder = builder.setIsAppInteractionRequired();
+        if (j.has("isAppInteractionRequired")) {
+            builder = builder.setIsAppInteractionRequired(j.getBoolean("isAppInteractionRequired"));
         }
-        if (j.has("isUserInteractionRequired") && j.getBoolean("isUserInteractionRequired")) {
-            builder = builder.setIsUserInteractionRequired();
+        if (j.has("isUserInteractionRequired")) {
+            builder = builder.setIsUserInteractionRequired(
+                    j.getBoolean("isUserInteractionRequired"));
         }
-        if (j.has("isMetered") && j.getBoolean("isMetered")) {
-            builder = builder.setIsMetered();
+        if (j.has("isMetered")) {
+            builder = builder.setIsMetered(j.getBoolean("isMetered"));
         }
         if (j.has("priority")) {
             builder = builder.setPriority(j.getInt("priority"));
