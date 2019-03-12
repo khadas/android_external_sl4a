@@ -62,6 +62,7 @@ import android.provider.Settings.Global;
 import android.provider.Settings.SettingNotFoundException;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.SparseArray;
 
 import com.android.internal.annotations.GuardedBy;
 
@@ -131,7 +132,7 @@ public class WifiManagerFacade extends RpcReceiver {
     private boolean mTrackingNetworkSuggestionStateChange;
     @GuardedBy("mCallbackLock")
     private NetworkRequestUserSelectionCallback mNetworkRequestUserSelectionCallback;
-
+    private final SparseArray<SoftApCallbackImp> mSoftapCallbacks;
 
     private final BroadcastReceiver mTetherStateReceiver = new BroadcastReceiver() {
         @Override
@@ -217,6 +218,37 @@ public class WifiManagerFacade extends RpcReceiver {
         }
     };
 
+    private static class SoftApCallbackImp implements WifiManager.SoftApCallback {
+        // A monotonic increasing counter for softap callback ids.
+        private static int sCount = 0;
+
+        private final int mId;
+        private final EventFacade mEventFacade;
+        private final String mEventStr;
+
+        SoftApCallbackImp(EventFacade eventFacade) {
+            sCount++;
+            mId = sCount;
+            mEventFacade = eventFacade;
+            mEventStr = mEventType + "SoftApCallback-" + mId + "-";
+        }
+
+        @Override
+        public void onStateChanged(int state, int failureReason) {
+            Bundle msg = new Bundle();
+            msg.putInt("State", state);
+            msg.putInt("FailureReason", failureReason);
+            mEventFacade.postEvent(mEventStr + "OnStateChanged", msg);
+        }
+
+        @Override
+        public void onNumClientsChanged(int numClients) {
+            Bundle msg = new Bundle();
+            msg.putInt("NumClients", numClients);
+            mEventFacade.postEvent(mEventStr + "OnNumClientsChanged", msg);
+        }
+    };
+
     private WifiLock mLock = null;
     private boolean mIsConnected = false;
 
@@ -248,6 +280,7 @@ public class WifiManagerFacade extends RpcReceiver {
         mTrackingTetherStateChange = false;
         mTrackingNetworkSuggestionStateChange = false;
         mCallbackHandlerThread.start();
+        mSoftapCallbacks = new SparseArray<>();
     }
 
     private void makeLock(int wifiMode) {
@@ -1295,6 +1328,36 @@ public class WifiManagerFacade extends RpcReceiver {
             @RpcParameter(name = "configJson") JSONObject configJson) throws JSONException {
         WifiConfiguration config = createSoftApWifiConfiguration(configJson);
         return mWifi.setWifiApConfiguration(config);
+    }
+
+    /**
+     * Register softap callback.
+     *
+     * @return the id associated with the {@link SoftApCallbackImp}
+     * used for registering callback.
+     */
+    @Rpc(description = "Register softap callback function.",
+            returns = "Id of the callback associated with registering.")
+    public Integer registerSoftApCallback() {
+        SoftApCallbackImp softApCallback = new SoftApCallbackImp(mEventFacade);
+        mSoftapCallbacks.put(softApCallback.mId, softApCallback);
+        mWifi.registerSoftApCallback(softApCallback,
+                new Handler(mCallbackHandlerThread.getLooper()));
+        return softApCallback.mId;
+    }
+
+    /**
+     * Unregister softap callback role for the {@link SoftApCallbackImp} identified by the given
+     * {@code callbackId}.
+     *
+     * @param callbackId the id associated with the {@link SoftApCallbackImp}
+     * used for registering callback.
+     *
+     */
+    @Rpc(description = "Unregister softap callback function.")
+    public void unregisterSoftApCallback(@RpcParameter(name = "callbackId") Integer callbackId) {
+        mWifi.unregisterSoftApCallback(mSoftapCallbacks.get(callbackId));
+        mSoftapCallbacks.delete(callbackId);
     }
 
     @Rpc(description = "Set the country code used by WiFi.")
