@@ -49,7 +49,7 @@ public class BluetoothA2dpFacade extends RpcReceiver {
     private final BroadcastReceiver mBluetoothA2dpReceiver;
     private final BluetoothAdapter mBluetoothAdapter;
 
-    private static boolean sIsA2dpReady = false;
+    private static volatile boolean sIsA2dpReady = false;
     private static BluetoothA2dp sA2dpProfile = null;
     private BluetoothCodecConfig mBluetoothCodecConfig;
 
