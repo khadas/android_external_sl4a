@@ -472,6 +472,7 @@ public class WifiManagerFacade extends RpcReceiver {
             if (j.has("security")) {
                 if (TextUtils.equals(j.getString("security"), "SAE")) {
                     config.allowedKeyManagement.set(KeyMgmt.SAE);
+                    config.requirePMF = true;
                 } else {
                     config.allowedKeyManagement.set(KeyMgmt.WPA_PSK);
                 }
@@ -483,7 +484,16 @@ public class WifiManagerFacade extends RpcReceiver {
             config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
             config.preSharedKey = j.getString("preSharedKey");
         } else {
-            config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+            if (j.has("security")) {
+                if (TextUtils.equals(j.getString("security"), "OWE")) {
+                    config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.OWE);
+                    config.requirePMF = true;
+                } else {
+                    config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                }
+            } else {
+                config.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+            }
         }
         if (j.has("BSSID")) {
             config.BSSID = j.getString("BSSID");
@@ -585,6 +595,14 @@ public class WifiManagerFacade extends RpcReceiver {
         WifiConfiguration config = new WifiConfiguration();
         config.allowedKeyManagement.set(KeyMgmt.WPA_EAP);
         config.allowedKeyManagement.set(KeyMgmt.IEEE8021X);
+
+        if (j.has("security")) {
+            if (TextUtils.equals(j.getString("security"), "SUITE_B_192")) {
+                config.allowedKeyManagement.set(KeyMgmt.SUITE_B_192);
+                config.requirePMF = true;
+            }
+        }
+
         if (j.has("SSID")) {
             config.SSID = "\"" + j.getString("SSID") + "\"";
         } else if (j.has("ssid")) {
