@@ -236,7 +236,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mCallStateChangeListener,
             CallStateChangeListener.sListeningStates);
         return true;
@@ -258,7 +258,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mCellInfoChangeListener,
             PhoneStateListener.LISTEN_CELL_INFO);
         return true;
@@ -314,7 +314,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mCellInfoChangeListener,
             PhoneStateListener.LISTEN_NONE);
         return true;
@@ -335,7 +335,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mCallStateChangeListener,
             PhoneStateListener.LISTEN_NONE);
         return true;
@@ -357,7 +357,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mDataConnectionRTInfoChangeListener,
             DataConnectionRealTimeInfoChangeListener.sListeningStates);
         return true;
@@ -379,7 +379,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mDataConnectionRTInfoChangeListener,
             PhoneStateListener.LISTEN_NONE);
         return true;
@@ -401,7 +401,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mDataConnectionStateChangeListener,
             DataConnectionStateChangeListener.sListeningStates);
         return true;
@@ -423,7 +423,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mDataConnectionStateChangeListener,
             PhoneStateListener.LISTEN_NONE);
         return true;
@@ -445,7 +445,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mServiceStateChangeListener,
             ServiceStateChangeListener.sListeningStates);
         return true;
@@ -467,7 +467,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mServiceStateChangeListener,
             PhoneStateListener.LISTEN_NONE);
             return true;
@@ -489,7 +489,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mSignalStrengthChangeListener,
             SignalStrengthChangeListener.sListeningStates);
         return true;
@@ -511,7 +511,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mSignalStrengthChangeListener,
             PhoneStateListener.LISTEN_NONE);
         return true;
@@ -533,7 +533,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mVoiceMailStateChangeListener,
             VoiceMailStateChangeListener.sListeningStates);
         return true;
@@ -555,7 +555,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
             Log.e("Invalid subscription ID");
             return false;
         }
-        mTelephonyManager.listen(
+        mTelephonyManager.createForSubscriptionId(subId).listen(
             listener.mVoiceMailStateChangeListener,
             PhoneStateListener.LISTEN_NONE);
         return true;
