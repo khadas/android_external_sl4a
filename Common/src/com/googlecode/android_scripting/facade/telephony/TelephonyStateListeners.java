@@ -230,7 +230,7 @@ public class TelephonyStateListeners {
         }
 
         public CellInfoChangeListener(EventFacade ef, int subId, Looper looper) {
-            super();
+            super(looper);
             mEventFacade = ef;
         }
 
