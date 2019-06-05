@@ -570,6 +570,14 @@ public class WifiP2pManagerFacade extends RpcReceiver {
         mChannel = mP2p.initialize(mService, mService.getMainLooper(), null);
     }
 
+    @Rpc(description = "Sets the listening channel and operating channel of the current group created with initialize")
+    public void wifiP2pSetChannelsForCurrentGroup(
+            @RpcParameter(name = "listeningChannel") Integer listeningChannel,
+            @RpcParameter(name = "operatingChannel") Integer operatingChannel) {
+        mP2p.setWifiP2pChannels(mChannel, listeningChannel, operatingChannel,
+                new WifiP2pActionListener(mEventFacade, "SetChannels"));
+    }
+
     @Rpc(description = "Close the current wifi p2p connection created with initialize.")
     public void wifiP2pClose() {
         if (mChannel != null) {
