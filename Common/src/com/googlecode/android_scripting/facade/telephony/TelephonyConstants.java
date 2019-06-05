@@ -343,6 +343,7 @@ public class TelephonyConstants {
     public static final String EventPreciseStateChanged = "PreciseStateChanged";
     public static final String EventDataConnectionRealTimeInfoChanged = "DataConnectionRealTimeInfoChanged";
     public static final String EventDataConnectionStateChanged = "DataConnectionStateChanged";
+    public static final String EventActiveDataSubIdChanged = "ActiveDataSubIdChanged";
     public static final String EventServiceStateChanged = "ServiceStateChanged";
     public static final String EventSignalStrengthChanged = "SignalStrengthChanged";
     public static final String EventSrvccStateChanged = "SrvccStateChanged";

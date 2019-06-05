@@ -181,6 +181,43 @@ public class TelephonyStateListeners {
         }
     }
 
+    public static class ActiveDataSubIdChangeListener extends PhoneStateListener {
+
+        private final EventFacade mEventFacade;
+        private final TelephonyManager mTelephonyManager;
+        public static final int sListeningStates =
+                PhoneStateListener.LISTEN_ACTIVE_DATA_SUBSCRIPTION_ID_CHANGE;
+        public int subscriptionId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+
+        public ActiveDataSubIdChangeListener(EventFacade ef, TelephonyManager tm) {
+            super();
+            mEventFacade = ef;
+            mTelephonyManager = tm;
+            subscriptionId = SubscriptionManager.DEFAULT_SUBSCRIPTION_ID;
+        }
+
+        public ActiveDataSubIdChangeListener(EventFacade ef, TelephonyManager tm, int subId) {
+            super();
+            mEventFacade = ef;
+            mTelephonyManager = tm;
+            subscriptionId = subId;
+        }
+
+        public ActiveDataSubIdChangeListener(
+                EventFacade ef, TelephonyManager tm, int subId, Looper looper) {
+            super(looper);
+            mEventFacade = ef;
+            mTelephonyManager = tm;
+            subscriptionId = subId;
+        }
+
+        @Override
+        public void onActiveDataSubscriptionIdChanged(int subId) {
+            mEventFacade.postEvent(
+                TelephonyConstants.EventActiveDataSubIdChanged, subId);
+        }
+    }
+
     public static class ServiceStateChangeListener extends PhoneStateListener {
 
         private final EventFacade mEventFacade;
