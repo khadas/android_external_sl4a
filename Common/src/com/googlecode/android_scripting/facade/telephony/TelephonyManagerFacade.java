@@ -35,6 +35,7 @@ import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.AvailableNetworkInfo;
 
 import com.android.internal.telephony.RILConstants;
 import com.android.internal.telephony.TelephonyProperties;
@@ -67,6 +68,7 @@ import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -82,6 +84,7 @@ public class TelephonyManagerFacade extends RpcReceiver {
     private final EventFacade mEventFacade;
     private final TelephonyManager mTelephonyManager;
     private final SubscriptionManager mSubscriptionManager;
+    private List<AvailableNetworkInfo> availableNetworkList;
     private HashMap<Integer, StateChangeListener> mStateChangeListeners =
                              new HashMap<Integer, StateChangeListener>();
 
@@ -740,6 +743,32 @@ public class TelephonyManagerFacade extends RpcReceiver {
     @Rpc(description = "Returns preferred opportunistic data subscription Id")
     public Integer telephonyGetPreferredOpportunisticDataSubscription() {
         return mTelephonyManager.getPreferredOpportunisticDataSubscription();
+    }
+
+    @Rpc(description = "Sets preferred opportunistic data subscription Id")
+    public void telephonySetPreferredOpportunisticDataSubscription(
+            @RpcParameter(name = "subId") Integer subId,
+            @RpcParameter(name = "needValidation") Boolean needValidation) {
+        mTelephonyManager.setPreferredOpportunisticDataSubscription(
+                   subId, needValidation, null, null);
+    }
+
+    @Rpc(description = "Updates Available Networks")
+    public void telephonyUpdateAvailableNetworks(
+            @RpcParameter(name = "subId") Integer subId) {
+
+        availableNetworkList = new ArrayList<>();
+        List<String> mccmmc = new ArrayList<String>();
+        List<Integer> bands = new ArrayList<Integer>();
+
+        availableNetworkList.add(
+            new AvailableNetworkInfo(
+                subId,
+                AvailableNetworkInfo.PRIORITY_HIGH,
+                mccmmc,
+                bands));
+
+        mTelephonyManager.updateAvailableNetworks(availableNetworkList, null, null);
     }
 
     /**
