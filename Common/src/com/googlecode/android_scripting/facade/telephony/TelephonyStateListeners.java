@@ -54,13 +54,13 @@ public class TelephonyStateListeners {
         }
 
         public CallStateChangeListener(EventFacade ef, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
             subscriptionId = subId;
         }
 
         public CallStateChangeListener(EventFacade ef, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
             subscriptionId = subId;
         }
@@ -119,13 +119,13 @@ public class TelephonyStateListeners {
         }
 
         public DataConnectionRealTimeInfoChangeListener(EventFacade ef, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
             subscriptionId = subId;
         }
 
         public DataConnectionRealTimeInfoChangeListener(EventFacade ef, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
             subscriptionId = subId;
         }
@@ -156,7 +156,7 @@ public class TelephonyStateListeners {
         }
 
         public DataConnectionStateChangeListener(EventFacade ef, TelephonyManager tm, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
             mTelephonyManager = tm;
             subscriptionId = subId;
@@ -164,7 +164,7 @@ public class TelephonyStateListeners {
 
         public DataConnectionStateChangeListener(
                 EventFacade ef, TelephonyManager tm, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
             mTelephonyManager = tm;
             subscriptionId = subId;
@@ -231,13 +231,13 @@ public class TelephonyStateListeners {
         }
 
         public ServiceStateChangeListener(EventFacade ef, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
             subscriptionId = subId;
         }
 
         public ServiceStateChangeListener(EventFacade ef, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
             subscriptionId = subId;
         }
@@ -262,12 +262,12 @@ public class TelephonyStateListeners {
         }
 
         public CellInfoChangeListener(EventFacade ef, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
         }
 
         public CellInfoChangeListener(EventFacade ef, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
         }
 
@@ -289,12 +289,12 @@ public class TelephonyStateListeners {
         }
 
         public SrvccStateChangeListener(EventFacade ef, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
         }
 
         public SrvccStateChangeListener(EventFacade ef, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
         }
 
@@ -319,12 +319,12 @@ public class TelephonyStateListeners {
         }
 
         public VoiceMailStateChangeListener(EventFacade ef, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
         }
 
         public VoiceMailStateChangeListener(EventFacade ef, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
         }
 
@@ -349,12 +349,12 @@ public class TelephonyStateListeners {
         }
 
         public SignalStrengthChangeListener(EventFacade ef, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
         }
 
         public SignalStrengthChangeListener(EventFacade ef, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
         }
 
@@ -378,13 +378,13 @@ public class TelephonyStateListeners {
         }
 
         public PhysicalChannelConfigurationChangeListener(EventFacade ef, int subId) {
-            super(subId);
+            super();
             mEventFacade = ef;
         }
 
         public PhysicalChannelConfigurationChangeListener(
                 EventFacade ef, int subId, Looper looper) {
-            super(subId, looper);
+            super(looper);
             mEventFacade = ef;
         }
 
