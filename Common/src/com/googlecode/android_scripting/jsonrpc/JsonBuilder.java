@@ -995,6 +995,7 @@ public class JsonBuilder {
         msg.put("dataRoaming", data.getDataRoaming());
         msg.put("mcc", data.getMcc());
         msg.put("mnc", data.getMnc());
+        msg.put("carrierId", data.getCarrierId());
         return msg;
     }
 
