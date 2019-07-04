@@ -66,6 +66,11 @@ public class SubscriptionManagerFacade extends RpcReceiver {
         return SubscriptionManager.getDefaultVoiceSubscriptionId();
     }
 
+    @Rpc(description = "Returns active data subscription ID")
+    public Integer subscriptionGetActiveDataSubscriptionId() {
+        return SubscriptionManager.getActiveDataSubscriptionId();
+    }
+
     @Rpc(description = "Set the default voice subscription ID")
     public void subscriptionSetDefaultVoiceSubId(
             @RpcParameter(name = "subId")
