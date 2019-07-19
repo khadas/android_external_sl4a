@@ -670,6 +670,15 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         }
     }
 
+    @Rpc(description = "register a default network callback")
+    public String connectivityRegisterDefaultNetworkCallback() {
+        mNetworkCallback = new NetworkCallback(NetworkCallback.EVENT_AVAILABLE);
+        mManager.registerDefaultNetworkCallback(mNetworkCallback);
+        String key = mNetworkCallback.mId;
+        mNetworkCallbackMap.put(key, mNetworkCallback);
+        return key;
+    }
+
     @Rpc(description = "request a network")
     public String connectivityRequestNetwork(@RpcParameter(name = "configJson")
     JSONObject configJson) throws JSONException {
