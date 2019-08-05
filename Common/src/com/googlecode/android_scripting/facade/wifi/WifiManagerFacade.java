@@ -695,7 +695,7 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("isWpa3") && j.getBoolean("isWpa3")) {
             isWpa3 = true;
         }
-        if (j.has("password")) {
+        if (j.has("password") && !j.has(WifiEnterpriseConfig.EAP_KEY)) {
             if (!isWpa3) {
                 builder = builder.setWpa2Passphrase(j.getString("password"));
             } else {
