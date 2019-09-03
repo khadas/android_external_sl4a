@@ -874,7 +874,7 @@ public class SmsFacade extends RpcReceiver {
                 return "CELL_WIDE_IMMEDIATE";
             case SmsCbMessage.GEOGRAPHICAL_SCOPE_PLMN_WIDE:
                 return "PLMN_WIDE ";
-            case SmsCbMessage.GEOGRAPHICAL_SCOPE_LA_WIDE:
+            case SmsCbMessage.GEOGRAPHICAL_SCOPE_LOCATION_AREA_WIDE:
                 return "LA_WIDE";
             case SmsCbMessage.GEOGRAPHICAL_SCOPE_CELL_WIDE:
                 return "CELL_WIDE";
