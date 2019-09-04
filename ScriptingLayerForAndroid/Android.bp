@@ -41,7 +41,7 @@ android_test_helper_app {
         "guava",
         "android-common",
         "sl4a.locale_platform",
-        "android-support-v4",
+        "androidx.legacy_legacy-support-v4",
 
         "sl4a.Utils",
         "sl4a.Common",
