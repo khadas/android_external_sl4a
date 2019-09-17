@@ -1379,6 +1379,12 @@ public class WifiManagerFacade extends RpcReceiver {
         mSoftapCallbacks.delete(callbackId);
     }
 
+    @Rpc(description = "Set the country code used by WiFi.")
+    public void wifiSetCountryCode(
+            @RpcParameter(name = "country") String country) {
+        mWifi.setCountryCode(country);
+    }
+
     @Rpc(description = "Enable/disable tdls with a mac address.")
     public void wifiSetTdlsEnabledWithMacAddress(
             @RpcParameter(name = "remoteMacAddress") String remoteMacAddress,
