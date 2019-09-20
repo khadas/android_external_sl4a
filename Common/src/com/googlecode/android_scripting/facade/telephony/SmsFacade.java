@@ -442,7 +442,8 @@ public class SmsFacade extends RpcReceiver {
     public void smsStartTrackingGsmEmergencyCBMessage() {
         if (!mGsmEmergencyCBListenerRegistered) {
             for (int messageId : mGsmCbMessageIdList) {
-                mSms.enableCellBroadcast(
+                mSms.enableCellBroadcastRange(
+                        messageId,
                         messageId,
                         SmsManager.CELL_BROADCAST_RAN_TYPE_GSM);
             }
@@ -460,7 +461,8 @@ public class SmsFacade extends RpcReceiver {
             mService.unregisterReceiver(mGsmEmergencyCBMessageListener);
             mGsmEmergencyCBListenerRegistered = false;
             for (int messageId : mGsmCbMessageIdList) {
-                mSms.disableCellBroadcast(
+                mSms.disableCellBroadcastRange(
+                        messageId,
                         messageId,
                         SmsManager.CELL_BROADCAST_RAN_TYPE_GSM);
             }
@@ -471,7 +473,8 @@ public class SmsFacade extends RpcReceiver {
     public void smsStartTrackingCdmaEmergencyCBMessage() {
         if (!mCdmaEmergencyCBListenerRegistered) {
             for (int messageId : mCdmaCbMessageIdList) {
-                mSms.enableCellBroadcast(
+                mSms.enableCellBroadcastRange(
+                        messageId,
                         messageId,
                         SmsManager.CELL_BROADCAST_RAN_TYPE_CDMA);
             }
@@ -488,7 +491,8 @@ public class SmsFacade extends RpcReceiver {
             mService.unregisterReceiver(mCdmaEmergencyCBMessageListener);
             mCdmaEmergencyCBListenerRegistered = false;
             for (int messageId : mCdmaCbMessageIdList) {
-                mSms.disableCellBroadcast(
+                mSms.disableCellBroadcastRange(
+                        messageId,
                         messageId,
                         SmsManager.CELL_BROADCAST_RAN_TYPE_CDMA);
             }
