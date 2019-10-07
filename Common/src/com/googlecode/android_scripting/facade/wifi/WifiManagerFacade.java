@@ -674,41 +674,11 @@ public class WifiManagerFacade extends RpcReceiver {
     }
 
     private WifiNetworkSuggestion genWifiNetworkSuggestion(JSONObject j) throws JSONException,
-            GeneralSecurityException {
+            GeneralSecurityException, IOException {
         if (j == null) {
             return null;
         }
         WifiNetworkSuggestion.Builder builder = new WifiNetworkSuggestion.Builder();
-        if (j.has("SSID")) {
-            builder = builder.setSsid(j.getString("SSID"));
-        }
-        if (j.has("BSSID")) {
-            builder = builder.setBssid(MacAddress.fromString(j.getString("BSSID")));
-        }
-        if (j.has("hiddenSSID")) {
-            builder = builder.setIsHiddenSsid(j.getBoolean("hiddenSSID"));
-        }
-        if (j.has("isEnhancedOpen")) {
-            builder = builder.setIsEnhancedOpen(j.getBoolean("isEnhancedOpen"));
-        }
-        boolean isWpa3 = false;
-        if (j.has("isWpa3") && j.getBoolean("isWpa3")) {
-            isWpa3 = true;
-        }
-        if (j.has("password") && !j.has(WifiEnterpriseConfig.EAP_KEY)) {
-            if (!isWpa3) {
-                builder = builder.setWpa2Passphrase(j.getString("password"));
-            } else {
-                builder = builder.setWpa3Passphrase(j.getString("password"));
-            }
-        }
-        if (j.has(WifiEnterpriseConfig.EAP_KEY)) {
-            if (!isWpa3) {
-                builder = builder.setWpa2EnterpriseConfig(genWifiEnterpriseConfig(j));
-            } else {
-                builder = builder.setWpa3EnterpriseConfig(genWifiEnterpriseConfig(j));
-            }
-        }
         if (j.has("isAppInteractionRequired")) {
             builder = builder.setIsAppInteractionRequired(j.getBoolean("isAppInteractionRequired"));
         }
@@ -722,11 +692,47 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("priority")) {
             builder = builder.setPriority(j.getInt("priority"));
         }
+        if (j.has("profile")) {
+            builder = builder.setPasspointConfig(genWifiPasspointConfig(j));
+        } else {
+            if (j.has("SSID")) {
+                builder = builder.setSsid(j.getString("SSID"));
+            }
+            if (j.has("BSSID")) {
+                builder = builder.setBssid(MacAddress.fromString(j.getString("BSSID")));
+            }
+            if (j.has("hiddenSSID")) {
+                builder = builder.setIsHiddenSsid(j.getBoolean("hiddenSSID"));
+            }
+            if (j.has("isEnhancedOpen")) {
+                builder = builder.setIsEnhancedOpen(j.getBoolean("isEnhancedOpen"));
+            }
+            boolean isWpa3 = false;
+            if (j.has("isWpa3") && j.getBoolean("isWpa3")) {
+                isWpa3 = true;
+            }
+            if (j.has("password") && !j.has(WifiEnterpriseConfig.EAP_KEY)) {
+                if (!isWpa3) {
+                    builder = builder.setWpa2Passphrase(j.getString("password"));
+                } else {
+                    builder = builder.setWpa3Passphrase(j.getString("password"));
+                }
+            }
+            if (j.has(WifiEnterpriseConfig.EAP_KEY)) {
+                if (!isWpa3) {
+                    builder = builder.setWpa2EnterpriseConfig(genWifiEnterpriseConfig(j));
+                } else {
+                    builder = builder.setWpa3EnterpriseConfig(genWifiEnterpriseConfig(j));
+                }
+            }
+        }
+
         return builder.build();
     }
 
     private List<WifiNetworkSuggestion> genWifiNetworkSuggestions(
-            JSONArray jsonNetworkSuggestionsArray) throws JSONException, GeneralSecurityException {
+            JSONArray jsonNetworkSuggestionsArray) throws JSONException, GeneralSecurityException,
+            IOException {
         if (jsonNetworkSuggestionsArray == null) {
             return null;
         }
@@ -1630,7 +1636,7 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Add network suggestions to the platform")
     public boolean wifiAddNetworkSuggestions(
             @RpcParameter(name = "wifiNetworkSuggestions") JSONArray wifiNetworkSuggestions)
-            throws JSONException, GeneralSecurityException {
+            throws JSONException, GeneralSecurityException, IOException {
         return mWifi.addNetworkSuggestions(genWifiNetworkSuggestions(wifiNetworkSuggestions))
                 == WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
     }
@@ -1646,7 +1652,7 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Remove network suggestions from the platform")
     public boolean wifiRemoveNetworkSuggestions(
             @RpcParameter(name = "wifiNetworkSuggestions") JSONArray wifiNetworkSuggestions)
-            throws JSONException, GeneralSecurityException {
+            throws JSONException, GeneralSecurityException, IOException {
         return mWifi.removeNetworkSuggestions(genWifiNetworkSuggestions(wifiNetworkSuggestions))
                 == WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS;
     }
