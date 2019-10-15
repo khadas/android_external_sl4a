@@ -496,7 +496,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
 
     @Rpc(description = "register a default network callback")
     public String connectivityRegisterDefaultNetworkCallback() {
-        mNetworkCallback = new NetworkCallback(NetworkCallback.EVENT_AVAILABLE);
+        mNetworkCallback = new NetworkCallback(NetworkCallback.EVENT_ALL);
         mManager.registerDefaultNetworkCallback(mNetworkCallback);
         String key = mNetworkCallback.mId;
         mNetworkCallbackMap.put(key, mNetworkCallback);
