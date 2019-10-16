@@ -1057,6 +1057,7 @@ public class JsonBuilder {
         config.put("providerFriendlyName", data.providerFriendlyName);
         config.put("isPasspoint", data.isPasspoint());
         config.put("hiddenSSID", data.hiddenSSID);
+        config.put("carrierId", data.carrierId);
         if (data.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SAE)) {
             config.put("security", "SAE");
         } else if (data.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_PSK)) {
