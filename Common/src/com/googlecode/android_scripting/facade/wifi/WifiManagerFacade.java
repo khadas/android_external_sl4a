@@ -122,6 +122,7 @@ public class WifiManagerFacade extends RpcReceiver {
     private final IntentFilter mTetherFilter;
     private final IntentFilter mNetworkSuggestionStateChangeFilter;
     private final WifiScanReceiver mScanResultsAvailableReceiver;
+    private final WifiScanResultsReceiver mWifiScanResultsReceiver;
     private final WifiStateChangeReceiver mStateChangeReceiver;
     private final WifiNetworkSuggestionStateChangeReceiver mNetworkSuggestionStateChangeReceiver;
     private final HandlerThread mCallbackHandlerThread;
@@ -274,6 +275,7 @@ public class WifiManagerFacade extends RpcReceiver {
                 WifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION);
 
         mScanResultsAvailableReceiver = new WifiScanReceiver(mEventFacade);
+        mWifiScanResultsReceiver = new WifiScanResultsReceiver(mEventFacade);
         mStateChangeReceiver = new WifiStateChangeReceiver();
         mNetworkSuggestionStateChangeReceiver = new WifiNetworkSuggestionStateChangeReceiver();
         mTrackingWifiStateChange = false;
@@ -317,6 +319,22 @@ public class WifiManagerFacade extends RpcReceiver {
                 }
                 mService.unregisterReceiver(mScanResultsAvailableReceiver);
             }
+        }
+    }
+
+    class WifiScanResultsReceiver implements WifiManager.ScanResultsListener{
+        private final EventFacade mEventFacade;
+
+        WifiScanResultsReceiver(EventFacade eventFacade) {
+            mEventFacade = eventFacade;
+        }
+        @Override
+        public void onScanResultsAvailable() {
+            Bundle mResults = new Bundle();
+            Log.d("Wifi connection scan finished, results available.");
+            mResults.putLong("Timestamp", System.currentTimeMillis() / 1000);
+            mEventFacade.postEvent(mEventType + "ScanResultsCallbackOnSuccess", mResults);
+            mWifi.removeScanResultsListener(mWifiScanResultsReceiver);
         }
     }
 
@@ -1395,6 +1413,13 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Starts a scan for Wifi access points.", returns = "True if the scan was initiated successfully.")
     public Boolean wifiStartScan() {
         mService.registerReceiver(mScanResultsAvailableReceiver, mScanFilter);
+        return mWifi.startScan();
+    }
+
+    @Rpc(description = "Starts a scan for Wifi access points with scanResultCallback.",
+            returns = "True if the scan was initiated successfully.")
+    public Boolean wifiStartScanWithListener() {
+        mWifi.addScanResultsListener(mService.getMainExecutor(), mWifiScanResultsReceiver);
         return mWifi.startScan();
     }
 
