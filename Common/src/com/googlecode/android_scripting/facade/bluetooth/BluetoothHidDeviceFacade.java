@@ -316,7 +316,7 @@ public class BluetoothHidDeviceFacade extends RpcReceiver {
         }
         BluetoothDevice mDevice =
                 BluetoothFacade.getDevice(BluetoothFacade.DiscoveredDevices, device);
-        Log.d("Connecting to device " + mDevice.getAliasName());
+        Log.d("Connecting to device " + mDevice.getAlias());
         return hidDeviceConnect(mDevice);
     }
 

@@ -121,7 +121,7 @@ public class BluetoothHspFacade extends RpcReceiver {
         if (!waitHspReady(10)) return;
         BluetoothDevice device = BluetoothFacade.getDevice(
                 mBluetoothAdapter.getBondedDevices(), deviceStr);
-        Log.d("Changing priority of device " + device.getAliasName() + " p: " + priority);
+        Log.d("Changing priority of device " + device.getAlias() + " p: " + priority);
         sHspProfile.setPriority(device, priority);
     }
 
@@ -138,7 +138,7 @@ public class BluetoothHspFacade extends RpcReceiver {
         if (!waitHspReady(10)) return false;
         BluetoothDevice mDevice = BluetoothFacade.getDevice(
                 mBluetoothAdapter.getBondedDevices(), device);
-        Log.d("Connecting to device " + mDevice.getAliasName());
+        Log.d("Connecting to device " + mDevice.getAlias());
         return hspConnect(mDevice);
     }
 
