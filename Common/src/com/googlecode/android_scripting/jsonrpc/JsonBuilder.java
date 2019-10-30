@@ -1033,13 +1033,12 @@ public class JsonBuilder {
     private static JSONObject buildWifiActivityEnergyInfo(
             WifiActivityEnergyInfo data) throws JSONException {
         JSONObject result = new JSONObject();
-        result.put("ControllerEnergyUsed", data.getControllerEnergyUsed());
-        result.put("ControllerIdleTimeMillis",
-                data.getControllerIdleTimeMillis());
-        result.put("ControllerRxTimeMillis", data.getControllerRxTimeMillis());
-        result.put("ControllerTxTimeMillis", data.getControllerTxTimeMillis());
+        result.put("ControllerEnergyUsed", data.getControllerEnergyUsedMicroJoules());
+        result.put("ControllerIdleTimeMillis", data.getControllerIdleDurationMillis());
+        result.put("ControllerRxTimeMillis", data.getControllerRxDurationMillis());
+        result.put("ControllerTxTimeMillis", data.getControllerTxDurationMillis());
         result.put("StackState", data.getStackState());
-        result.put("TimeStamp", data.getTimeStamp());
+        result.put("TimeStamp", data.getTimeSinceBootMillis());
         return result;
     }
 
