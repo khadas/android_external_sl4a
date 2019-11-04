@@ -25,8 +25,9 @@ import android.database.Cursor;
 import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.RemoteException;
-import android.os.SystemProperties;
 import android.provider.Telephony;
+import android.sysprop.TelephonyProperties;
+import android.telephony.AvailableNetworkInfo;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.NeighboringCellInfo;
@@ -35,10 +36,8 @@ import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.telephony.AvailableNetworkInfo;
 
 import com.android.internal.telephony.RILConstants;
-import com.android.internal.telephony.TelephonyProperties;
 
 import com.google.common.io.BaseEncoding;
 import com.googlecode.android_scripting.Log;
@@ -46,9 +45,9 @@ import com.googlecode.android_scripting.facade.AndroidFacade;
 import com.googlecode.android_scripting.facade.EventFacade;
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.facade.telephony.TelephonyStateListeners
-                                                   .CallStateChangeListener;
-import com.googlecode.android_scripting.facade.telephony.TelephonyStateListeners
                                                    .ActiveDataSubIdChangeListener;
+import com.googlecode.android_scripting.facade.telephony.TelephonyStateListeners
+                                                   .CallStateChangeListener;
 import com.googlecode.android_scripting.facade.telephony.TelephonyStateListeners
                                                    .CellInfoChangeListener;
 import com.googlecode.android_scripting.facade.telephony.TelephonyStateListeners
@@ -67,8 +66,8 @@ import com.googlecode.android_scripting.rpc.RpcDefault;
 import com.googlecode.android_scripting.rpc.RpcOptional;
 import com.googlecode.android_scripting.rpc.RpcParameter;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -1193,7 +1192,8 @@ public class TelephonyManagerFacade extends RpcReceiver {
         String mcc = "";
         String mnc = "";
 
-        String numeric = SystemProperties.get(TelephonyProperties.PROPERTY_ICC_OPERATOR_NUMERIC);
+        List<String> numerics = TelephonyProperties.icc_operator_numeric();
+        String numeric = numerics.isEmpty() ? null : numerics.get(0);
         // MCC is first 3 chars and then in 2 - 3 chars of MNC
         if (numeric != null && numeric.length() > 4) {
             // Country code
