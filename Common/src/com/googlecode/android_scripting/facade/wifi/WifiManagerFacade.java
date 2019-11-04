@@ -547,6 +547,9 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("macRand")) {
             config.macRandomizationSetting = j.getInt("macRand");
         }
+        if (j.has("carrierId")) {
+            config.carrierId = j.getInt("carrierId");
+        }
         return config;
     }
 
@@ -641,6 +644,9 @@ public class WifiManagerFacade extends RpcReceiver {
             }
             config.roamingConsortiumIds = rIds;
         }
+        if (j.has("carrierId")) {
+            config.carrierId = j.getInt("carrierId");
+        }
         config.enterpriseConfig = genWifiEnterpriseConfig(j);
         return config;
     }
@@ -711,6 +717,9 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("priority")) {
             builder = builder.setPriority(j.getInt("priority"));
         }
+        if (j.has("carrierId")) {
+            builder.setCarrierId(j.getInt("carrierId"));
+        }
         if (j.has("profile")) {
             builder = builder.setPasspointConfig(genWifiPasspointConfig(j));
         } else {
@@ -744,6 +753,7 @@ public class WifiManagerFacade extends RpcReceiver {
                     builder = builder.setWpa3EnterpriseConfig(genWifiEnterpriseConfig(j));
                 }
             }
+
         }
 
         return builder.build();
