@@ -36,6 +36,7 @@ import android.net.NetworkSpecifier;
 import android.net.Uri;
 import android.net.wifi.EasyConnectStatusCallback;
 import android.net.wifi.ScanResult;
+import android.net.wifi.SoftApInfo;
 import android.net.wifi.WifiActivityEnergyInfo;
 import android.net.wifi.WifiClient;
 import android.net.wifi.WifiConfiguration;
@@ -248,6 +249,11 @@ public class WifiManagerFacade extends RpcReceiver {
             Bundle msg = new Bundle();
             msg.putInt("NumClients", clients.size());
             mEventFacade.postEvent(mEventStr + "OnNumClientsChanged", msg);
+        }
+
+        @Override
+        public void onInfoChanged(SoftApInfo softApInfo) {
+            mEventFacade.postEvent(mEventStr + "OnInfoChanged", softApInfo);
         }
     };
 

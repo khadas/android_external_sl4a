@@ -42,6 +42,7 @@ import android.net.RouteInfo;
 import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
 import android.net.wifi.ScanResult;
+import android.net.wifi.SoftApInfo;
 import android.net.wifi.WifiActivityEnergyInfo;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
@@ -293,6 +294,9 @@ public class JsonBuilder {
         }
         if (data instanceof WifiP2pGroup) {
             return buildWifiP2pGroup((WifiP2pGroup) data);
+        }
+        if (data instanceof SoftApInfo) {
+            return buildSoftApInfo((SoftApInfo) data);
         }
         if (data instanceof LinkProperties) {
             return buildLinkProperties((LinkProperties) data);
@@ -1153,6 +1157,15 @@ public class JsonBuilder {
         info.put("groupFormed", data.groupFormed);
         info.put("isGroupOwner", data.isGroupOwner);
         info.put("groupOwnerAddress", data.groupOwnerAddress);
+        return info;
+    }
+
+    private static JSONObject buildSoftApInfo(SoftApInfo data)
+            throws JSONException {
+        JSONObject info = new JSONObject();
+        Log.d("build softAp info.");
+        info.put("frequency", data.getFrequency());
+        info.put("bandwidth", data.getBandwidth());
         return info;
     }
 
