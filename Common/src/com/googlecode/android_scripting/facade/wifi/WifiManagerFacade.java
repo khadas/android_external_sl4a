@@ -1080,7 +1080,7 @@ public class WifiManagerFacade extends RpcReceiver {
                 osuServiceDescription = config.getString("description");
             }
             Map<String, String> osuFriendlyNames = new HashMap<>();
-            osuFriendlyNames.put("en", osuFriendlyName);
+            osuFriendlyNames.put("eng", osuFriendlyName);
             return new OsuProvider(osuSsid, osuFriendlyNames, osuServiceDescription,
                     osuServerUri, null, osuMethodList, null);
         } catch (JSONException e) {
