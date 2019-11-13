@@ -50,7 +50,6 @@ import android.net.wifi.WifiManager.NetworkRequestUserSelectionCallback;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiNetworkSpecifier;
 import android.net.wifi.WifiNetworkSuggestion;
-import android.net.wifi.WifiSsid;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.hotspot2.ConfigParser;
 import android.net.wifi.hotspot2.OsuProvider;
@@ -87,7 +86,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -1061,8 +1059,7 @@ public class WifiManagerFacade extends RpcReceiver {
                 Log.e("missing osuSSID from the config");
                 return null;
             }
-            WifiSsid osuSsid = WifiSsid.createFromByteArray(
-                    config.getString("osuSSID").getBytes(StandardCharsets.UTF_8));
+            String osuSsid = config.getString("osuSSID");
 
             if (!config.has("osuUri")) {
                 Log.e("missing osuUri from the config");
