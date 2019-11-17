@@ -132,6 +132,7 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         public static final int EVENT_SUSPENDED = 1 << 6;
         public static final int EVENT_RESUMED = 1 << 7;
         public static final int EVENT_LINK_PROPERTIES_CHANGED = 1 << 8;
+        public static final int EVENT_BLOCKED_STATUS_CHANGED = 1 << 9;
         public static final int EVENT_ALL = EVENT_PRECHECK |
                 EVENT_AVAILABLE |
                 EVENT_LOSING |
@@ -140,7 +141,8 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                 EVENT_CAPABILITIES_CHANGED |
                 EVENT_SUSPENDED |
                 EVENT_RESUMED |
-                EVENT_LINK_PROPERTIES_CHANGED;
+                EVENT_LINK_PROPERTIES_CHANGED
+                | EVENT_BLOCKED_STATUS_CHANGED;
 
         private int mEvents;
         public String mId;
@@ -238,6 +240,19 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         }
 
         @Override
+        public void onBlockedStatusChanged(Network network, boolean blocked) {
+            Log.d("NetworkCallback onBlockedStatusChanged");
+            if ((mEvents & EVENT_BLOCKED_STATUS_CHANGED) == EVENT_BLOCKED_STATUS_CHANGED) {
+                mEventFacade.postEvent(
+                        ConnectivityConstants.EventNetworkCallback,
+                        new ConnectivityEvents.NetworkCallbackEventBase(
+                            mId,
+                            getNetworkCallbackEventString(EVENT_BLOCKED_STATUS_CHANGED),
+                            mCreateTimestamp));
+            }
+        }
+
+        @Override
         public void onNetworkSuspended(Network network) {
             Log.d("NetworkCallback onNetworkSuspended");
             if ((mEvents & EVENT_SUSPENDED) == EVENT_SUSPENDED) {
@@ -296,6 +311,8 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                 return NetworkCallback.EVENT_RESUMED;
             case ConnectivityConstants.NetworkCallbackLinkPropertiesChanged:
                 return NetworkCallback.EVENT_LINK_PROPERTIES_CHANGED;
+            case ConnectivityConstants.NetworkCallbackBlockedStatusChanged:
+                return NetworkCallback.EVENT_BLOCKED_STATUS_CHANGED;
         }
         return NetworkCallback.EVENT_INVALID;
     }
@@ -320,6 +337,8 @@ public class ConnectivityManagerFacade extends RpcReceiver {
                 return ConnectivityConstants.NetworkCallbackResumed;
             case NetworkCallback.EVENT_LINK_PROPERTIES_CHANGED:
                 return ConnectivityConstants.NetworkCallbackLinkPropertiesChanged;
+            case NetworkCallback.EVENT_BLOCKED_STATUS_CHANGED:
+                return ConnectivityConstants.NetworkCallbackBlockedStatusChanged;
         }
         return ConnectivityConstants.NetworkCallbackInvalid;
     }
