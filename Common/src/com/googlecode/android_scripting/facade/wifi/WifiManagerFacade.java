@@ -1625,7 +1625,8 @@ public class WifiManagerFacade extends RpcReceiver {
             throws JSONException, GeneralSecurityException {
         // Listen for UI interaction callbacks
         mWifi.registerNetworkRequestMatchCallback(
-                mNetworkRequestMatchCallback, new Handler(mCallbackHandlerThread.getLooper()));
+                new HandlerExecutor(new Handler(mCallbackHandlerThread.getLooper())),
+                mNetworkRequestMatchCallback);
     }
 
     /**
