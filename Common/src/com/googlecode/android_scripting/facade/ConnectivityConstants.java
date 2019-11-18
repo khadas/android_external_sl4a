@@ -37,6 +37,7 @@ public class ConnectivityConstants {
     public static final String NetworkCallbackSuspended = "Suspended";
     public static final String NetworkCallbackResumed = "Resumed";
     public static final String NetworkCallbackLinkPropertiesChanged = "LinkPropertiesChanged";
+    public static final String NetworkCallbackBlockedStatusChanged = "BlockedStatusChanged";
     public static final String NetworkCallbackInvalid = "Invalid";
 
     /**
