@@ -1362,8 +1362,9 @@ public class WifiManagerFacade extends RpcReceiver {
     public Integer registerSoftApCallback() {
         SoftApCallbackImp softApCallback = new SoftApCallbackImp(mEventFacade);
         mSoftapCallbacks.put(softApCallback.mId, softApCallback);
-        mWifi.registerSoftApCallback(softApCallback,
-                new HandlerExecutor(new Handler(mCallbackHandlerThread.getLooper())));
+        mWifi.registerSoftApCallback(
+                new HandlerExecutor(new Handler(mCallbackHandlerThread.getLooper())),
+                softApCallback);
         return softApCallback.mId;
     }
 
