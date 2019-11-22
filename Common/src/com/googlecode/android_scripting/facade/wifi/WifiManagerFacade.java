@@ -328,7 +328,7 @@ public class WifiManagerFacade extends RpcReceiver {
         }
     }
 
-    class WifiScanResultsReceiver implements WifiManager.ScanResultsListener{
+    class WifiScanResultsReceiver extends WifiManager.ScanResultsCallback {
         private final EventFacade mEventFacade;
 
         WifiScanResultsReceiver(EventFacade eventFacade) {
@@ -340,7 +340,7 @@ public class WifiManagerFacade extends RpcReceiver {
             Log.d("Wifi connection scan finished, results available.");
             mResults.putLong("Timestamp", System.currentTimeMillis() / 1000);
             mEventFacade.postEvent(mEventType + "ScanResultsCallbackOnSuccess", mResults);
-            mWifi.removeScanResultsListener(mWifiScanResultsReceiver);
+            mWifi.unregisterScanResultsCallback(mWifiScanResultsReceiver);
         }
     }
 
@@ -1435,7 +1435,7 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Starts a scan for Wifi access points with scanResultCallback.",
             returns = "True if the scan was initiated successfully.")
     public Boolean wifiStartScanWithListener() {
-        mWifi.addScanResultsListener(mService.getMainExecutor(), mWifiScanResultsReceiver);
+        mWifi.registerScanResultsCallback(mService.getMainExecutor(), mWifiScanResultsReceiver);
         return mWifi.startScan();
     }
 
