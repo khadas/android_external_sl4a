@@ -35,7 +35,7 @@ import java.util.List;
 
 public class BluetoothA2dpSinkFacade extends RpcReceiver {
     static final ParcelUuid[] SOURCE_UUIDS = {
-        BluetoothUuid.AudioSource,
+        BluetoothUuid.A2DP_SOURCE,
     };
 
     private final Service mService;
