@@ -34,6 +34,7 @@ import android.net.NetworkPolicyManager;
 import android.net.NetworkRequest;
 import android.net.ProxyInfo;
 import android.net.StringNetworkSpecifier;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.provider.Settings;
@@ -977,7 +978,8 @@ public class ConnectivityManagerFacade extends RpcReceiver {
      */
     @Rpc(description = "Set global proxy with proxy autoconfig")
     public void connectivitySetGlobalPacProxy(String pac) {
-        ProxyInfo proxyInfo = new ProxyInfo(pac);
+        Uri uri = Uri.parse(pac);
+        ProxyInfo proxyInfo = new ProxyInfo(uri);
         mManager.setGlobalProxy(proxyInfo);
     }
 
