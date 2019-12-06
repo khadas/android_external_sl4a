@@ -40,7 +40,7 @@ import java.util.List;
 
 public class BluetoothHidDeviceFacade extends RpcReceiver {
 
-    public static final ParcelUuid[] UUIDS = {BluetoothUuid.Hid};
+    public static final ParcelUuid[] UUIDS = {BluetoothUuid.HID};
 
     public static final byte ID_KEYBOARD = 1;
     public static final byte ID_MOUSE = 2;

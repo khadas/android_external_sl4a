@@ -35,7 +35,7 @@ import java.util.List;
 
 public class BluetoothHfpClientFacade extends RpcReceiver {
     static final ParcelUuid[] UUIDS = {
-        BluetoothUuid.Handsfree_AG,
+        BluetoothUuid.HFP_AG,
     };
 
     private final Service mService;

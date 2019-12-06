@@ -42,7 +42,7 @@ import java.util.List;
 
 public class BluetoothA2dpFacade extends RpcReceiver {
     static final ParcelUuid[] SINK_UUIDS = {
-        BluetoothUuid.AudioSink, BluetoothUuid.AdvAudioDist,
+        BluetoothUuid.A2DP_SINK, BluetoothUuid.ADV_AUDIO_DIST,
     };
     private BluetoothCodecConfig mBluetoothCodecConfig;
 
