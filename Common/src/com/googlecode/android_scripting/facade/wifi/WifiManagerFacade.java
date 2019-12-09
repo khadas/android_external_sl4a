@@ -1272,9 +1272,20 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.isDeviceToDeviceRttSupported();
     }
 
-    @Rpc(description = "Check if the chipset supports dual frequency band (2.4 GHz and 5 GHz).")
-    public Boolean wifiIsDualBandSupported() {
-        return mWifi.isDualBandSupported();
+    /**
+     * @return true if chipset supports 5GHz band and false otherwise.
+     */
+    @Rpc(description = "Check if the chipset supports 5GHz frequency band.")
+    public Boolean is5GhzBandSupported() {
+        return mWifi.is5GHzBandSupported();
+    }
+
+    /**
+     * @return true if chipset supports 6GHz band and false otherwise.
+     */
+    @Rpc(description = "Check if the chipset supports 6GHz frequency band.")
+    public Boolean is6GhzBandSupported() {
+        return mWifi.is6GHzBandSupported();
     }
 
     @Rpc(description = "Check if this adapter supports advanced power/performance counters.")
