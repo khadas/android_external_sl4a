@@ -445,7 +445,7 @@ public class SmsFacade extends RpcReceiver {
                 mSms.enableCellBroadcastRange(
                         messageId,
                         messageId,
-                        SmsManager.CELL_BROADCAST_RAN_TYPE_GSM);
+                        SmsCbMessage.MESSAGE_FORMAT_3GPP);
             }
 
             mEmergencyCBMessage = new IntentFilter(EMERGENCY_CB_MESSAGE_RECEIVED_ACTION);
@@ -464,7 +464,7 @@ public class SmsFacade extends RpcReceiver {
                 mSms.disableCellBroadcastRange(
                         messageId,
                         messageId,
-                        SmsManager.CELL_BROADCAST_RAN_TYPE_GSM);
+                        SmsCbMessage.MESSAGE_FORMAT_3GPP);
             }
         }
     }
@@ -476,7 +476,7 @@ public class SmsFacade extends RpcReceiver {
                 mSms.enableCellBroadcastRange(
                         messageId,
                         messageId,
-                        SmsManager.CELL_BROADCAST_RAN_TYPE_CDMA);
+                        SmsCbMessage.MESSAGE_FORMAT_3GPP2);
             }
             mEmergencyCBMessage = new IntentFilter(EMERGENCY_CB_MESSAGE_RECEIVED_ACTION);
             mService.registerReceiver(mCdmaEmergencyCBMessageListener,
@@ -494,7 +494,7 @@ public class SmsFacade extends RpcReceiver {
                 mSms.disableCellBroadcastRange(
                         messageId,
                         messageId,
-                        SmsManager.CELL_BROADCAST_RAN_TYPE_CDMA);
+                        SmsCbMessage.MESSAGE_FORMAT_3GPP2);
             }
         }
     }
