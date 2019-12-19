@@ -79,6 +79,7 @@ import android.telephony.CellSignalStrengthLte;
 import android.telephony.CellSignalStrengthTdscdma;
 import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.ModemActivityInfo;
+import android.telephony.ModemActivityInfo.TransmitPower;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
@@ -1335,14 +1336,13 @@ public class JsonBuilder {
         info.put("SleepTimeMs", modemInfo.getSleepTimeMillis());
         info.put("IdleTimeMs", modemInfo.getIdleTimeMillis());
         // convert from int[] to List<Integer> for proper JSON translation
-        int[] txTimes = modemInfo.getTxTimeMillis();
-        List<Integer> tmp = new ArrayList<Integer>(txTimes.length);
-        for (int val : txTimes) {
-            tmp.add(val);
+        List<TransmitPower> txPowerIno = modemInfo.getTransmitPowerInfo();
+        List<Integer> tmp = new ArrayList<Integer>(txPowerIno.size());
+        for (TransmitPower val : txPowerIno) {
+            tmp.add(val.getTimeInMillis());
         }
         info.put("TxTimeMs", build(tmp));
-        info.put("RxTimeMs", modemInfo.getRxTimeMillis());
-        info.put("EnergyUsedMw", modemInfo.getEnergyUsed());
+        info.put("RxTimeMs", modemInfo.getReceiveTimeMillis());
         return info;
     }
 
