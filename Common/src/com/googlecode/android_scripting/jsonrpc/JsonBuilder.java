@@ -1420,11 +1420,11 @@ public class JsonBuilder {
         JSONObject info = new JSONObject();
 
         info.put(TelephonyConstants.ServiceStateContainer.VOICE_REG_STATE,
-                TelephonyUtils.getNetworkStateString(ss.getVoiceRegState()));
+                TelephonyUtils.getNetworkStateString(ss.getState()));
         info.put(TelephonyConstants.ServiceStateContainer.VOICE_NETWORK_TYPE,
                 TelephonyUtils.getNetworkTypeString(ss.getVoiceNetworkType()));
         info.put(TelephonyConstants.ServiceStateContainer.DATA_REG_STATE,
-                TelephonyUtils.getNetworkStateString(ss.getDataRegState()));
+                TelephonyUtils.getNetworkStateString(ss.getDataRegistrationState()));
         info.put(TelephonyConstants.ServiceStateContainer.DATA_NETWORK_TYPE,
                 TelephonyUtils.getNetworkTypeString(ss.getDataNetworkType()));
         info.put(TelephonyConstants.ServiceStateContainer.OPERATOR_NAME, ss.getOperatorAlphaLong());
