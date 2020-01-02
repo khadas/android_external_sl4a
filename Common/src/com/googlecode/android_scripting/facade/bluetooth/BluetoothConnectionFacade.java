@@ -241,6 +241,7 @@ public class BluetoothConnectionFacade extends RpcReceiver {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (BluetoothFacade.deviceMatch(device, mDeviceID)) {
                     Log.d("Found device " + device.getAlias() + " for connection.");
+                    mEventFacade.postEvent("Discovery" + mDeviceID, mGoodNews);
                     mBluetoothAdapter.cancelDiscovery();
                     mDevice = device;
                 }
@@ -248,6 +249,7 @@ public class BluetoothConnectionFacade extends RpcReceiver {
             } else if (action.equals(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)) {
                 if (mDevice == null) {
                     Log.d("Device " + mDeviceID + " was not discovered.");
+                    mEventFacade.postEvent("Discovery", mBadNews);
                     mEventFacade.postEvent("Bond", mBadNews);
                     return;
                 }
