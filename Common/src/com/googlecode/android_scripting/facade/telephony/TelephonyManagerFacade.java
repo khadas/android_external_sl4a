@@ -739,6 +739,13 @@ public class TelephonyManagerFacade extends RpcReceiver {
             mTelephonyManager.getPhoneType());
     }
 
+    @Rpc(description = "Return if setAlwaysAllowMMSData is set correctly")
+    public boolean telephonySetAlwaysAllowMmsData(
+            @RpcParameter(name = "subId") Integer subId,
+            @RpcParameter(name = "alwaysAllow") Boolean alwaysAllow) {
+        return mTelephonyManager.createForSubscriptionId(subId).setAlwaysAllowMmsData(alwaysAllow);
+    }
+
     @Rpc(description = "Returns preferred opportunistic data subscription Id")
     public Integer telephonyGetPreferredOpportunisticDataSubscription() {
         return mTelephonyManager.getPreferredOpportunisticDataSubscription();
