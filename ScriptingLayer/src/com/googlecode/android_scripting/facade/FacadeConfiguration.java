@@ -50,6 +50,7 @@ import com.googlecode.android_scripting.facade.net.nsd.NsdManagerFacade;
 import com.googlecode.android_scripting.facade.telephony.CarrierConfigFacade;
 import com.googlecode.android_scripting.facade.telephony.ImsManagerFacade;
 import com.googlecode.android_scripting.facade.telephony.ImsMmTelManagerFacade;
+import com.googlecode.android_scripting.facade.telephony.ProvisioningManagerFacade;
 import com.googlecode.android_scripting.facade.telephony.SmsFacade;
 import com.googlecode.android_scripting.facade.telephony.SubscriptionManagerFacade;
 import com.googlecode.android_scripting.facade.telephony.TelecomCallFacade;
@@ -109,6 +110,7 @@ public class FacadeConfiguration {
         sFacadeClassList.add(ImsMmTelManagerFacade.class);
         sFacadeClassList.add(LocationFacade.class);
         sFacadeClassList.add(TelephonyManagerFacade.class);
+        sFacadeClassList.add(ProvisioningManagerFacade.class);
         sFacadeClassList.add(PreferencesFacade.class);
         sFacadeClassList.add(MediaPlayerFacade.class);
         sFacadeClassList.add(MediaRecorderFacade.class);
