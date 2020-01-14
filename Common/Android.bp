@@ -25,7 +25,11 @@ java_library {
         "junit",
     ],
 
+    sdk_version: "core_platform",
     libs: [
+        "framework-wifi", // allow SL4A to access @hide Wifi APIs
+        "framework",
+
         "telephony-common",
         "ims-common",
     ],
