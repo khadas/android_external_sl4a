@@ -1566,7 +1566,7 @@ public class WifiManagerFacade extends RpcReceiver {
     @Rpc(description = "Enable/disable WifiConnectivityManager.")
     public void wifiEnableWifiConnectivityManager(
             @RpcParameter(name = "enable") Boolean enable) {
-        mWifi.enableWifiConnectivityManager(enable);
+        mWifi.allowAutojoinGlobal(enable);
     }
 
     private void wifiRequestNetworkWithSpecifierInternal(NetworkSpecifier wns, int timeoutInMs)
