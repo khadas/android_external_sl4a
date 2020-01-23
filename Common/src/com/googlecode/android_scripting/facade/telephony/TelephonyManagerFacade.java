@@ -759,6 +759,18 @@ public class TelephonyManagerFacade extends RpcReceiver {
         return mTelephonyManager.createForSubscriptionId(subId).setAlwaysAllowMmsData(alwaysAllow);
     }
 
+    /**
+    * Sets Data Roaming flag for a particular sub Id
+    * @param subId the subscriber id
+    * @param isEnabled can you set to true or false
+    */
+    @Rpc(description = "Sets data roaming for a sub Id")
+    public void telephonySetDataRoamingEnabled(
+            @RpcParameter(name = "subId") Integer subId,
+            @RpcParameter(name = "isEnabled") Boolean isEnabled) {
+        mTelephonyManager.createForSubscriptionId(subId).setDataRoamingEnabled(isEnabled);
+    }
+
     @Rpc(description = "Returns preferred opportunistic data subscription Id")
     public Integer telephonyGetPreferredOpportunisticDataSubscription() {
         return mTelephonyManager.getPreferredOpportunisticDataSubscription();
