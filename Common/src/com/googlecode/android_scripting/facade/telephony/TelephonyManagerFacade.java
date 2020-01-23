@@ -136,6 +136,19 @@ public class TelephonyManagerFacade extends RpcReceiver {
         mTelephonyManager.factoryReset(subId);
     }
 
+    /**
+    * Reset TelephonyManager settings to factory default.
+    * @param subId the subriber id to be reset, use default id if not provided.
+    */
+    @Rpc(description = "Resets Telephony and IMS settings to factory default.")
+    public void telephonyResetSettings(
+            @RpcOptional @RpcParameter(name = "subId") Integer subId) {
+        if (subId == null) {
+            subId = SubscriptionManager.getDefaultVoiceSubscriptionId();
+        }
+        mTelephonyManager.createForSubscriptionId(subId).resetSettings();
+    }
+
     @Rpc(description = "Set network preference.")
     public boolean telephonySetPreferredNetworkTypes(
         @RpcParameter(name = "nwPreference") String nwPreference) {
