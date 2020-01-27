@@ -1138,7 +1138,7 @@ public class WifiManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Enable WiFi verbose logging.")
     public void wifiEnableVerboseLogging(@RpcParameter(name = "level") Integer level) {
-        mWifi.enableVerboseLogging(level);
+        mWifi.setVerboseLoggingEnabled(level > 0);
     }
 
     @Rpc(description = "Resets all WifiManager settings.")
@@ -1243,7 +1243,7 @@ public class WifiManagerFacade extends RpcReceiver {
 
     @Rpc(description = "Get the current level of WiFi verbose logging.")
     public Integer wifiGetVerboseLoggingLevel() {
-        return mWifi.getVerboseLoggingLevel();
+        return mWifi.isVerboseLoggingEnabled() ? 1 : 0;
     }
 
     @Rpc(description = "true if this adapter supports 5 GHz band.")
