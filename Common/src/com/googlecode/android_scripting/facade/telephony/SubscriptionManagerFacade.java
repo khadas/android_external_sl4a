@@ -18,8 +18,8 @@ package com.googlecode.android_scripting.facade.telephony;
 
 import android.app.Service;
 import android.content.Context;
-import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 
 import com.googlecode.android_scripting.facade.FacadeManager;
 import com.googlecode.android_scripting.jsonrpc.RpcReceiver;
@@ -105,13 +105,6 @@ public class SubscriptionManagerFacade extends RpcReceiver {
             @RpcParameter(name = "subId")
             Integer subId) {
         return mSubscriptionManager.getActiveSubscriptionInfo(subId);
-    }
-
-    @Rpc(description = "Return if AlwaysAllowMMSData is set correctly")
-    public boolean subscriptionSetAlwaysAllowMmsData(
-            @RpcParameter(name = "subId") Integer subId,
-            @RpcParameter(name = "alwaysAllow") Boolean alwaysAllow) {
-        return mSubscriptionManager.setAlwaysAllowMmsData(subId, alwaysAllow);
     }
 
     @Rpc(description = "Set Data Roaming Enabled or Disabled for a particular Subscription ID")
