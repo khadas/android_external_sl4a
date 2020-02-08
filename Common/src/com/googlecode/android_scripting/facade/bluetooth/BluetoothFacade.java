@@ -227,11 +227,11 @@ public class BluetoothFacade extends RpcReceiver {
     @Rpc(description = "Requests that the device be discoverable for Bluetooth connections.")
     public void bluetoothMakeDiscoverable(
             @RpcParameter(name = "duration",
-                          description = "period of time, in seconds,"
+                          description = "period of time, in milliseconds,"
                                       + "during which the device should be discoverable")
-            @RpcDefault("300")
-            Integer duration) {
-        Log.d("Making discoverable for " + duration + " seconds.\n");
+            @RpcDefault("300000")
+            Long duration) {
+        Log.d("Making discoverable for " + duration + " milliseconds.\n");
         mBluetoothAdapter.setScanMode(
                 BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE, duration);
     }
