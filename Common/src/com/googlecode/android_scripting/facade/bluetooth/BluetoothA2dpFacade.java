@@ -281,7 +281,7 @@ public class BluetoothA2dpFacade extends RpcReceiver {
                 currentCodecStatus.getCodecsSelectableCapabilities()) {
             if (isSelectableCodec(codecConfig, selectable)) {
                 mBluetoothCodecConfig = codecConfig;
-                sA2dpProfile.setCodecConfigPreference(null, mBluetoothCodecConfig);
+                sA2dpProfile.setCodecConfigPreference(activeDevice, mBluetoothCodecConfig);
                 return true;
             }
         }
