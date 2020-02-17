@@ -33,6 +33,7 @@ import android.net.NetworkPolicy;
 import android.net.NetworkPolicyManager;
 import android.net.NetworkRequest;
 import android.net.ProxyInfo;
+import android.net.RouteInfo;
 import android.net.StringNetworkSpecifier;
 import android.net.Uri;
 import android.os.Bundle;
@@ -763,6 +764,21 @@ public class ConnectivityManagerFacade extends RpcReceiver {
     @Rpc(description = "Returns active link properties")
     public LinkProperties connectivityGetActiveLinkProperties() {
         return mManager.getActiveLinkProperties();
+    }
+
+    /**
+     * Get the IPv4 default gateway for the active network.
+     */
+    @Rpc(description = "Return default gateway of the active network")
+    public String connectivityGetIPv4DefaultGateway() {
+        LinkProperties linkProp = mManager.getActiveLinkProperties();
+        List<RouteInfo> routeInfos = linkProp.getRoutes();
+        for (RouteInfo routeInfo: routeInfos) {
+            if (routeInfo.isIPv4Default()) {
+                return routeInfo.getGateway().toString().split("/")[1];
+            }
+        }
+        return null;
     }
 
     @Rpc(description = "Returns all IP addresses of the active link")
