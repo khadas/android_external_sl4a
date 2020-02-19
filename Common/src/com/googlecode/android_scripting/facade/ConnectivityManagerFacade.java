@@ -1027,6 +1027,15 @@ public class ConnectivityManagerFacade extends RpcReceiver {
         return mManager.isActiveNetworkMetered();
     }
 
+    /**
+     * Check if device connected to WiFi network
+     */
+    @Rpc(description = "Is active network WiFi")
+    public boolean connectivityIsActiveNetworkWiFi() {
+        NetworkInfo mWifi = mManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        return mWifi.isConnected();
+    }
+
     @Override
     public void shutdown() {
         connectivityStopTrackingConnectivityStateChange();
