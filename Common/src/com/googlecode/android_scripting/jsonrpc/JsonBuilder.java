@@ -42,6 +42,7 @@ import android.net.RouteInfo;
 import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
 import android.net.wifi.ScanResult;
+import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
@@ -279,6 +280,9 @@ public class JsonBuilder {
         }
         if (data instanceof WifiActivityEnergyInfo) {
             return buildWifiActivityEnergyInfo((WifiActivityEnergyInfo) data);
+        }
+        if (data instanceof SoftApConfiguration) {
+            return buildSoftApConfiguration((SoftApConfiguration) data);
         }
         if (data instanceof WifiConfiguration) {
             return buildWifiConfiguration((WifiConfiguration) data);
@@ -1040,6 +1044,25 @@ public class JsonBuilder {
         result.put("StackState", data.getStackState());
         result.put("TimeStamp", data.getTimeSinceBootMillis());
         return result;
+    }
+
+    private static Object buildSoftApConfiguration(SoftApConfiguration data)
+            throws JSONException {
+        JSONObject config = new JSONObject();
+        config.put("SSID", data.getSsid());
+        config.put("BSSID", data.getBssid());
+        config.put("hiddenSSID", data.isHiddenSsid());
+        int securityType = data.getSecurityType();
+        if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN) {
+            config.put("security", "NONE");
+        } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK) {
+            config.put("security", "PSK");
+        } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE_TRANSITION) {
+            config.put("security", "WPA3_SAE_TRANSITION");
+        } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE) {
+            config.put("security", "WPA3_SAE");
+        }
+        return config;
     }
 
     private static Object buildWifiConfiguration(WifiConfiguration data)

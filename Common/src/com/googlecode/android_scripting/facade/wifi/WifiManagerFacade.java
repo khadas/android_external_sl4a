@@ -38,6 +38,7 @@ import android.net.NetworkSpecifier;
 import android.net.Uri;
 import android.net.wifi.EasyConnectStatusCallback;
 import android.net.wifi.ScanResult;
+import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
 import android.net.wifi.WifiClient;
 import android.net.wifi.WifiConfiguration;
@@ -1168,8 +1169,21 @@ public class WifiManagerFacade extends RpcReceiver {
         mWifi.disableEphemeralNetwork("\"" + ssid + "\"");
     }
 
+    /**
+     * Get SoftAp Configuration with SoftApConfiguration.
+     */
     @Rpc(description = "Gets the Wi-Fi AP Configuration.")
-    public WifiConfiguration wifiGetApConfiguration() {
+    public SoftApConfiguration wifiGetApConfiguration() {
+        return mWifi.getSoftApConfiguration();
+    }
+
+    /**
+     * Get SoftAp Configuration with WifiConfiguration.
+     *
+     * Used to test deprecated API to check backward compatible
+     */
+    @Rpc(description = "Gets the Wi-Fi AP Configuration with WifiConfiguration.")
+    public WifiConfiguration wifiGetApConfigurationWithWifiConfiguration() {
         return mWifi.getWifiApConfiguration();
     }
 
@@ -1404,6 +1418,44 @@ public class WifiManagerFacade extends RpcReceiver {
         return mWifi.removeNetwork(netId);
     }
 
+    private SoftApConfiguration createSoftApConfiguration(JSONObject configJson)
+            throws JSONException {
+        if (configJson == null) {
+            return null;
+        }
+        SoftApConfiguration.Builder configBuilder = new SoftApConfiguration.Builder();
+        if (configJson.has("SSID")) {
+            configBuilder.setSsid(configJson.getString("SSID"));
+        }
+        if (configJson.has("password")) {
+            String pwd = configJson.getString("password");
+            // Check if new security type SAE (WPA3) is present. Default to PSK
+            if (configJson.has("security")) {
+                String securityType = configJson.getString("security");
+                if (TextUtils.equals(securityType, "WPA2")) {
+                    configBuilder.setPassphrase(pwd, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK);
+                } else if (TextUtils.equals(securityType, "SAE_TRANSITION")) {
+                    configBuilder.setPassphrase(pwd,
+                            SoftApConfiguration.SECURITY_TYPE_WPA3_SAE_TRANSITION);
+                } else if (TextUtils.equals(securityType, "SAE")) {
+                    configBuilder.setPassphrase(pwd, SoftApConfiguration.SECURITY_TYPE_WPA3_SAE);
+                }
+            } else {
+                configBuilder.setPassphrase(pwd, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK);
+            }
+        }
+        if (configJson.has("BSSID")) {
+            configBuilder.setBssid(MacAddress.fromString(configJson.getString("BSSID")));
+        }
+        if (configJson.has("hiddenSSID")) {
+            configBuilder.setHiddenSsid(configJson.getBoolean("hiddenSSID"));
+        }
+        if (configJson.has("apBand")) {
+            configBuilder.setBand(configJson.getInt("apBand"));
+        }
+        return configBuilder.build();
+    }
+
     private WifiConfiguration createSoftApWifiConfiguration(JSONObject configJson)
             throws JSONException {
         WifiConfiguration config = genWifiConfig(configJson);
@@ -1424,11 +1476,24 @@ public class WifiManagerFacade extends RpcReceiver {
         return config;
     }
 
+    /**
+     * Set SoftAp Configuration with SoftApConfiguration.
+     */
     @Rpc(description = "Set configuration for soft AP.")
     public Boolean wifiSetWifiApConfiguration(
             @RpcParameter(name = "configJson") JSONObject configJson) throws JSONException {
-        WifiConfiguration config = createSoftApWifiConfiguration(configJson);
-        return mWifi.setWifiApConfiguration(config);
+        return mWifi.setSoftApConfiguration(createSoftApConfiguration(configJson));
+    }
+
+    /**
+     * Set SoftAp Configuration with WifiConfiguration.
+     *
+     * Used to test deprecated API to check backward compatible.
+     */
+    @Rpc(description = "Set configuration for soft AP with WifiConfig.")
+    public Boolean wifiSetWifiApConfigurationWithWifiConfiguration(
+            @RpcParameter(name = "configJson") JSONObject configJson) throws JSONException {
+        return mWifi.setWifiApConfiguration(createSoftApWifiConfiguration(configJson));
     }
 
     /**
