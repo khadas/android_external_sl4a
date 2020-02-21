@@ -1613,19 +1613,9 @@ public class WifiManagerFacade extends RpcReceiver {
     public Boolean wifiToggleScanAlwaysAvailable(
             @RpcParameter(name = "enabled") @RpcOptional Boolean enabled)
                     throws SettingNotFoundException {
-        ContentResolver cr = mService.getContentResolver();
-        int isSet = 0;
-        if (enabled == null) {
-            isSet = Global.getInt(cr, Global.WIFI_SCAN_ALWAYS_AVAILABLE);
-            isSet ^= 1;
-        } else if (enabled == true) {
-            isSet = 1;
-        }
-        Global.putInt(cr, Global.WIFI_SCAN_ALWAYS_AVAILABLE, isSet);
-        if (isSet == 1) {
-            return true;
-        }
-        return false;
+        boolean isSet = (enabled == null) ? !mWifi.isScanAlwaysAvailable() : enabled;
+        mWifi.setScanAlwaysAvailable(isSet);
+        return isSet;
     }
 
     @Rpc(description = "Enable/disable WifiConnectivityManager.")
