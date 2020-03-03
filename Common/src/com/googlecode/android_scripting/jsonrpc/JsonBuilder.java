@@ -42,6 +42,7 @@ import android.net.RouteInfo;
 import android.net.Uri;
 import android.net.wifi.RttManager.RttCapabilities;
 import android.net.wifi.ScanResult;
+import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
 import android.net.wifi.WifiConfiguration;
@@ -298,6 +299,9 @@ public class JsonBuilder {
         }
         if (data instanceof WifiP2pGroup) {
             return buildWifiP2pGroup((WifiP2pGroup) data);
+        }
+        if (data instanceof SoftApCapability) {
+            return buildSoftApCapability((SoftApCapability) data);
         }
         if (data instanceof SoftApInfo) {
             return buildSoftApInfo((SoftApInfo) data);
@@ -1190,6 +1194,20 @@ public class JsonBuilder {
         info.put("groupFormed", data.groupFormed);
         info.put("isGroupOwner", data.isGroupOwner);
         info.put("groupOwnerAddress", data.groupOwnerAddress);
+        return info;
+    }
+
+    private static JSONObject buildSoftApCapability(SoftApCapability data)
+            throws JSONException {
+        JSONObject info = new JSONObject();
+        Log.d("build softAp capability info.");
+        info.put("maxSupportedClients", data.getMaxSupportedClients());
+        info.put("acsOffloadSupported", data.areFeaturesSupported(
+                SoftApCapability.SOFTAP_FEATURE_ACS_OFFLOAD));
+        info.put("clientForceDisconnectSupported", data.areFeaturesSupported(
+                SoftApCapability.SOFTAP_FEATURE_CLIENT_FORCE_DISCONNECT));
+        info.put("wpa3SaeSupported", data.areFeaturesSupported(
+                SoftApCapability.SOFTAP_FEATURE_WPA3_SAE));
         return info;
     }
 

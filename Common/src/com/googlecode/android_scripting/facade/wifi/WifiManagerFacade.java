@@ -37,6 +37,7 @@ import android.net.NetworkSpecifier;
 import android.net.Uri;
 import android.net.wifi.EasyConnectStatusCallback;
 import android.net.wifi.ScanResult;
+import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
 import android.net.wifi.WifiClient;
@@ -259,6 +260,11 @@ public class WifiManagerFacade extends RpcReceiver {
         @Override
         public void onInfoChanged(SoftApInfo softApInfo) {
             mEventFacade.postEvent(mEventStr + "OnInfoChanged", softApInfo);
+        }
+
+        @Override
+        public void onCapabilityChanged(SoftApCapability softApCapability) {
+            mEventFacade.postEvent(mEventStr + "OnCapabilityChanged", softApCapability);
         }
     };
 
