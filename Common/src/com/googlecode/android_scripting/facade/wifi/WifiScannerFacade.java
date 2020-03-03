@@ -553,7 +553,8 @@ public class WifiScannerFacade extends RpcReceiver {
     public void wifiScannerToggleAlwaysAvailable(
             @RpcParameter(name = "alwaysAvailable") @RpcOptional Boolean alwaysAvailable)
                     throws SettingNotFoundException {
-        mWifiManager.setScanAlwaysAvailable(alwaysAvailable);
+        mWifiManager.setScanAlwaysAvailable(
+                alwaysAvailable == null ? !mWifiManager.isScanAlwaysAvailable() : alwaysAvailable);
     }
 
     @Rpc(description = "Returns true if WiFi scan is always available, false otherwise.")
