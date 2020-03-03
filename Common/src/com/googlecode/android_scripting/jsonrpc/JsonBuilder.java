@@ -1056,12 +1056,23 @@ public class JsonBuilder {
         if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN) {
             config.put("security", "NONE");
         } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK) {
-            config.put("security", "PSK");
+            config.put("security", "WPA2_PSK");
         } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE_TRANSITION) {
             config.put("security", "WPA3_SAE_TRANSITION");
         } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE) {
             config.put("security", "WPA3_SAE");
         }
+        if (data.getPassphrase() != null) {
+            config.put("password", data.getPassphrase());
+        }
+        config.put("apBand", data.getBand());
+        config.put("apChannel", data.getChannel());
+        config.put("MaxNumberOfClients", data.getMaxNumberOfClients());
+        config.put("ShutdownTimeoutMillis", data.getShutdownTimeoutMillis());
+        config.put("AutoShutdownEnabled", data.isAutoShutdownEnabled());
+        config.put("ClientControlByUserEnabled", data.isClientControlByUserEnabled());
+        config.put("AllowedClientList", build(data.getAllowedClientList()));
+        config.put("BlockedClientList", build(data.getBlockedClientList()));
         return config;
     }
 
