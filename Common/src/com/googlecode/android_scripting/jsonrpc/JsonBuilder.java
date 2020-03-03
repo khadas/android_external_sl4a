@@ -45,6 +45,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
+import android.net.wifi.WifiClient;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
@@ -287,6 +288,9 @@ public class JsonBuilder {
         }
         if (data instanceof WifiConfiguration) {
             return buildWifiConfiguration((WifiConfiguration) data);
+        }
+        if (data instanceof WifiClient) {
+            return buildWifiClient((WifiClient) data);
         }
         if (data instanceof WifiP2pConfig) {
             return buildWifiP2pConfig((WifiP2pConfig) data);
@@ -1077,6 +1081,12 @@ public class JsonBuilder {
         config.put("ClientControlByUserEnabled", data.isClientControlByUserEnabled());
         config.put("AllowedClientList", build(data.getAllowedClientList()));
         config.put("BlockedClientList", build(data.getBlockedClientList()));
+        return config;
+    }
+
+    private static Object buildWifiClient(WifiClient data) throws JSONException {
+        JSONObject config = new JSONObject();
+        config.put("MacAddress", data.getMacAddress().toString());
         return config;
     }
 

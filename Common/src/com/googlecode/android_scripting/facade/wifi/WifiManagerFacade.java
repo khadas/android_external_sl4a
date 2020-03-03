@@ -255,6 +255,7 @@ public class WifiManagerFacade extends RpcReceiver {
             Bundle msg = new Bundle();
             msg.putInt("NumClients", clients.size());
             mEventFacade.postEvent(mEventStr + "OnNumClientsChanged", msg);
+            mEventFacade.postEvent(mEventStr + "OnConnectedClientsChanged", clients);
         }
 
         @Override
@@ -265,6 +266,14 @@ public class WifiManagerFacade extends RpcReceiver {
         @Override
         public void onCapabilityChanged(SoftApCapability softApCapability) {
             mEventFacade.postEvent(mEventStr + "OnCapabilityChanged", softApCapability);
+        }
+
+        @Override
+        public void onBlockedClientConnecting(WifiClient client, int blockedReason) {
+            Bundle msg = new Bundle();
+            msg.putString("WifiClient", client.getMacAddress().toString());
+            msg.putInt("BlockedReason", blockedReason);
+            mEventFacade.postEvent(mEventStr + "OnBlockedClientConnecting", msg);
         }
     };
 
