@@ -22,7 +22,6 @@ import static com.googlecode.android_scripting.jsonrpc.JsonBuilder.build;
 
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -38,6 +37,7 @@ import android.net.NetworkSpecifier;
 import android.net.Uri;
 import android.net.wifi.EasyConnectStatusCallback;
 import android.net.wifi.ScanResult;
+import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
 import android.net.wifi.WifiClient;
@@ -63,7 +63,6 @@ import android.os.HandlerExecutor;
 import android.os.HandlerThread;
 import android.os.PatternMatcher;
 import android.os.connectivity.WifiActivityEnergyInfo;
-import android.provider.Settings.Global;
 import android.provider.Settings.SettingNotFoundException;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -256,11 +255,25 @@ public class WifiManagerFacade extends RpcReceiver {
             Bundle msg = new Bundle();
             msg.putInt("NumClients", clients.size());
             mEventFacade.postEvent(mEventStr + "OnNumClientsChanged", msg);
+            mEventFacade.postEvent(mEventStr + "OnConnectedClientsChanged", clients);
         }
 
         @Override
         public void onInfoChanged(SoftApInfo softApInfo) {
             mEventFacade.postEvent(mEventStr + "OnInfoChanged", softApInfo);
+        }
+
+        @Override
+        public void onCapabilityChanged(SoftApCapability softApCapability) {
+            mEventFacade.postEvent(mEventStr + "OnCapabilityChanged", softApCapability);
+        }
+
+        @Override
+        public void onBlockedClientConnecting(WifiClient client, int blockedReason) {
+            Bundle msg = new Bundle();
+            msg.putString("WifiClient", client.getMacAddress().toString());
+            msg.putInt("BlockedReason", blockedReason);
+            mEventFacade.postEvent(mEventStr + "OnBlockedClientConnecting", msg);
         }
     };
 
@@ -1432,12 +1445,12 @@ public class WifiManagerFacade extends RpcReceiver {
             // Check if new security type SAE (WPA3) is present. Default to PSK
             if (configJson.has("security")) {
                 String securityType = configJson.getString("security");
-                if (TextUtils.equals(securityType, "WPA2")) {
+                if (TextUtils.equals(securityType, "WPA2_PSK")) {
                     configBuilder.setPassphrase(pwd, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK);
-                } else if (TextUtils.equals(securityType, "SAE_TRANSITION")) {
+                } else if (TextUtils.equals(securityType, "WPA3_SAE_TRANSITION")) {
                     configBuilder.setPassphrase(pwd,
                             SoftApConfiguration.SECURITY_TYPE_WPA3_SAE_TRANSITION);
-                } else if (TextUtils.equals(securityType, "SAE")) {
+                } else if (TextUtils.equals(securityType, "WPA3_SAE")) {
                     configBuilder.setPassphrase(pwd, SoftApConfiguration.SECURITY_TYPE_WPA3_SAE);
                 }
             } else {
@@ -1453,6 +1466,44 @@ public class WifiManagerFacade extends RpcReceiver {
         if (configJson.has("apBand")) {
             configBuilder.setBand(configJson.getInt("apBand"));
         }
+        if (configJson.has("apChannel") && configJson.has("apBand")) {
+            configBuilder.setChannel(configJson.getInt("apChannel"), configJson.getInt("apBand"));
+        }
+
+        if (configJson.has("MaxNumberOfClients")) {
+            configBuilder.setMaxNumberOfClients(configJson.getInt("MaxNumberOfClients"));
+        }
+
+        if (configJson.has("ShutdownTimeoutMillis")) {
+            configBuilder.setShutdownTimeoutMillis(configJson.getInt("ShutdownTimeoutMillis"));
+        }
+
+        if (configJson.has("AutoShutdownEnabled")) {
+            configBuilder.setAutoShutdownEnabled(configJson.getBoolean("AutoShutdownEnabled"));
+        }
+
+        if (configJson.has("ClientControlByUserEnabled")) {
+            configBuilder.enableClientControlByUser(
+                    configJson.getBoolean("ClientControlByUserEnabled"));
+        }
+
+        List allowedClientList = new ArrayList<>();
+        if (configJson.has("AllowedClientList")) {
+            JSONArray allowedList = configJson.getJSONArray("AllowedClientList");
+            for (int i = 0; i < allowedList.length(); i++) {
+                allowedClientList.add(MacAddress.fromString(allowedList.getString(i)));
+            }
+        }
+
+        List blockedClientList = new ArrayList<>();
+        if (configJson.has("BlockedClientList")) {
+            JSONArray blockedList = configJson.getJSONArray("BlockedClientList");
+            for (int j = 0; j < blockedList.length(); j++) {
+                blockedClientList.add(MacAddress.fromString(blockedList.getString(j)));
+            }
+
+        }
+        configBuilder.setClientList(blockedClientList, allowedClientList);
         return configBuilder.build();
     }
 
