@@ -1173,13 +1173,25 @@ public class WifiManagerFacade extends RpcReceiver {
     }
 
     /**
-     * Disable ephemeral network.
+     * User disconnect network.
      *
      * @param ssid SSID of wifi network
      */
-    @Rpc(description = "Forget a wifi network by networkId")
-    public void wifiDisableEphemeralNetwork(@RpcParameter(name = "ssid") String ssid) {
+    @Rpc(description = "Disconnect a wifi network by SSID")
+    public void wifiUserDisconnectNetwork(@RpcParameter(name = "ssid") String ssid) {
         mWifi.disableEphemeralNetwork("\"" + ssid + "\"");
+        mWifi.disconnect();
+    }
+
+    /**
+     * User disconnect passpoint network.
+     *
+     * @param fqdn FQDN of the passpoint network
+     */
+    @Rpc(description = "Disconnect a wifi network by FQDN")
+    public void wifiUserDisconnectPasspointNetwork(@RpcParameter(name = "fqdn") String fqdn) {
+        mWifi.disableEphemeralNetwork(fqdn);
+        mWifi.disconnect();
     }
 
     /**
