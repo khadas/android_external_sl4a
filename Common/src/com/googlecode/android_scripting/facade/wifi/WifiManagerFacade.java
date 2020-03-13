@@ -749,6 +749,9 @@ public class WifiManagerFacade extends RpcReceiver {
         if (j.has("enableAutojoin")) {
             builder.setIsInitialAutojoinEnabled(j.getBoolean("enableAutojoin"));
         }
+        if (j.has("untrusted")) {
+            builder.setUntrusted(j.getBoolean("untrusted"));
+        }
         if (j.has("profile")) {
             builder = builder.setPasspointConfig(genWifiPasspointConfig(j));
         } else {
