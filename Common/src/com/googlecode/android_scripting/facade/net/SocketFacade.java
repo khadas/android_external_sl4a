@@ -172,6 +172,17 @@ public class SocketFacade extends RpcReceiver {
     }
 
     /**
+     * Return port number of Socket
+     * @param socketId : Hash key of {@link Socket}
+     * @return Port number in int
+     */
+    @Rpc(description = "Get port number of a Socket")
+    public int getPortOfSocket(String socketId) {
+        Socket socket = sSocketHashMap.get(socketId);
+        return socket.getLocalPort();
+    }
+
+    /**
      * Close socket of java.net.Socket class
      * @param socketId : Hash key of {@link Socket}
      * @return True if closing socket is successful
@@ -207,6 +218,17 @@ public class SocketFacade extends RpcReceiver {
             Log.e("Socket: Failed to open TCP server socket ", e);
         }
         return null;
+    }
+
+    /**
+     * Return port number of ServerSocket
+     * @param serverSocketId : Hash key of {@link ServerSocket}
+     * @return Port number in int
+     */
+    @Rpc(description = "Get port number of a ServerSocket")
+    public int getPortOfServerSocket(String serverSocketId) {
+        ServerSocket socket = sServerSocketHashMap.get(serverSocketId);
+        return socket.getLocalPort();
     }
 
     /**
@@ -397,6 +419,17 @@ public class SocketFacade extends RpcReceiver {
             Log.e("Socket: Failed to open datagram socket");
         }
         return null;
+    }
+
+    /**
+     * Return port number of DatagramSocket
+     * @param datagramSocketId : Hash key of {@link DatagramSocket}
+     * @return Port number in int
+     */
+    @Rpc(description = "Get port number of a DatagramSocket")
+    public int getPortOfDatagramSocket(String datagramSocketId) {
+        DatagramSocket socket = sDatagramSocketHashMap.get(datagramSocketId);
+        return socket.getLocalPort();
     }
 
     /**
