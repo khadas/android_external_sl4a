@@ -228,6 +228,15 @@ public class TelephonyConstants {
     public static final String DATA_STATE_UNKNOWN = "UNKNOWN";
 
     /**
+     * Constant for Override Network Type
+     * **/
+    public static final String OVERRIDE_NETWORK_TYPE_NONE = "NONE";
+    public static final String OVERRIDE_NETWORK_TYPE_LTE_CA = "LTE_CA";
+    public static final String OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO = "LTE_ADVANCED_PRO";
+    public static final String OVERRIDE_NETWORK_TYPE_NR_NSA = "NR_NSA";
+    public static final String OVERRIDE_NETWORK_TYPE_NR_NSA_MMWAVE = "NR_MMWAVE";
+
+    /**
      * Constant for Telephony Manager Call State
      * **/
     public static final String TELEPHONY_STATE_RINGING = "RINGING";
@@ -373,6 +382,7 @@ public class TelephonyConstants {
     public static final String EventPreciseStateChanged = "PreciseStateChanged";
     public static final String EventDataConnectionRealTimeInfoChanged = "DataConnectionRealTimeInfoChanged";
     public static final String EventDataConnectionStateChanged = "DataConnectionStateChanged";
+    public static final String EventDisplayInfoChanged = "DisplayInfoChanged";
     public static final String EventActiveDataSubIdChanged = "ActiveDataSubIdChanged";
     public static final String EventServiceStateChanged = "ServiceStateChanged";
     public static final String EventSignalStrengthChanged = "SignalStrengthChanged";
@@ -436,6 +446,13 @@ public class TelephonyConstants {
         public static final String STATE_CODE = "stateCode";
         public static final String SUBSCRIPTION_ID = "subscriptionId";
         public static final String DATA_CONNECTION_STATE = "dataConnectionState";
+    }
+
+    public static class DisplayInfoContainer {
+        public static final String TIME = "time";
+        public static final String NETWORK = "network";
+        public static final String OVERRIDE = "override";
+        public static final String SUBSCRIPTION_ID = "subscriptionId";
     }
 
     public static class ServiceStateContainer {
