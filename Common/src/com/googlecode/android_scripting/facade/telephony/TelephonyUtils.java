@@ -18,10 +18,12 @@ package com.googlecode.android_scripting.facade.telephony;
 import com.android.ims.ImsConfig;
 import com.android.internal.telephony.RILConstants;
 import com.googlecode.android_scripting.Log;
+
 import android.telecom.TelecomManager;
 import android.telephony.DataConnectionRealTimeInfo;
 import android.telephony.PreciseCallState;
 import android.telephony.ServiceState;
+import android.telephony.TelephonyDisplayInfo;
 import android.telephony.TelephonyManager;
 import android.telephony.VoLteServiceState;
 
@@ -187,6 +189,23 @@ public class TelephonyUtils {
         }
         Log.d("getDataConnectionStateString error. int: " + state);
         return TelephonyConstants.DATA_STATE_UNKNOWN;
+    }
+
+    public static String getDisplayInfoString(int state) {
+        switch (state) {
+            case TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE:
+                return TelephonyConstants.OVERRIDE_NETWORK_TYPE_NONE;
+            case TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_CA:
+                return TelephonyConstants.OVERRIDE_NETWORK_TYPE_LTE_CA;
+            case TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO:
+                return TelephonyConstants.OVERRIDE_NETWORK_TYPE_LTE_ADVANCED_PRO;
+            case TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA:
+                return TelephonyConstants.OVERRIDE_NETWORK_TYPE_NR_NSA;
+            case TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA_MMWAVE:
+                return TelephonyConstants.OVERRIDE_NETWORK_TYPE_NR_NSA_MMWAVE;
+        }
+        Log.d("getDisplayInfoStateString error. int: " + state);
+        return TelephonyConstants.OVERRIDE_NETWORK_TYPE_NONE;
     }
 
     public static int getNetworkModeIntfromString(String networkMode) {
