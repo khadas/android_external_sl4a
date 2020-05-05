@@ -256,6 +256,28 @@ public class TelephonyUtils {
                 return RILConstants.NETWORK_MODE_TDSCDMA_CDMA_EVDO_GSM_WCDMA;
             case TelephonyConstants.NETWORK_MODE_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA:
                 return RILConstants.NETWORK_MODE_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_GSM_WCDMA:
+                return RILConstants.NETWORK_MODE_NR_LTE_GSM_WCDMA;
+            case TelephonyConstants.NETWORK_MODE_NR_ONLY:
+                return RILConstants.NETWORK_MODE_NR_ONLY;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE:
+                return RILConstants.NETWORK_MODE_NR_LTE;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_CDMA_EVDO:
+                return RILConstants.NETWORK_MODE_NR_LTE_CDMA_EVDO;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA:
+                return RILConstants.NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_WCDMA:
+                return RILConstants.NETWORK_MODE_NR_LTE_WCDMA;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA:
+                return RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA_GSM:
+                return RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA_GSM;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA_WCDMA:
+                return RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA_WCDMA;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA_GSM_WCDMA:
+                return RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA_GSM_WCDMA;
+            case TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA:
+                return RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA;
         }
         Log.d("getNetworkModeIntfromString error. String: " + networkMode);
         return RILConstants.RIL_ERRNO_INVALID_RESPONSE;
@@ -309,6 +331,28 @@ public class TelephonyUtils {
                 return TelephonyConstants.NETWORK_MODE_TDSCDMA_CDMA_EVDO_GSM_WCDMA;
             case RILConstants.NETWORK_MODE_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA:
                 return TelephonyConstants.NETWORK_MODE_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA;
+            case RILConstants.NETWORK_MODE_NR_LTE_GSM_WCDMA:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_GSM_WCDMA;
+            case RILConstants.NETWORK_MODE_NR_ONLY:
+                return TelephonyConstants.NETWORK_MODE_NR_ONLY;
+            case RILConstants.NETWORK_MODE_NR_LTE:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE;
+            case RILConstants.NETWORK_MODE_NR_LTE_CDMA_EVDO:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_CDMA_EVDO;
+            case RILConstants.NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_CDMA_EVDO_GSM_WCDMA;
+            case RILConstants.NETWORK_MODE_NR_LTE_WCDMA:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_WCDMA;
+            case RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA;
+            case RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA_GSM:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA_GSM;
+            case RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA_WCDMA:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA_WCDMA;
+            case RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA_GSM_WCDMA:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA_GSM_WCDMA;
+            case RILConstants.NETWORK_MODE_NR_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA:
+                return TelephonyConstants.NETWORK_MODE_NR_LTE_TDSCDMA_CDMA_EVDO_GSM_WCDMA;
         }
         Log.d("getNetworkModeStringfromInt error. Int: " + networkMode);
         return TelephonyConstants.NETWORK_MODE_INVALID;
