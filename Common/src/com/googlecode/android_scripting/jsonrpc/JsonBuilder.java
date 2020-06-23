@@ -1155,6 +1155,7 @@ public class JsonBuilder {
         String privateKeyString = Base64.encodeToString(pk.getEncoded(), Base64.DEFAULT);
         config.put(WifiEnterpriseConfig.PRIVATE_KEY_ID_KEY, privateKeyString);
         config.put(WifiEnterpriseConfig.PASSWORD_KEY, data.getPassword());
+        config.put(WifiEnterpriseConfig.OCSP, data.getOcsp());
         return config;
     }
 
