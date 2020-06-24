@@ -635,6 +635,11 @@ public class WifiManagerFacade extends RpcReceiver {
             Log.v("Setting Domain Suffix Match to " + realm);
             eConfig.setRealm(realm);
         }
+        if (j.has(WifiEnterpriseConfig.OCSP)) {
+            int ocsp = j.getInt(WifiEnterpriseConfig.OCSP);
+            Log.v("Setting OCSP to " + ocsp);
+            eConfig.setOcsp(ocsp);
+        }
         return eConfig;
     }
 
